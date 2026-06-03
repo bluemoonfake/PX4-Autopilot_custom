@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,7 @@ bool FlightTaskAuto::activate(const trajectory_setpoint_s &last_setpoint)
 	_updateTrajConstraints();
 	_is_emergency_braking_active = false;
 	_time_last_cruise_speed_override = 0;
+	_takeoff_locked_xy.setNaN();
 
 	return ret;
 }
@@ -84,6 +85,7 @@ void FlightTaskAuto::reActivate()
 
 	// On ground, reset acceleration and velocity to zero
 	_position_smoothing.reset({0.f, 0.f, 0.f}, {0.f, 0.f, 0.7f}, _position);
+	_takeoff_locked_xy.setNaN();
 }
 
 bool FlightTaskAuto::updateInitialize()
@@ -93,6 +95,7 @@ bool FlightTaskAuto::updateInitialize()
 	_sub_home_position.update();
 	_sub_vehicle_status.update();
 	_position_setpoint_triplet_sub.update();
+	_takeoff_status_sub.update();
 #if defined(CONFIG_MODULES_VISION_TARGET_ESTIMATOR) && CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 	_prec_land_status_sub.update();
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
@@ -166,6 +169,12 @@ bool FlightTaskAuto::update()
 		// In case the target has been modified, we take this as the next waypoints
 		waypoints[2] = _position_setpoint;
 	}
+
+	// waypoints[] = {previous, current, next} are the points fed to the trajectory smoother below.
+	// waypoints[1] is the current target the vehicle is flying to (here the takeoff destination);
+	// during takeoff replace its XY with the lift-off XY so the smoother aims straight up instead
+	// of at the geo-fixed takeoff waypoint.
+	_lockTakeoffXY(waypoints[1]);
 
 	const bool should_wait_for_yaw_align = _param_mpc_yaw_mode.get() == int32_t(yaw_mode::towards_waypoint_yaw_first)
 					       && !_yaw_sp_aligned;
@@ -706,6 +715,31 @@ bool FlightTaskAuto::isTargetModified() const
 	return xy_modified || z_modified;
 }
 
+void FlightTaskAuto::_lockTakeoffXY(matrix::Vector3f &target)
+{
+	// Climb straight up off the lift-off point: record the horizontal position during the ramp, freeze
+	// it at FLIGHT, and hold it until the vehicle is above MPC_LAND_ALT1; above ALT1 release the
+	// target to the navigator setpoint.
+	if (_type != WaypointType::takeoff || _dist_to_ground > _param_mpc_land_alt1.get()) {
+		_takeoff_locked_xy.setNaN();
+		return;
+	}
+
+	if (_inTakeoffRamp()) {
+		_takeoff_locked_xy = _position.xy();
+	}
+
+	if (PX4_ISFINITE(_takeoff_locked_xy(0)) && PX4_ISFINITE(_takeoff_locked_xy(1))) {
+		target.xy() = _takeoff_locked_xy;
+	}
+}
+
+bool FlightTaskAuto::_inTakeoffRamp() const
+{
+	return (_type == WaypointType::takeoff)
+	       && (_takeoff_status_sub.get().takeoff_state < takeoff_status_s::TAKEOFF_STATE_FLIGHT);
+}
+
 void FlightTaskAuto::_updateTrajConstraints()
 {
 	// update params of the position smoothing
@@ -744,10 +778,16 @@ void FlightTaskAuto::_updateTrajConstraints()
 			z_vel_constraint = _param_mpc_tko_speed.get();
 			z_accel_constraint = math::min(z_accel_constraint, _param_mpc_tko_speed.get() / _param_mpc_tko_ramp_t.get());
 
-			// Keep the altitude setpoint at the current altitude
-			// to avoid having it going down into the ground during
-			// the initial ramp as the velocity does not start at 0
-			_position_smoothing.forceSetPosition({NAN, NAN, _position(2)});
+			// Keep the setpoint at the current position: avoids the altitude setpoint dropping into
+			// the ground during the initial ramp, and pins the smoother XY to the vehicle so the
+			// horizontal time-stretch can't freeze the climb off a moving platform.
+			Vector3f pin = _position;
+
+			if (!_inTakeoffRamp()) {
+				pin(0) = pin(1) = NAN; // released after FLIGHT
+			}
+
+			_position_smoothing.forceSetPosition(pin);
 		}
 
 		_position_smoothing.setMaxVelocityZ(z_vel_constraint);

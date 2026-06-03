@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,6 +48,7 @@
 #include <uORB/topics/prec_land_status.h>
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/takeoff_status.h>
 #include <lib/geo/geo.h>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/motion_planning/HeadingSmoothing.hpp>
@@ -106,6 +107,8 @@ protected:
 	bool _generateHeadingAlongTraj(); /**< Generates heading along trajectory. */
 	bool isTargetModified() const;
 	void _updateTrajConstraints();
+	void _lockTakeoffXY(matrix::Vector3f &target); /**< hold the lift-off XY until MPC_LAND_ALT1, see .cpp */
+	bool _inTakeoffRamp() const; /**< taking off and not yet at TAKEOFF_STATE_FLIGHT */
 
 	void rcHelpModifyYaw(float &yaw_sp);
 
@@ -128,6 +131,7 @@ protected:
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 	uORB::SubscriptionData<home_position_s>			_sub_home_position {ORB_ID(home_position)};
 	uORB::SubscriptionData<vehicle_status_s>		_sub_vehicle_status{ORB_ID(vehicle_status)};
+	uORB::SubscriptionData<takeoff_status_s>		_takeoff_status_sub{ORB_ID(takeoff_status)};
 
 	float _target_acceptance_radius{0.0f}; /**< Acceptances radius of the target */
 
@@ -178,6 +182,7 @@ protected:
 
 private:
 	matrix::Vector2f _lock_position_xy{NAN, NAN}; /**< if no valid triplet is received, lock positition to current position */
+	matrix::Vector2f _takeoff_locked_xy{NAN, NAN}; /**< lift-off XY recorded during the ramp, frozen at FLIGHT, held until MPC_LAND_ALT1 */
 	bool _yaw_lock{false}; /**< if within acceptance radius, lock yaw to current yaw */
 
 	matrix::Vector3f _triplet_previous; ///< previous waypoint in triplet from navigator
