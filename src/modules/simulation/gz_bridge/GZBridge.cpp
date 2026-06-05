@@ -417,7 +417,6 @@ void GZBridge::magnetometerCallback(const gz::msgs::Magnetometer &msg)
 
 void GZBridge::airPressureCallback(const gz::msgs::FluidPressure &msg)
 {
-	_px4_baro.set_temperature(this->_temperature);
 	_px4_baro.update(hrt_absolute_time(), msg.pressure());
 }
 
