@@ -86,22 +86,17 @@ Create a PX4 module that builds and runs.
 
 ### Files
 
-```text
-src/modules/antenna_tracker/CMakeLists.txt
-src/modules/antenna_tracker/Kconfig
-src/modules/antenna_tracker/antenna_tracker_main.cpp
-src/modules/antenna_tracker/antenna_tracker.hpp
-```
+- [ ] `src/modules/antenna_tracker/CMakeLists.txt`
+- [ ] `src/modules/antenna_tracker/Kconfig`
+- [ ] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
+- [ ] `src/modules/antenna_tracker/antenna_tracker.hpp`
 
 ### Required behavior
 
 PX4 shell commands must work:
-
-```bash
-antenna_tracker start
-antenna_tracker status
-antenna_tracker stop
-```
+- [ ] `antenna_tracker start`
+- [ ] `antenna_tracker status`
+- [ ] `antenna_tracker stop`
 
 ### Implementation notes
 
@@ -134,25 +129,12 @@ Verify that the module can drive servo outputs through PX4.
 
 ### Files
 
-```text
-src/modules/antenna_tracker/antenna_tracker_main.cpp
-src/modules/antenna_tracker/antenna_tracker.hpp
-```
+- [ ] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
+- [ ] `src/modules/antenna_tracker/antenna_tracker.hpp`
 
 ### Required behavior
 
-Publish to:
-
-```text
-actuator_servos.control[0] = yaw command
-actuator_servos.control[1] = pitch command
-```
-
-Command range:
-
-```text
--1.0 to +1.0
-```
+- [ ] Publish normalized commands to `actuator_servos.control[0]` (yaw) and `actuator_servos.control[1]` (pitch) in the range `-1.0` to `+1.0`
 
 ### Servo test mode
 
@@ -180,39 +162,30 @@ Add tracker-specific parameters.
 
 ### File
 
-```text
-src/modules/antenna_tracker/tracker_params.c
-```
+- [ ] `src/modules/antenna_tracker/tracker_params.c`
 
 ### Required parameters
 
-```text
-TRK_SYSID_TARGET
-TRK_AUTO_LOCK
-TRK_TIMEOUT_MS
-
-TRK_YAW_P
-TRK_YAW_I
-TRK_YAW_D
-TRK_PIT_P
-TRK_PIT_I
-TRK_PIT_D
-
-TRK_YAW_TRIM
-TRK_PIT_TRIM
-
-TRK_YAW_MIN
-TRK_YAW_MAX
-TRK_PIT_MIN
-TRK_PIT_MAX
-
-TRK_TGT_LAT
-TRK_TGT_LON
-TRK_TGT_ALT
-
-TRK_MODE
-TRK_SERVO_TEST
-```
+- [ ] `TRK_SYSID_TARGET`
+- [ ] `TRK_AUTO_LOCK`
+- [ ] `TRK_TIMEOUT_MS`
+- [ ] `TRK_YAW_P`
+- [ ] `TRK_YAW_I`
+- [ ] `TRK_YAW_D`
+- [ ] `TRK_PIT_P`
+- [ ] `TRK_PIT_I`
+- [ ] `TRK_PIT_D`
+- [ ] `TRK_YAW_TRIM`
+- [ ] `TRK_PIT_TRIM`
+- [ ] `TRK_YAW_MIN`
+- [ ] `TRK_YAW_MAX`
+- [ ] `TRK_PIT_MIN`
+- [ ] `TRK_PIT_MAX`
+- [ ] `TRK_TGT_LAT`
+- [ ] `TRK_TGT_LON`
+- [ ] `TRK_TGT_ALT`
+- [ ] `TRK_MODE`
+- [ ] `TRK_SERVO_TEST`
 
 ### Notes
 
@@ -230,26 +203,17 @@ Implement standalone geometry functions.
 
 ### Files
 
-```text
-tracker_geo.hpp
-tracker_geo.cpp
-```
+- [ ] `src/modules/antenna_tracker/tracker_geo.hpp`
+- [ ] `src/modules/antenna_tracker/tracker_geo.cpp`
 
 ### Required functions
 
-```cpp
-float longitude_scale(double latitude_deg);
-float horizontal_distance_m(int32_t tracker_lat, int32_t tracker_lon,
-                            int32_t target_lat, int32_t target_lon);
-
-float bearing_rad(int32_t tracker_lat, int32_t tracker_lon,
-                  int32_t target_lat, int32_t target_lon);
-
-float pitch_rad(float delta_alt_m, float horizontal_distance_m);
-
-float wrap_pi(float angle_rad);
-float wrap_180_deg(float angle_deg);
-```
+- [ ] `longitude_scale(double latitude_deg)`
+- [ ] `horizontal_distance_m(int32_t tracker_lat, int32_t tracker_lon, int32_t target_lat, int32_t target_lon)`
+- [ ] `bearing_rad(int32_t tracker_lat, int32_t tracker_lon, int32_t target_lat, int32_t target_lon)`
+- [ ] `pitch_rad(float delta_alt_m, float horizontal_distance_m)`
+- [ ] `wrap_pi(float angle_rad)`
+- [ ] `wrap_180_deg(float angle_deg)`
 
 ### Required formulas
 
@@ -285,10 +249,8 @@ Implement yaw/pitch PID controller.
 
 ### Files
 
-```text
-tracker_controller.hpp
-tracker_controller.cpp
-```
+- [ ] `src/modules/antenna_tracker/tracker_controller.hpp`
+- [ ] `src/modules/antenna_tracker/tracker_controller.cpp`
 
 ### Required behavior
 
@@ -370,9 +332,7 @@ Add a PX4 airframe for the antenna tracker.
 
 ### File
 
-```text
-ROMFS/px4fmu_common/init.d/airframes/4099_antenna_tracker
-```
+- [ ] `ROMFS/px4fmu_common/init.d/airframes/4099_antenna_tracker`
 
 ### Draft content
 
@@ -418,6 +378,8 @@ Add target and status messages.
 
 ### File: `msg/TrackerTargetPosition.msg`
 
+- [ ] `msg/TrackerTargetPosition.msg`
+
 Suggested fields:
 
 ```text
@@ -438,6 +400,8 @@ uint64 last_update_us
 ```
 
 ### File: `msg/TrackerStatus.msg`
+
+- [ ] `msg/TrackerStatus.msg`
 
 Suggested fields:
 
@@ -480,10 +444,8 @@ Receive target UAV position from MAVLink and publish to uORB.
 
 ### Files
 
-```text
-src/modules/mavlink/mavlink_receiver.cpp
-src/modules/mavlink/mavlink_receiver.h
-```
+- [ ] `src/modules/mavlink/mavlink_receiver.cpp`
+- [ ] `src/modules/mavlink/mavlink_receiver.h`
 
 ### Required MAVLink message
 
