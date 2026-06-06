@@ -444,8 +444,8 @@ Receive target UAV position from MAVLink and publish to uORB.
 
 ### Files
 
-- [x] `src/modules/mavlink/mavlink_receiver.cpp`
-- [x] `src/modules/mavlink/mavlink_receiver.h`
+- [ ] `src/modules/mavlink/mavlink_receiver.cpp`
+- [ ] `src/modules/mavlink/mavlink_receiver.h`
 
 ### Required MAVLink message
 
