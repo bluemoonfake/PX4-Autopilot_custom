@@ -97,6 +97,7 @@
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/sensor_optical_flow.h>
 #include <uORB/topics/telemetry_status.h>
+#include <uORB/topics/tracker_target_position.h>
 #include <uORB/topics/transponder_report.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/tune_control.h>
@@ -168,6 +169,7 @@ private:
 	void handle_message_distance_sensor(mavlink_message_t *msg);
 	void handle_message_follow_target(mavlink_message_t *msg);
 	void handle_message_generator_status(mavlink_message_t *msg);
+	void handle_message_global_position_int_for_tracker(mavlink_message_t *msg);
 	void handle_message_set_gps_global_origin(mavlink_message_t *msg);
 	void handle_message_gps_rtcm_data(mavlink_message_t *msg);
 	void handle_message_heartbeat(mavlink_message_t *msg);
@@ -318,6 +320,7 @@ private:
 	uORB::Publication<open_drone_id_self_id_s>		_open_drone_id_self_id_pub{ORB_ID(open_drone_id_self_id)};
 	uORB::Publication<open_drone_id_system_s>		_open_drone_id_system_pub{ORB_ID(open_drone_id_system)};
 	uORB::Publication<generator_status_s>			_generator_status_pub{ORB_ID(generator_status)};
+	uORB::Publication<tracker_target_position_s>		_tracker_target_position_pub{ORB_ID(tracker_target_position)};
 	uORB::Publication<vehicle_attitude_s>			_attitude_pub{ORB_ID(vehicle_attitude)};
 	uORB::Publication<vehicle_attitude_setpoint_s>		_att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Publication<vehicle_attitude_setpoint_s>		_mc_virtual_att_sp_pub{ORB_ID(mc_virtual_attitude_setpoint)};
@@ -402,13 +405,18 @@ private:
 	hrt_abstime _heartbeat_component_udp_bridge{0};
 	hrt_abstime _heartbeat_component_uart_bridge{0};
 
+	// Tracker target sysid lock state
+	uint8_t _tracker_locked_sysid{0};
+
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::BAT_CRIT_THR>)     _param_bat_crit_thr,
 		(ParamFloat<px4::params::BAT_EMERGEN_THR>)  _param_bat_emergen_thr,
 		(ParamFloat<px4::params::BAT_LOW_THR>)      _param_bat_low_thr,
 		(ParamInt<px4::params::BAT1_N_CELLS>)       _param_bat_cells_count,
 		(ParamFloat<px4::params::BAT1_V_CHARGED>)   _param_bat_v_charged,
-		(ParamFloat<px4::params::BAT1_V_EMPTY>)     _param_bat_v_empty
+		(ParamFloat<px4::params::BAT1_V_EMPTY>)     _param_bat_v_empty,
+		(ParamInt<px4::params::TRK_SYSID_TGT>)      _param_trk_sysid_tgt,
+		(ParamInt<px4::params::TRK_AUTO_LOCK>)       _param_trk_auto_lock
 	);
 
 	// Disallow copy construction and move assignment.

@@ -26,15 +26,6 @@ Branch custom đề xuất: antenna_tracker_v1.17
 Ngôn ngữ: C++
 ```
 
-Lệnh chuẩn bị repo:
-
-```bash
-git clone https://github.com/PX4/PX4-Autopilot.git
-cd PX4-Autopilot
-git checkout v1.17.0
-git submodule update --init --recursive
-git checkout -b antenna_tracker_v1.17
-```
 
 ---
 
@@ -388,7 +379,7 @@ Cần xác định rõ pitch servo đo theo thân tracker, earth frame hay body 
 Ưu tiên thấp rủi ro nhất:
 
 ```text
-1. Clone PX4 v1.17.0
+1. Clone PX4 v1.17.0 (da clone)
 2. Tạo branch antenna_tracker_v1.17
 3. Tạo module skeleton antenna_tracker
 4. Build được SITL

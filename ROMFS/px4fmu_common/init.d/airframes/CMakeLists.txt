@@ -179,3 +179,10 @@ if(CONFIG_MODULES_SPACECRAFT)
 		70000_atmos
 	)
 endif()
+
+if(CONFIG_MODULES_ANTENNA_TRACKER)
+	px4_add_romfs_files(
+		# [4099] Antenna Tracker
+		4099_antenna_tracker
+	)
+endif()

@@ -4,6 +4,9 @@ px4_add_module(
 	SRCS
 		antenna_tracker_main.cpp
 		antenna_tracker.hpp
+		tracker_geo.cpp
+		tracker_geo.hpp
+		tracker_controller.hpp
 	DEPENDS
 		px4_work_queue
 	)

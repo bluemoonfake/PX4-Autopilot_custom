@@ -213,6 +213,10 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_follow_target(msg);
 		break;
 
+	case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+		handle_message_global_position_int_for_tracker(msg);
+		break;
+
 	case MAVLINK_MSG_ID_LANDING_TARGET:
 		handle_message_landing_target(msg);
 		break;
@@ -2497,6 +2501,63 @@ MavlinkReceiver::handle_message_follow_target(mavlink_message_t *msg)
 	follow_target_topic.vz = follow_target_msg.vel[2];
 
 	_follow_target_pub.publish(follow_target_topic);
+}
+
+void
+MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_t *msg)
+{
+	// Skip messages from ourselves (same sysid)
+	if (msg->sysid == mavlink_system.sysid) {
+		return;
+	}
+
+	// Skip messages from GCS (compid 0 or MAV_COMP_ID_MISSIONPLANNER=190)
+	if (msg->compid == 0 || msg->compid == MAV_COMP_ID_MISSIONPLANNER) {
+		return;
+	}
+
+	const int32_t target_sysid_param = _param_trk_sysid_tgt.get();
+	const int32_t auto_lock = _param_trk_auto_lock.get();
+
+	// Determine if we should accept this sysid
+	if (target_sysid_param != 0) {
+		// Specific target configured: only accept that sysid
+		if (msg->sysid != static_cast<uint8_t>(target_sysid_param)) {
+			return;
+		}
+
+	} else if (auto_lock != 0) {
+		// Auto-lock mode: lock to first valid vehicle
+		if (_tracker_locked_sysid == 0) {
+			_tracker_locked_sysid = msg->sysid;
+			PX4_INFO("Tracker auto-locked to sysid %u", _tracker_locked_sysid);
+
+		} else if (msg->sysid != _tracker_locked_sysid) {
+			return;
+		}
+
+	} else {
+		// No target configured and auto-lock disabled: ignore
+		return;
+	}
+
+	mavlink_global_position_int_t gpos;
+	mavlink_msg_global_position_int_decode(msg, &gpos);
+
+	tracker_target_position_s target{};
+	target.timestamp = hrt_absolute_time();
+	target.target_system = msg->sysid;
+	target.valid = true;
+	target.lat = gpos.lat;            // degE7
+	target.lon = gpos.lon;            // degE7
+	target.alt_mm = gpos.alt;         // mm MSL
+	target.relative_alt_mm = gpos.relative_alt; // mm relative
+	target.vx_m_s = static_cast<float>(gpos.vx) * 0.01f;  // cm/s → m/s
+	target.vy_m_s = static_cast<float>(gpos.vy) * 0.01f;
+	target.vz_m_s = static_cast<float>(gpos.vz) * 0.01f;
+	target.last_update_us = hrt_absolute_time();
+
+	_tracker_target_position_pub.publish(target);
 }
 
 void

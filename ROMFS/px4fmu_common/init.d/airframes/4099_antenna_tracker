@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# @name Generic Antenna Tracker
+# @type Antenna Tracker
+# @class Tracker
+#
+# @board px4_fmu-v2 exclude
+#
+
+. ${R}etc/init.d/rc.mc_defaults
+
+# MAV_TYPE 5 = ANTENNA_TRACKER in MAVLink enum
+param set-default MAV_TYPE 5
+
+# Disable auto-disarm for tracker (we want servos always active)
+param set-default COM_DISARM_LAND -1
+param set-default COM_DISARM_PRFLT -1
+
+# Tracker default parameters
+param set-default TRK_MODE 0
+param set-default TRK_SERVO_TEST 0
+param set-default TRK_YAW_P 1.0
+param set-default TRK_PIT_P 1.0
+
+# Start the antenna tracker module
+antenna_tracker start
