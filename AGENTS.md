@@ -86,17 +86,17 @@ Create a PX4 module that builds and runs.
 
 ### Files
 
-- [ ] `src/modules/antenna_tracker/CMakeLists.txt`
-- [ ] `src/modules/antenna_tracker/Kconfig`
-- [ ] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
-- [ ] `src/modules/antenna_tracker/antenna_tracker.hpp`
+- [x] `src/modules/antenna_tracker/CMakeLists.txt`
+- [x] `src/modules/antenna_tracker/Kconfig`
+- [x] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
+- [x] `src/modules/antenna_tracker/antenna_tracker.hpp`
 
 ### Required behavior
 
 PX4 shell commands must work:
-- [ ] `antenna_tracker start`
-- [ ] `antenna_tracker status`
-- [ ] `antenna_tracker stop`
+- [x] `antenna_tracker start`
+- [x] `antenna_tracker status`
+- [x] `antenna_tracker stop`
 
 ### Implementation notes
 
@@ -129,8 +129,8 @@ Verify that the module can drive servo outputs through PX4.
 
 ### Files
 
-- [ ] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
-- [ ] `src/modules/antenna_tracker/antenna_tracker.hpp`
+- [x] `src/modules/antenna_tracker/antenna_tracker_main.cpp`
+- [x] `src/modules/antenna_tracker/antenna_tracker.hpp`
 
 ### Required behavior
 
@@ -444,8 +444,8 @@ Receive target UAV position from MAVLink and publish to uORB.
 
 ### Files
 
-- [ ] `src/modules/mavlink/mavlink_receiver.cpp`
-- [ ] `src/modules/mavlink/mavlink_receiver.h`
+- [x] `src/modules/mavlink/mavlink_receiver.cpp`
+- [x] `src/modules/mavlink/mavlink_receiver.h`
 
 ### Required MAVLink message
 

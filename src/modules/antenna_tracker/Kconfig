@@ -1,0 +1,5 @@
+menuconfig MODULES_ANTENNA_TRACKER
+	bool "antenna_tracker"
+	default n
+	---help---
+		Enable support for antenna_tracker module
