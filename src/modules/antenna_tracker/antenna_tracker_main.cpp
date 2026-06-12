@@ -3,6 +3,9 @@
 #include <drivers/drv_hrt.h>
 #include <lib/mathlib/mathlib.h>
 #include <matrix/math.hpp>
+#include <parameters/param.h>
+#include <inttypes.h>
+#include <string.h>
 
 using namespace time_literals;
 
@@ -110,9 +113,17 @@ void AntennaTracker::parameters_update()
 	_pitch_pid.set_output_limits(_param_trk_pit_min.get(), _param_trk_pit_max.get());
 }
 
+bool AntennaTracker::is_global_position_valid(const vehicle_global_position_s &gpos)
+{
+	return PX4_ISFINITE(gpos.lat)
+	       && PX4_ISFINITE(gpos.lon)
+	       && PX4_ISFINITE(gpos.alt)
+	       && (fabsf(gpos.lat) > 1e-6f || fabsf(gpos.lon) > 1e-6f);
+}
+
 void AntennaTracker::run_servo_test(float elapsed_s)
 {
-	// Sweep: triangle wave over 4 seconds, range [-0.5, +0.5]
+	// Safe four-step sweep: -0.5 -> 0.0 -> +0.5 -> 0.0.
 	_servo_test_phase += elapsed_s;
 
 	if (_servo_test_phase > 4.f) {
@@ -122,13 +133,16 @@ void AntennaTracker::run_servo_test(float elapsed_s)
 	float val;
 
 	if (_servo_test_phase < 1.f) {
-		val = -0.5f + _servo_test_phase * 1.0f;      // -0.5 → +0.5
+		val = -0.5f + _servo_test_phase * 0.5f;
+
+	} else if (_servo_test_phase < 2.f) {
+		val = (_servo_test_phase - 1.f) * 0.5f;
 
 	} else if (_servo_test_phase < 3.f) {
-		val = 0.5f - (_servo_test_phase - 1.f) * 1.0f; // +0.5 → -1.5 → clamped
+		val = 0.5f - (_servo_test_phase - 2.f) * 0.5f;
 
 	} else {
-		val = -0.5f + (_servo_test_phase - 3.f) * 1.0f; // -0.5 → +0.5
+		val = -(_servo_test_phase - 3.f) * 0.5f;
 	}
 
 	val = math::constrain(val, -0.5f, 0.5f);
@@ -171,7 +185,25 @@ void AntennaTracker::run_tracking(float dt)
 	bool gpos_valid = false;
 
 	if (_vehicle_global_position_sub.copy(&gpos)) {
-		gpos_valid = (fabs(gpos.lat) > 1e-6 || fabs(gpos.lon) > 1e-6);
+		gpos_valid = is_global_position_valid(gpos);
+	}
+
+	int32_t tracker_lat_e7 = 0;
+	int32_t tracker_lon_e7 = 0;
+	float tracker_alt_m = 0.f;
+
+	if (gpos_valid) {
+		tracker_lat_e7 = static_cast<int32_t>(gpos.lat * 1e7);
+		tracker_lon_e7 = static_cast<int32_t>(gpos.lon * 1e7);
+		tracker_alt_m = gpos.alt; // meters MSL
+
+	} else if (_param_trk_home_en.get() != 0
+		   && _param_trk_home_lat.get() != 0
+		   && _param_trk_home_lon.get() != 0) {
+		tracker_lat_e7 = _param_trk_home_lat.get();
+		tracker_lon_e7 = _param_trk_home_lon.get();
+		tracker_alt_m = static_cast<float>(_param_trk_home_alt.get()) * 0.001f;
+		gpos_valid = true;
 	}
 
 	// --- Determine target position ---
@@ -231,6 +263,13 @@ void AntennaTracker::run_tracking(float dt)
 	if (!have_target || !gpos_valid || !att_valid) {
 		_yaw_pid.reset();
 		_pitch_pid.reset();
+		_bearing_rad = 0.f;
+		_pitch_rad = 0.f;
+		_distance_m = 0.f;
+		_yaw_error_rad = 0.f;
+		_pitch_error_rad = 0.f;
+		_yaw_output = 0.f;
+		_pitch_output = 0.f;
 
 		actuator_servos_s servos{};
 		servos.timestamp = hrt_absolute_time();
@@ -252,11 +291,6 @@ void AntennaTracker::run_tracking(float dt)
 		_tracker_status_pub.publish(status);
 		return;
 	}
-
-	// --- Convert tracker position to degE7 ---
-	const int32_t tracker_lat_e7 = static_cast<int32_t>(gpos.lat * 1e7);
-	const int32_t tracker_lon_e7 = static_cast<int32_t>(gpos.lon * 1e7);
-	const float tracker_alt_m = gpos.alt; // meters MSL
 
 	// --- Geometry computations ---
 	_distance_m = tracker_geo::horizontal_distance_m(tracker_lat_e7, tracker_lon_e7,
@@ -349,6 +383,44 @@ int AntennaTracker::task_spawn(int argc, char *argv[])
 
 int AntennaTracker::custom_command(int argc, char *argv[])
 {
+	if (argc > 0 && !strcmp(argv[0], "set_home")) {
+		vehicle_global_position_s gpos{};
+		const int gpos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+
+		if (gpos_sub < 0) {
+			PX4_ERR("vehicle_global_position subscribe failed");
+			return PX4_ERROR;
+		}
+
+		const int copy_result = orb_copy(ORB_ID(vehicle_global_position), gpos_sub, &gpos);
+		orb_unsubscribe(gpos_sub);
+
+		if (copy_result != PX4_OK || !is_global_position_valid(gpos)) {
+			PX4_ERR("no valid vehicle_global_position for set_home");
+			return PX4_ERROR;
+		}
+
+		const int32_t enabled = 1;
+		const int32_t lat = static_cast<int32_t>(gpos.lat * 1e7);
+		const int32_t lon = static_cast<int32_t>(gpos.lon * 1e7);
+		const int32_t alt = static_cast<int32_t>(gpos.alt * 1000.f);
+
+		bool failed = false;
+		failed = failed || (param_set(param_find("TRK_HOME_EN"), &enabled) != PX4_OK);
+		failed = failed || (param_set(param_find("TRK_HOME_LAT"), &lat) != PX4_OK);
+		failed = failed || (param_set(param_find("TRK_HOME_LON"), &lon) != PX4_OK);
+		failed = failed || (param_set(param_find("TRK_HOME_ALT"), &alt) != PX4_OK);
+
+		if (failed) {
+			PX4_ERR("failed to set TRK_HOME params");
+			return PX4_ERROR;
+		}
+
+		PX4_INFO("tracker home set: lat=%" PRId32 " lon=%" PRId32 " alt=%" PRId32 "mm", lat, lon, alt);
+		PX4_INFO("run 'param save' to persist across reboot");
+		return PX4_OK;
+	}
+
 	return print_usage("unknown command");
 }
 
@@ -358,6 +430,9 @@ int AntennaTracker::print_status()
 	PX4_INFO("  Mode:           %s", _param_trk_mode.get() == 0 ? "STOP" :
 		 (_param_trk_mode.get() == 1 ? "AUTO" : "SCAN"));
 	PX4_INFO("  Servo Test:     %s", _param_trk_servo_test.get() ? "ENABLED" : "disabled");
+	PX4_INFO("  Home Fallback:  %s", _param_trk_home_en.get() ? "ENABLED" : "disabled");
+	PX4_INFO("  Home:           %" PRId32 ", %" PRId32 ", %" PRId32 " mm",
+		 _param_trk_home_lat.get(), _param_trk_home_lon.get(), _param_trk_home_alt.get());
 	PX4_INFO("  Target Valid:   %s", _target_valid ? "YES" : "no");
 	PX4_INFO("  Target SysID:   %u", _target_sysid);
 	PX4_INFO("  Bearing:        %.1f deg", static_cast<double>(_bearing_rad * 180.f / M_PI_F));
@@ -400,10 +475,15 @@ $ antenna_tracker start
 Start servo test:
 $ param set TRK_SERVO_TEST 1
 $ antenna_tracker start
+
+Set tracker home from current GPS/global position:
+$ antenna_tracker set_home
+$ param save
 )DESCR_STR");
 
 	PRINT_MODULE_USAGE_NAME("antenna_tracker", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
+	PRINT_MODULE_USAGE_COMMAND("set_home");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;

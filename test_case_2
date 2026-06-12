@@ -1,0 +1,460 @@
+TEST 2:
+
+ubuntu@nam:~/PX4_tracker/PX4-Autopilot$ # Terminal 1: Start SITL
+cd ~/PX4_tracker/PX4-Autopilot
+make px4_sitl gz_x500
+[0/1] cd /home/ubuntu/PX4_tracker/PX4-...topilot/build/px4_sitl_default/bin/px4
+
+______  __   __    ___ 
+| ___ \ \ \ / /   /   |
+| |_/ /  \ V /   / /| |
+|  __/   /   \  / /_| |
+| |     / /^\ \ \___  |
+\_|     \/   \/     |_/
+
+px4 starting.
+
+INFO  [px4] startup script: /bin/sh etc/init.d-posix/rcS 0
+INFO  [init] found model autostart file as SYS_AUTOSTART=4001
+INFO  [param] selected parameter default file parameters.bson
+INFO  [param] importing from 'parameters.bson'
+INFO  [parameters] BSON document size 368 bytes, decoded 368 bytes (INT32:14, FLOAT:5)
+INFO  [param] selected parameter backup file parameters_backup.bson
+INFO  [dataman] data manager file './dataman' size is 1208528 bytes
+INFO  [init] Gazebo simulator 8.11.0
+INFO  [init] Starting gazebo with world: /home/ubuntu/PX4_tracker/PX4-Autopilot/Tools/simulation/gz/worlds/default.sdf
+INFO  [init] Starting gz gui
+libva info: VA-API version 1.14.0
+libva info: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+libva info: Found init function __vaDriverInit_1_14
+libva info: va_openDriver() returns 0
+INFO  [init] Waiting for Gazebo world...
+INFO  [init] Waiting for Gazebo world...
+libva info: VA-API version 1.14.0
+libva info: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+libva info: Found init function __vaDriverInit_1_14
+libva info: va_openDriver() returns 0
+INFO  [init] Waiting for Gazebo world...
+INFO  [init] Gazebo world is ready
+INFO  [init] Spawning Gazebo model
+INFO  [gz_bridge] world: default, model: x500_0
+INFO  [lockstep_scheduler] setting initial absolute time to 4008000 us
+INFO  [commander] LED: open /dev/led0 failed (22)
+WARN  [health_and_arming_checks] Preflight Fail: ekf2 missing data
+WARN  [health_and_arming_checks] Preflight Fail: No connection to the GCS
+INFO  [uxrce_dds_client] init UDP agent IP:127.0.0.1, port:8888
+INFO  [mavlink] mode: Normal, data rate: 4000000 B/s on udp port 18570 remote port 14550
+INFO  [mavlink] partner IP: 127.0.0.1
+INFO  [mavlink] mode: Onboard, data rate: 4000000 B/s on udp port 14580 remote port 14540
+INFO  [mavlink] mode: Onboard, data rate: 4000 B/s on udp port 14280 remote port 14030
+INFO  [mavlink] mode: Gimbal, data rate: 400000 B/s on udp port 13030 remote port 13280
+INFO  [tone_alarm] home set
+INFO  [logger] logger started (mode=all)
+INFO  [logger] Start file log (type: full)
+INFO  [logger] [logger] ./log/2026-06-06/16_54_18.ulg	
+INFO  [logger] Opened full log file: ./log/2026-06-06/16_54_18.ulg
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [px4] Startup script returned successfully
+pxh> INFO  [commander] Ready for takeoff!
+pxh> # Disable fake target, enable MAVLink tracking
+pxh> param set TRK_MODE 1
+pxh> param set TRK_SERVO_TEST 0
+pxh> param set TRK_TGT_LAT 0
+pxh> param set TRK_TGT_LON 0
+pxh> param set TRK_TGT_ALT 0
+pxh> param set TRK_SYSID_TGT 0
+pxh> param set TRK_AUTO_LOCK 1
+pxh> 
+pxh> antenna_tracker start
+pxh> 
+pxh> # Xem target position nhận được
+pxh> listener tracker_target_position
+never published
+pxh> 
+pxh> # Xem tracker status (bearing phải thay đổi liên tục)
+pxh> listener tracker_status
+
+TOPIC: tracker_status
+ tracker_status
+    timestamp: 30488000 (0.008000 seconds ago)
+    bearing_rad: 0.00000
+    pitch_rad: 0.00000
+    distance_m: 0.00000
+    yaw_error_rad: 0.00000
+    pitch_error_rad: 0.00000
+    yaw_output: 0.00000
+    pitch_output: 0.00000
+    target_valid: False
+    target_system: 0
+    mode: 1
+    state: 2
+pxh> 
+pxh> # Xem servo output (yaw phải sweep theo vòng tròn)
+pxh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 30488000 (0.008000 seconds ago)
+    timestamp_sample: 30488000 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+pxh> 
+pxh> # Xem status tổng hợp
+pxh> antenna_tracker status
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 814 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 814 events, 19970.52us avg, min 16000us max 24000us 242.933us rms
+pxh> 
+
+
+
+ubuntu@nam:~/PX4_tracker/PX4-Autopilot$ # Terminal 2: Send circular orbit target 
+cd ~/PX4_tracker/PX4-Autopilot
+python3 scripts/test_mavlink_target.py \
+    --mode circular \
+    --radius 200 \
+    --alt 100 \
+    --sysid 2 \
+    --duration 30
+=== Antenna Tracker MAVLink Target Simulator ===
+  Connection:  udp:127.0.0.1:14550
+  SysID:       2
+  Mode:        circular
+  Rate:        5.0 Hz
+  Duration:    30.0s
+  Radius:      200.0m
+  Alt above:   100.0m
+  Center:      47.397742, 8.545594
+
+Sending GLOBAL_POSITION_INT messages... (Ctrl+C to stop)
+  [   0.8s] msg #   5 | lat=473995373 lon=85457539 | bearing=  3.5° dist= 200.0m | v=( -0.9, +15.0) m/s
+  [   1.8s] msg #  10 | lat=473995241 lon=85459528 | bearing=  7.8° dist= 200.0m | v=( -2.0, +14.9) m/s
+  [   2.8s] msg #  15 | lat=473995008 lon=85461500 | bearing= 12.1° dist= 200.0m | v=( -3.1, +14.7) m/s
+  [   3.8s] msg #  20 | lat=473994675 lon=85463436 | bearing= 16.4° dist= 200.0m | v=( -4.2, +14.4) m/s
+  [   4.8s] msg #  25 | lat=473994246 lon=85465329 | bearing= 20.7° dist= 200.0m | v=( -5.3, +14.0) m/s
+  [   5.8s] msg #  30 | lat=473993721 lon=85467168 | bearing= 25.0° dist= 200.0m | v=( -6.3, +13.6) m/s
+  [   6.8s] msg #  35 | lat=473993105 lon=85468944 | bearing= 29.3° dist= 200.0m | v=( -7.3, +13.1) m/s
+  [   7.8s] msg #  40 | lat=473992400 lon=85470646 | bearing= 33.6° dist= 200.0m | v=( -8.3, +12.5) m/s
+  [   8.8s] msg #  45 | lat=473991609 lon=85472268 | bearing= 37.9° dist= 200.0m | v=( -9.2, +11.8) m/s
+  [   9.8s] msg #  50 | lat=473990739 lon=85473797 | bearing= 42.2° dist= 200.0m | v=(-10.1, +11.1) m/s
+  [  10.8s] msg #  55 | lat=473989794 lon=85475223 | bearing= 46.5° dist= 200.0m | v=(-10.9, +10.3) m/s
+  [  11.8s] msg #  60 | lat=473988779 lon=85476541 | bearing= 50.8° dist= 200.0m | v=(-11.6,  +9.5) m/s
+  [  12.8s] msg #  65 | lat=473987701 lon=85477742 | bearing= 55.1° dist= 200.0m | v=(-12.3,  +8.6) m/s
+  [  13.8s] msg #  70 | lat=473986564 lon=85478821 | bearing= 59.4° dist= 200.0m | v=(-12.9,  +7.6) m/s
+  [  14.8s] msg #  75 | lat=473985376 lon=85479770 | bearing= 63.7° dist= 200.0m | v=(-13.5,  +6.6) m/s
+  [  15.8s] msg #  80 | lat=473984143 lon=85480585 | bearing= 68.1° dist= 200.0m | v=(-13.9,  +5.6) m/s
+  [  16.8s] msg #  85 | lat=473982872 lon=85481261 | bearing= 72.4° dist= 200.0m | v=(-14.3,  +4.5) m/s
+  [  17.8s] msg #  90 | lat=473981569 lon=85481794 | bearing= 76.7° dist= 200.0m | v=(-14.6,  +3.5) m/s
+
+
+TEST 3:
+
+pxh> antenna_tracker status
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 814 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 814 events, 19970.52us avg, min 16000us max 24000us 242.933us rms
+pxh> # Trong khi script đang chạy (10s đầu):
+pxh> antenna_tracker status      # Expect: Target Valid: YES, state=TRACKING
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 4324 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 4324 events, 19994.45us avg, min 12000us max 28000us 304.181us rms
+pxh> 
+pxh> antenna_tracker status      # Expect: Target Valid: YES, state=TRACKING
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 4466 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 4466 events, 19994.63us avg, min 12000us max 28000us 299.305us rms
+pxh> # Script dừng sau 10s. Chờ thêm ~6s (TRK_TIMEOUT_MS=5000)
+pxh> # Sau đó kiểm tra:
+pxh> antenna_tracker status      # Expect: Target Valid: no, state=TIMEOUT
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 5015 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 5015 events, 19995.21us avg, min 12000us max 28000us 282.444us rms
+pxh> listener actuator_servos    # Expect: control=[0.0, 0.0, ...]
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 114508000 (0.012000 seconds ago)
+    timestamp_sample: 114508000 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+pxh> 
+pxh> 
+
+ubuntu@nam:~/PX4_tracker/PX4-Autopilot$ # Terminal 2:
+python3 scripts/test_mavlink_target.py \
+    --mode circular \
+    --radius 200 \
+    --alt 100 \
+    --sysid 2 \
+    --duration 10
+=== Antenna Tracker MAVLink Target Simulator ===
+  Connection:  udp:127.0.0.1:14550
+  SysID:       2
+  Mode:        circular
+  Rate:        5.0 Hz
+  Duration:    10.0s
+  Radius:      200.0m
+  Alt above:   100.0m
+  Center:      47.397742, 8.545594
+
+Sending GLOBAL_POSITION_INT messages... (Ctrl+C to stop)
+  [   0.8s] msg #   5 | lat=473995373 lon=85457539 | bearing=  3.5° dist= 200.0m | v=( -0.9, +15.0) m/s
+  [   1.8s] msg #  10 | lat=473995240 lon=85459539 | bearing=  7.8° dist= 200.0m | v=( -2.0, +14.9) m/s
+  [   2.8s] msg #  15 | lat=473995007 lon=85461508 | bearing= 12.1° dist= 200.0m | v=( -3.1, +14.7) m/s
+  [   3.8s] msg #  20 | lat=473994674 lon=85463443 | bearing= 16.4° dist= 200.0m | v=( -4.2, +14.4) m/s
+  [   4.8s] msg #  25 | lat=473994244 lon=85465335 | bearing= 20.7° dist= 200.0m | v=( -5.3, +14.0) m/s
+  [   5.8s] msg #  30 | lat=473993719 lon=85467174 | bearing= 25.0° dist= 200.0m | v=( -6.3, +13.6) m/s
+  [   6.8s] msg #  35 | lat=473993102 lon=85468950 | bearing= 29.3° dist= 200.0m | v=( -7.3, +13.1) m/s
+  [   7.8s] msg #  40 | lat=473992397 lon=85470653 | bearing= 33.6° dist= 200.0m | v=( -8.3, +12.5) m/s
+  [   8.8s] msg #  45 | lat=473991606 lon=85472275 | bearing= 37.9° dist= 200.0m | v=( -9.2, +11.8) m/s
+  [   9.8s] msg #  50 | lat=473990734 lon=85473804 | bearing= 42.2° dist= 200.0m | v=(-10.1, +11.1) m/s
+
+Duration reached (10.0s). Stopping.
+
+
+pxh> # Script dừng sau 10s. Chờ thêm ~6s (TRK_TIMEOUT_MS=5000)
+pxh> # Sau đó kiểm tra:
+pxh> antenna_tracker status      # Expect: Target Valid: no, state=TIMEOUT
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 7835 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 7835 events, 19996.94us avg, min 12000us max 28000us 234.825us rms
+pxh> listener actuator_servos    # Expect: control=[0.0, 0.0, ...]
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 170908000 (0.012000 seconds ago)
+    timestamp_sample: 170908000 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+pxh> 
+pxh> 
+
+
+ubuntu@nam:~/PX4_tracker/PX4-Autopilot$ # Terminal 2: chạy lại script
+python3 scripts/test_mavlink_target.py --mode static --sysid 2 --duration 10
+=== Antenna Tracker MAVLink Target Simulator ===
+  Connection:  udp:127.0.0.1:14550
+  SysID:       2
+  Mode:        static
+  Rate:        5.0 Hz
+  Duration:    10.0s
+
+  Alt above:   100.0m
+  Center:      47.397742, 8.545594
+
+Sending GLOBAL_POSITION_INT messages... (Ctrl+C to stop)
+  [   0.8s] msg #   5 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   1.8s] msg #  10 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   2.8s] msg #  15 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   3.8s] msg #  20 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   4.8s] msg #  25 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   5.8s] msg #  30 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   6.8s] msg #  35 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   7.8s] msg #  40 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   8.8s] msg #  45 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+  [   9.8s] msg #  50 | lat=473977420 lon=85482511 | bearing= 90.0° dist= 200.0m | v=( +0.0,  +0.0) m/s
+
+Duration reached (10.0s). Stopping.
+
+
+TEST 4:
+4a:
+pxh> # PX4 shell:
+pxh> param set TRK_SYSID_TGT 5
+  TRK_SYSID_TGT: curr: 0 -> new: 5
+pxh> param set TRK_AUTO_LOCK 0
+  TRK_AUTO_LOCK: curr: 1 -> new: 0
+pxh> param set TRK_TGT_LAT 0
+pxh> param set TRK_TGT_LON 0
+pxh> param set TRK_TGT_ALT 0
+pxh> 
+pxh> # PX4 shell:
+pxh> antenna_tracker status      # Expect: Target Valid: no (sysid 2 bị reject)
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 15430 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 15430 events, 19998.44us avg, min 12000us max 28000us 211.165us rms
+pxh> listener tracker_target_position   # Không có data (bị filter)
+never published
+pxh> # PX4 shell:
+pxh> antenna_tracker status      # Expect: Target Valid: YES, Target SysID: 5
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 16378 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 16378 events, 19998.53us avg, min 12000us max 28000us 204.962us rms
+pxh> 
+pxh> # PX4 shell:
+pxh> antenna_tracker status      # Expect: Target Valid: YES, Target SysID: 5
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 16466 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 16466 events, 19998.54us avg, min 12000us max 28000us 204.414us rms
+pxh> # PX4 shell:
+pxh> param set TRK_SYSID_TGT 0
++ TRK_SYSID_TGT: curr: 5 -> new: 0
+pxh> param set TRK_AUTO_LOCK 1
++ TRK_AUTO_LOCK: curr: 0 -> new: 1
+pxh> 
+pxh> antenna_tracker status
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 17446 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 17446 events, 19998.62us avg, min 12000us max 28000us 198.589us rms
+pxh> antenna_tracker status
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 17559 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 17559 events, 19998.63us avg, min 12000us max 28000us 197.949us rms
+pxh> 
+
+4b:
+# PX4 shell:
+pxh> antenna_tracker status      # Target SysID vẫn = 3 (lock không đổi)
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 18744 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 18744 events, 19998.72us avg, min 12000us max 28000us 224.421us rms
+pxh> # PX4 shell:
+pxh> antenna_tracker status      # Target SysID vẫn = 3 (lock không đổi)
+INFO  [antenna_tracker] Antenna Tracker Status:
+INFO  [antenna_tracker]   Mode:           AUTO
+INFO  [antenna_tracker]   Servo Test:     disabled
+INFO  [antenna_tracker]   Target Valid:   no
+INFO  [antenna_tracker]   Target SysID:   0
+INFO  [antenna_tracker]   Bearing:        0.0 deg
+INFO  [antenna_tracker]   Pitch:          0.0 deg
+INFO  [antenna_tracker]   Distance:       0.0 m
+INFO  [antenna_tracker]   Yaw Error:      0.00 deg
+INFO  [antenna_tracker]   Pitch Error:    0.00 deg
+INFO  [antenna_tracker]   Yaw Output:     0.000
+INFO  [antenna_tracker]   Pitch Output:   0.000
+antenna_tracker: cycle: 18818 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
+antenna_tracker: interval: 18818 events, 19998.72us avg, min 12000us max 28000us 223.980us rms
+pxh> 
+pxh> 
+
+

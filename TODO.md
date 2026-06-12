@@ -69,6 +69,35 @@ pitch = atan2(\Delta altitude, distance)
 
 ---
 
+### 1.5 Trạng thái hiện tại, cập nhật 2026-06-07
+
+Đã có firmware antenna tracker chạy được trong PX4 v1.17.0 với các lớp chính:
+
+- Airframe hardware `4099_antenna_tracker`.
+- Airframe POSIX/SITL `4099_antenna_tracker`.
+- Module `antenna_tracker` chạy 50 Hz.
+- uORB `tracker_target_position` và `tracker_status`.
+- Servo output qua `actuator_servos`.
+- Default output mapping: `PWM_MAIN_FUNC1=201` cho yaw MAIN1, `PWM_MAIN_FUNC2=202` cho pitch MAIN2.
+- SITL tracker boot bằng `PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4`.
+- POSIX SITL có GPS/baro/mag simulation để tạo `vehicle_attitude` và `vehicle_global_position`.
+- QGC metadata tạo group riêng `Antenna Tracker`, dùng `@class Rover` để QGC chấp nhận airframe.
+
+Đã xác nhận trong SITL:
+
+```text
+SYS_AUTOSTART = 4099
+MAV_TYPE = 5
+vehicle_attitude published
+vehicle_global_position lat/lon/alt valid
+antenna_tracker running
+actuator_servos published
+```
+
+Lưu ý: QGC có thể hiển thị `MAV_TYPE Unknown:5`; đây là giới hạn UI, không phải lỗi firmware.
+
+---
+
 ## 2. File/thư mục dự kiến
 
 ```text
@@ -108,16 +137,16 @@ Tạo module `antenna_tracker` rỗng, build được trong PX4 v1.17.0.
 
 ### TODO
 
-- [ ] Tạo folder `src/modules/antenna_tracker/`
-- [ ] Tạo `CMakeLists.txt`
-- [ ] Tạo `Kconfig`
-- [ ] Tạo `antenna_tracker_main.cpp`
-- [ ] Implement command:
-  - [ ] `antenna_tracker start`
-  - [ ] `antenna_tracker stop`
-  - [ ] `antenna_tracker status`
-- [ ] Add module vào build config nếu cần
-- [ ] Build SITL thành công
+- [x] Tạo folder `src/modules/antenna_tracker/`
+- [x] Tạo `CMakeLists.txt`
+- [x] Tạo `Kconfig`
+- [x] Tạo `antenna_tracker_main.cpp`
+- [x] Implement command:
+  - [x] `antenna_tracker start`
+  - [x] `antenna_tracker stop`
+  - [x] `antenna_tracker status`
+- [x] Add module vào build config nếu cần
+- [x] Build SITL thành công
 - [ ] Build firmware hardware target thành công
 
 ### Acceptance criteria
@@ -144,15 +173,15 @@ antenna_tracker module → actuator_servos → PWM output → servo
 
 ### TODO
 
-- [ ] Include uORB `actuator_servos`
-- [ ] Publish `actuator_servos.control[0]` cho yaw
-- [ ] Publish `actuator_servos.control[1]` cho pitch
-- [ ] Tạo chế độ test sweep:
-  - [ ] yaw: -1 → 0 → +1
-  - [ ] pitch: -1 → 0 → +1
-- [ ] Kiểm tra output PWM trên MAIN/AUX
-- [ ] Kiểm tra servo quay đúng chiều
-- [ ] Ghi chú mapping channel yaw/pitch
+- [x] Include uORB `actuator_servos`
+- [x] Publish `actuator_servos.control[0]` cho yaw
+- [x] Publish `actuator_servos.control[1]` cho pitch
+- [x] Tạo chế độ test sweep:
+  - [x] yaw: -0.5 -> 0 -> +0.5 -> 0
+  - [x] pitch: -0.5 -> 0 -> +0.5 -> 0
+- [x] Kiểm tra output PWM trên MAIN1/MAIN2 trong SITL
+- [ ] Kiểm tra servo quay đúng chiều trên hardware
+- [x] Ghi chú mapping channel yaw/pitch
 
 ### Acceptance criteria
 
@@ -170,24 +199,31 @@ Tính bearing/pitch/distance trước khi nhận MAVLink thật.
 
 ### TODO
 
-- [ ] Subscribe `vehicle_attitude`
-- [ ] Subscribe `vehicle_global_position`
-- [ ] Tạo parameter target giả:
-  - [ ] `TRK_TGT_LAT`
-  - [ ] `TRK_TGT_LON`
-  - [ ] `TRK_TGT_ALT`
-- [ ] Viết `tracker_geo.hpp/.cpp`
-- [ ] Implement:
-  - [ ] longitude scale
-  - [ ] distance
-  - [ ] bearing
-  - [ ] pitch
-  - [ ] wrap yaw error
-- [ ] Publish debug qua `tracker_status`
+- [x] Subscribe `vehicle_attitude`
+- [x] Subscribe `vehicle_global_position`
+- [x] Tạo parameter target giả:
+  - [x] `TRK_TGT_LAT`
+  - [x] `TRK_TGT_LON`
+  - [x] `TRK_TGT_ALT`
+- [x] Tạo tracker home fallback để test bench khi chưa có GPS/global position:
+  - [x] `TRK_HOME_EN`
+  - [x] `TRK_HOME_LAT`
+  - [x] `TRK_HOME_LON`
+  - [x] `TRK_HOME_ALT`
+  - [x] `antenna_tracker set_home`
+- [x] Viết `tracker_geo.hpp/.cpp`
+- [x] Implement:
+  - [x] longitude scale
+  - [x] distance
+  - [x] bearing
+  - [x] pitch
+  - [x] wrap yaw error
+- [x] Publish debug qua `tracker_status`
 
 ### Acceptance criteria
 
 - Đặt target giả, module tính được bearing/pitch/distance hợp lý.
+- Khi không có GPS, bật `TRK_HOME_EN` với `TRK_HOME_LAT/LON/ALT` thì tracker vẫn tính được bearing/pitch để bench test.
 - Khi xoay FC tracker, yaw error thay đổi đúng dấu.
 - Khi đổi target giả, setpoint thay đổi đúng.
 
@@ -201,27 +237,27 @@ Tính bearing/pitch/distance trước khi nhận MAVLink thật.
 
 ### TODO
 
-- [ ] Tạo `tracker_controller.hpp/.cpp`
-- [ ] Implement PID đơn giản:
-  - [ ] P
-  - [ ] I với anti-windup
-  - [ ] D tùy chọn
-  - [ ] output limit `[-1, 1]`
-- [ ] Tạo parameter:
-  - [ ] `TRK_YAW_P`
-  - [ ] `TRK_YAW_I`
-  - [ ] `TRK_YAW_D`
-  - [ ] `TRK_PIT_P`
-  - [ ] `TRK_PIT_I`
-  - [ ] `TRK_PIT_D`
-  - [ ] `TRK_YAW_TRIM`
-  - [ ] `TRK_PIT_TRIM`
-  - [ ] `TRK_YAW_MIN`
-  - [ ] `TRK_YAW_MAX`
-  - [ ] `TRK_PIT_MIN`
-  - [ ] `TRK_PIT_MAX`
-- [ ] Chạy vòng lặp 50 Hz
-- [ ] Xuất PID ra `actuator_servos`
+- [x] Tạo `tracker_controller.hpp/.cpp`
+- [x] Implement PID đơn giản:
+  - [x] P
+  - [x] I với anti-windup
+  - [x] D tùy chọn
+  - [x] output limit `[-1, 1]`
+- [x] Tạo parameter:
+  - [x] `TRK_YAW_P`
+  - [x] `TRK_YAW_I`
+  - [x] `TRK_YAW_D`
+  - [x] `TRK_PIT_P`
+  - [x] `TRK_PIT_I`
+  - [x] `TRK_PIT_D`
+  - [x] `TRK_YAW_TRIM`
+  - [x] `TRK_PIT_TRIM`
+  - [x] `TRK_YAW_MIN`
+  - [x] `TRK_YAW_MAX`
+  - [x] `TRK_PIT_MIN`
+  - [x] `TRK_PIT_MAX`
+- [x] Chạy vòng lặp 50 Hz
+- [x] Xuất PID ra `actuator_servos`
 
 ### Acceptance criteria
 
@@ -239,16 +275,23 @@ Tạo airframe riêng để PX4 tự start module khi boot.
 
 ### TODO
 
-- [ ] Tạo file `4099_antenna_tracker`
-- [ ] Thêm metadata:
-  - [ ] `@name Generic Antenna Tracker`
-  - [ ] `@type Antenna Tracker`
-  - [ ] `@class Tracker`
-- [ ] Start sensor/estimator tối thiểu
-- [ ] Set MAVLink link
-- [ ] Set PWM min/max/center
-- [ ] Start `antenna_tracker`
-- [ ] Kiểm tra airframe hiện trong QGC
+- [x] Tạo file hardware `ROMFS/px4fmu_common/init.d/airframes/4099_antenna_tracker`
+- [x] Tạo file POSIX `ROMFS/px4fmu_common/init.d-posix/airframes/4099_antenna_tracker`
+- [x] Thêm metadata:
+  - [x] `@name Generic Antenna Tracker`
+  - [x] `@type Antenna Tracker`
+  - [x] `@class Rover`
+- [x] Set `VEHICLE_TYPE antenna_tracker`
+- [x] Set `MAV_TYPE=5`
+- [x] Set PWM output function:
+  - [x] `PWM_MAIN_FUNC1=201`
+  - [x] `PWM_MAIN_FUNC2=202`
+- [x] Start `antenna_tracker`
+- [x] Kiểm tra airframe metadata hiện trong QGC XML
+- [ ] Kiểm tra chọn airframe trong QGC UI sau khi clear cache/restart
+- [ ] Kiểm tra hardware boot tự chạy `antenna_tracker`
+- [ ] Kiểm tra servo thật trên MAIN1/MAIN2
+- [ ] Set PWM min/max/center trên hardware nếu param tồn tại
 
 ### Acceptance criteria
 
@@ -267,20 +310,20 @@ Nhận vị trí UAV thật từ MAVLink.
 
 ### TODO
 
-- [ ] Tạo `msg/TrackerTargetPosition.msg`
-- [ ] Add message vào build
-- [ ] Sửa `mavlink_receiver.cpp`
-- [ ] Khi nhận `GLOBAL_POSITION_INT`:
-  - [ ] Kiểm tra sysid target
-  - [ ] Lưu lat/lon/alt
-  - [ ] Convert velocity cm/s → m/s
-  - [ ] Publish `tracker_target_position`
-- [ ] Tạo parameter:
-  - [ ] `TRK_SYSID_TARGET`
-  - [ ] `TRK_AUTO_LOCK`
-  - [ ] `TRK_TIMEOUT_MS`
-- [ ] antenna_tracker subscribe topic mới
-- [ ] Nếu mất target > timeout → STOP hoặc HOLD
+- [x] Tạo `msg/TrackerTargetPosition.msg`
+- [x] Add message vào build
+- [x] Sửa `mavlink_receiver.cpp`
+- [x] Khi nhận `GLOBAL_POSITION_INT`:
+  - [x] Kiểm tra sysid target
+  - [x] Lưu lat/lon/alt
+  - [x] Convert velocity cm/s -> m/s
+  - [x] Publish `tracker_target_position`
+- [x] Tạo parameter:
+  - [x] `TRK_SYSID_TGT`
+  - [x] `TRK_AUTO_LOCK`
+  - [x] `TRK_TIMEOUT_MS`
+- [x] antenna_tracker subscribe topic mới
+- [x] Nếu mất target > timeout -> center servo và publish timeout status
 
 ### Acceptance criteria
 
@@ -300,28 +343,28 @@ Test firmware trước khi đưa lên phần cứng.
 
 #### Test 1 — Unit test geometry
 
-- Input lat/lon/alt giả
-- Kiểm tra distance/bearing/pitch
-- So với kết quả tính bằng script Python hoặc công thức độc lập
+- [x] Input lat/lon/alt giả
+- [x] Kiểm tra distance/bearing/pitch
+- [x] So với kết quả tính bằng script Python hoặc công thức độc lập
 
 #### Test 2 — SITL module chạy độc lập
 
-- Run PX4 SITL
-- Start `antenna_tracker`
-- Publish target giả
-- Check log/status
+- [x] Run PX4 SITL bằng `PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4`
+- [x] Start `antenna_tracker` tự động từ airframe
+- [x] Publish target giả
+- [x] Check log/status
 
 #### Test 3 — MAVLink fake target
 
-- Dùng script Python/MAVSDK/pymavlink gửi `GLOBAL_POSITION_INT`
-- FC tracker nhận target
-- Kiểm tra `listener tracker_target_position`
-- Kiểm tra `listener tracker_status`
+- [x] Dùng script Python/pymavlink gửi `GLOBAL_POSITION_INT`
+- [x] FC tracker nhận target
+- [x] Kiểm tra `listener tracker_target_position`
+- [x] Kiểm tra `listener tracker_status`
 
 #### Test 4 — Servo output simulated
 
-- Monitor `actuator_servos`
-- Kiểm tra output yaw/pitch thay đổi theo target
+- [x] Monitor `actuator_servos`
+- [x] Kiểm tra output yaw/pitch thay đổi theo target
 
 #### Test 5 — Hardware-in-loop nhẹ
 
@@ -350,7 +393,7 @@ Test firmware trước khi đưa lên phần cứng.
 
 ---
 
-## 4. Rủi ro kỹ thuật
+## 9. Rủi ro kỹ thuật
 
 ### Rủi ro 1 — PX4 output bị module khác chiếm
 
@@ -374,19 +417,137 @@ Cần xác định rõ pitch servo đo theo thân tracker, earth frame hay body 
 
 ---
 
-## 5. Việc cần làm ngay bây giờ
+## 10. Việc cần làm ngay bây giờ
 
-Ưu tiên thấp rủi ro nhất:
+Phần kế hoạch ban đầu bên dưới đã hoàn thành phần lớn trong SITL:
 
 ```text
-1. Clone PX4 v1.17.0 (da clone)
-2. Tạo branch antenna_tracker_v1.17
-3. Tạo module skeleton antenna_tracker
-4. Build được SITL
-5. Build được firmware board thật
-6. Test command start/status/stop
-7. Publish actuator_servos test
-8. Tạo airframe antenna_tracker
+1. Module skeleton antenna_tracker: done
+2. Build SITL: done
+3. Test command start/status/stop: done
+4. Publish actuator_servos test: done
+5. Airframe antenna_tracker: done
+6. SITL sensor fusion simulation: done
+7. MAVLink fake target: done
+8. Hardware target/build/servo thật: pending
 ```
 
-Chỉ sau khi các bước này chạy ổn mới sửa `mavlink_receiver`.
+Ưu tiên tiếp theo là test hardware an toàn trước khi bay thật.
+
+---
+
+## 11. Checklist cho lần update/debug tiếp theo
+
+### 11.1 Khi boot SITL tracker
+
+Lệnh đúng:
+
+```bash
+cd build/px4_sitl_default
+PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4
+```
+
+Không dùng `make px4_sitl gz_x500` để test airframe 4099 vì `gz_x500` ép `SYS_AUTOSTART=4001`.
+
+Kiểm tra trong PX4 shell:
+
+```sh
+param show SYS_AUTOSTART
+param show MAV_TYPE
+param show SENS_EN_GPSSIM
+param show SENS_EN_BAROSIM
+param show SENS_EN_MAGSIM
+antenna_tracker status
+listener vehicle_attitude
+listener vehicle_global_position
+listener tracker_target_position
+listener tracker_status
+listener actuator_servos
+listener actuator_outputs
+```
+
+Kỳ vọng:
+
+```text
+SYS_AUTOSTART = 4099
+MAV_TYPE = 5
+vehicle_attitude published
+vehicle_global_position lat/lon/alt valid
+antenna_tracker running
+```
+
+### 11.2 Khi test hardware Pixhawk 6C
+
+Việc cần calibrate:
+
+- [ ] Accelerometer.
+- [ ] Gyroscope.
+- [ ] Compass/magnetometer.
+- [ ] Level horizon.
+- [ ] GPS fix ngoài trời.
+- [ ] Power module nếu dùng.
+- [ ] Servo yaw MAIN1.
+- [ ] Servo pitch MAIN2.
+
+Kiểm tra sau khi nạp firmware:
+
+```sh
+param show SYS_AUTOSTART
+param show MAV_TYPE
+param show PWM_MAIN_FUNC1
+param show PWM_MAIN_FUNC2
+listener vehicle_attitude
+listener vehicle_global_position
+antenna_tracker status
+```
+
+Kỳ vọng:
+
+```text
+SYS_AUTOSTART = 4099
+MAV_TYPE = 5
+PWM_MAIN_FUNC1 = 201
+PWM_MAIN_FUNC2 = 202
+vehicle_attitude published
+vehicle_global_position valid
+```
+
+### 11.3 Khi servo không chạy
+
+Debug theo thứ tự:
+
+```sh
+param set TRK_SERVO_TEST 1
+param set TRK_MODE 0
+listener actuator_servos
+listener actuator_outputs
+param show PWM_MAIN_FUNC1
+param show PWM_MAIN_FUNC2
+commander arm -f
+listener actuator_outputs
+```
+
+Diễn giải:
+
+- Nếu `actuator_servos.control[0/1]` đổi nhưng `actuator_outputs` không đổi: kiểm tra arming/disarmed và output mapping.
+- Nếu `actuator_outputs[0/1]` đổi nhưng servo không quay: kiểm tra dây, rail power, servo, MAIN/AUX đúng cổng.
+- Nếu servo quay ngược: chỉnh reverse/direction hoặc đổi dấu output sau khi xác nhận cơ khí.
+
+### 11.4 Khi tracking không đúng hướng
+
+Kiểm tra:
+
+```sh
+listener vehicle_attitude
+listener vehicle_global_position
+listener tracker_target_position
+listener tracker_status
+```
+
+Nguyên nhân thường gặp:
+
+- Compass/yaw sai hoặc chưa calibrate.
+- GPS tracker không valid.
+- Target sysid sai hoặc chưa auto-lock.
+- Altitude reference giữa tracker và UAV không thống nhất.
+- Servo yaw/pitch bị đảo chiều.

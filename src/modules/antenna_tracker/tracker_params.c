@@ -204,6 +204,51 @@ PARAM_DEFINE_INT32(TRK_TGT_LON, 0);
 PARAM_DEFINE_INT32(TRK_TGT_ALT, 0);
 
 /**
+ * Enable tracker home fallback.
+ *
+ * If enabled and live vehicle_global_position is unavailable,
+ * the tracker uses TRK_HOME_LAT/LON/ALT as its own position.
+ * This is intended for bench testing or fixed tripod setups.
+ *
+ * 0 = disabled, 1 = enabled
+ *
+ * @boolean
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_INT32(TRK_HOME_EN, 0);
+
+/**
+ * Tracker home latitude.
+ *
+ * Latitude in degrees * 1E7. Used only when TRK_HOME_EN is enabled
+ * and live tracker global position is unavailable.
+ *
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_INT32(TRK_HOME_LAT, 0);
+
+/**
+ * Tracker home longitude.
+ *
+ * Longitude in degrees * 1E7. Used only when TRK_HOME_EN is enabled
+ * and live tracker global position is unavailable.
+ *
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_INT32(TRK_HOME_LON, 0);
+
+/**
+ * Tracker home altitude.
+ *
+ * Altitude in millimeters MSL. Used only when TRK_HOME_EN is enabled
+ * and live tracker global position is unavailable.
+ *
+ * @unit mm
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_INT32(TRK_HOME_ALT, 0);
+
+/**
  * MAVLink target system ID.
  *
  * If nonzero, only accept GLOBAL_POSITION_INT from this sysid.

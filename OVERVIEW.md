@@ -77,9 +77,12 @@ PX4_Autopilot v1.17.0
 - PX4 v1.17.0
 - Custom branch: `antenna_tracker_v1.17`
 - Build target tùy board:
-  - SITL: `make px4_sitl gz_x500`
+  - SITL build: `make px4_sitl`
+  - SITL boot đúng tracker: `PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4`
   - Hardware ví dụ: `make px4_fmu-v6x_default`
   - Board custom của dự án có thể cần target riêng tùy cấu trúc hiện tại.
+
+Lưu ý: không dùng `make px4_sitl gz_x500` để kiểm tra airframe tracker, vì model `gz_x500` ép `SYS_AUTOSTART=4001` và QGC sẽ hiển thị quadcopter.
 
 ---
 
@@ -253,3 +256,143 @@ Bản firmware đầu tiên được xem là đạt khi:
 6. Module dùng target giả để tự quay yaw/pitch đúng hướng.
 7. Sau đó nhận được target thật từ UAV qua MAVLink.
 8. Servo yaw/pitch bám theo vị trí UAV trong mô phỏng.
+
+---
+
+## 9. Trạng thái firmware hiện tại, cập nhật 2026-06-07
+
+### 9.1 Luồng dữ liệu đã xác nhận
+
+Firmware hiện chạy theo luồng:
+
+```text
+Tracker FC sensors hoặc sensor simulation
+IMU / gyro / accel / mag / GPS / baro
+        ↓
+PX4 estimator
+        ↓
+vehicle_attitude + vehicle_global_position
+        +
+Target UAV position từ MAVLink hoặc fake target params
+        ↓
+antenna_tracker
+        ↓
+bearing / pitch / yaw error / pitch error
+        ↓
+PID yaw/pitch
+        ↓
+actuator_servos.control[0] = yaw
+actuator_servos.control[1] = pitch
+        ↓
+PWM_MAIN_FUNC1=201 -> MAIN1 yaw servo
+PWM_MAIN_FUNC2=202 -> MAIN2 pitch servo
+```
+
+`antenna_tracker` không đọc raw IMU/mag trực tiếp. Module subscribe dữ liệu đã qua estimator:
+
+```text
+vehicle_attitude
+vehicle_global_position
+tracker_target_position
+```
+
+### 9.2 Airframe và output mapping
+
+Airframe hardware:
+
+```text
+ROMFS/px4fmu_common/init.d/airframes/4099_antenna_tracker
+```
+
+Airframe POSIX/SITL:
+
+```text
+ROMFS/px4fmu_common/init.d-posix/airframes/4099_antenna_tracker
+```
+
+Các điểm đã chốt:
+
+- `SYS_AUTOSTART=4099`.
+- `MAV_TYPE=5`, tương ứng Antenna Tracker.
+- `VEHICLE_TYPE=antenna_tracker` để không kéo multicopter/fixed-wing/rover controllers không cần thiết.
+- `PWM_MAIN_FUNC1=201`, tương ứng `Servo1`, yaw.
+- `PWM_MAIN_FUNC2=202`, tương ứng `Servo2`, pitch.
+- POSIX SITL bật `SENS_EN_GPSSIM=1`, `SENS_EN_BAROSIM=1`, `SENS_EN_MAGSIM=1` để có dữ liệu estimator mô phỏng.
+
+QGC metadata dùng:
+
+```text
+@type Antenna Tracker
+@class Rover
+```
+
+`@type Antenna Tracker` tạo group UI riêng. `@class Rover` chỉ để QGC chấp nhận metadata airframe; firmware behavior vẫn là tracker nhờ `MAV_TYPE=5` và `antenna_tracker start`.
+
+### 9.3 Kết quả SITL đã xác nhận
+
+Lệnh boot tracker SITL:
+
+```bash
+cd build/px4_sitl_default
+PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4
+```
+
+Đã xác nhận:
+
+```text
+SYS_AUTOSTART = 4099
+MAV_TYPE = 5
+SENS_EN_GPSSIM = 1
+SENS_EN_BAROSIM = 1
+SENS_EN_MAGSIM = 1
+vehicle_attitude published
+vehicle_global_position lat/lon/alt valid
+antenna_tracker running
+actuator_servos published
+```
+
+Dòng `No autostart ID found` đã được xử lý bằng cách set `VEHICLE_TYPE=antenna_tracker`.
+
+### 9.4 Checklist debug cho lần update tiếp theo
+
+Khi có lỗi mới, kiểm tra theo thứ tự:
+
+```sh
+param show SYS_AUTOSTART
+param show MAV_TYPE
+param show PWM_MAIN_FUNC1
+param show PWM_MAIN_FUNC2
+param show TRK_MODE
+param show TRK_SERVO_TEST
+antenna_tracker status
+listener vehicle_attitude
+listener vehicle_global_position
+listener tracker_target_position
+listener tracker_status
+listener actuator_servos
+listener actuator_outputs
+```
+
+Diễn giải nhanh:
+
+- Nếu `vehicle_attitude` không publish: lỗi sensor/estimator attitude.
+- Nếu `vehicle_global_position` không publish hoặc lat/lon invalid: dùng GPS ngoài trời hoặc bật `TRK_HOME_EN` với `TRK_HOME_LAT/LON/ALT` để bench test.
+- Nếu `tracker_target_position` không publish khi có UAV target: lỗi MAVLink receiver/sysid/target link.
+- Nếu `tracker_status.target_valid=False`: tracker chưa có target hợp lệ hoặc bị timeout.
+- Nếu `actuator_servos` đúng nhưng `actuator_outputs` không đổi: kiểm tra arming/disarmed state và `PWM_MAIN_FUNC1/2`.
+- Nếu QGC báo `MAV_TYPE Unknown:5`: đây là giới hạn UI, giá trị `5` vẫn đúng cho antenna tracker.
+
+### 9.5 Checklist hardware Pixhawk 6C
+
+Khi nạp firmware vào Pixhawk 6C hoặc board thật:
+
+1. Calibrate accelerometer.
+2. Calibrate gyroscope.
+3. Calibrate compass/magnetometer.
+4. Calibrate level horizon.
+5. Kiểm tra GPS fix và `vehicle_global_position`.
+6. Kiểm tra power module nếu dùng.
+7. Kiểm tra yaw servo trên MAIN1 và pitch servo trên MAIN2.
+8. Kiểm tra chiều servo, center, min/max trước khi bật tracking thật.
+
+Compass/yaw là rủi ro lớn nhất: nếu heading sai thì antenna sẽ quay sai hướng dù target position đúng.

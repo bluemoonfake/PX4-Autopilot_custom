@@ -9,6 +9,7 @@
 #include <lib/perf/perf_counter.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
+#include <uORB/uORB.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_global_position.h>
@@ -57,6 +58,11 @@ private:
 	 * Run tracking mode: compute geometry, PID, publish servo.
 	 */
 	void run_tracking(float dt);
+
+	/**
+	 * Validate a global position sample before using it for tracker geometry.
+	 */
+	static bool is_global_position_valid(const vehicle_global_position_s &gpos);
 
 	// Subscriptions
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
@@ -115,6 +121,10 @@ private:
 		(ParamInt<px4::params::TRK_TGT_LAT>)    _param_trk_tgt_lat,
 		(ParamInt<px4::params::TRK_TGT_LON>)    _param_trk_tgt_lon,
 		(ParamInt<px4::params::TRK_TGT_ALT>)    _param_trk_tgt_alt,
+		(ParamInt<px4::params::TRK_HOME_EN>)    _param_trk_home_en,
+		(ParamInt<px4::params::TRK_HOME_LAT>)   _param_trk_home_lat,
+		(ParamInt<px4::params::TRK_HOME_LON>)   _param_trk_home_lon,
+		(ParamInt<px4::params::TRK_HOME_ALT>)   _param_trk_home_alt,
 		(ParamInt<px4::params::TRK_SYSID_TGT>)  _param_trk_sysid_tgt,
 		(ParamInt<px4::params::TRK_AUTO_LOCK>)   _param_trk_auto_lock,
 		(ParamInt<px4::params::TRK_TIMEOUT_MS>)  _param_trk_timeout_ms
