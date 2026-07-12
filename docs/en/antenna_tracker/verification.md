@@ -1,0 +1,78 @@
+# Verification
+
+Verification is evidence-driven. A source file, successful compile, historical console copy, or build artifact alone does not verify a tracker behavior.
+
+The machine-readable contract lives in `validation/antenna_tracker/`:
+
+- `test_matrix.yaml` defines test IDs, gates, prerequisites, and acceptance criteria.
+- `evidence.schema.yaml` defines one evidence manifest per run.
+- `legacy/README.md` records limitations of older test transcripts.
+
+## Evidence levels
+
+| Level | Meaning |
+|---|---|
+| implemented | Code exists and is reviewed; no runtime claim yet. |
+| verified-sitl | Canonical tracker SITL test passed with a manifest and raw console/log attachments. |
+| verified-bench | Intended flight controller and actuator mechanics passed a controlled bench test. |
+| verified-hardware | Real telemetry, sensors, and closed-loop mechanics passed the required hardware case. |
+| field-ready | Repeated outdoor dynamic and failure tests passed, with known limits documented. |
+
+## Required gates
+
+### Build and unit tests
+
+- `BLD-001`: Build `px4_sitl_default`.
+- `BLD-002`: Build `px4_fmu-v6c_antenna_tracker` and record provenance.
+- `UNIT-001`: Geometry and angle-wrapping tests.
+- `UNIT-002`: PID/mapping/saturation tests.
+- `UNIT-003`: HEARTBEAT-qualified MAVLink target admission, source selection, and auto-lock tests.
+
+### Canonical SITL tests
+
+- `SITL-001`: Boot tracker airframe 4099 without Gazebo vehicle autostart.
+- `SITL-002`: STOP and servo-test behavior.
+- `SITL-003`: Fake target and home fallback geometry.
+- `SITL-004`: Correct MAVLink ingress and static target acquisition.
+- `SITL-005`: Dynamic target path with duration consistent with expected angular travel.
+- `SITL-006`: Target timeout, safe state, and recovery.
+- `SITL-007`: Specific system-ID filter.
+- `SITL-008`: Auto-lock, competing source rejection, and lock release.
+
+### Bench and hardware tests
+
+- `BENCH-001`: MAIN1 yaw / MAIN2 pitch mapping and output calibration.
+- `BENCH-002`: Servo direction, limited range, park pose, and startup no-jump behavior.
+- `BENCH-003`: Moving-IMU yaw/pitch feedback and compass validation under servo load.
+- `HW-001`: Target ingress over the deployed telemetry link.
+- `HW-002`: Static bearing/elevation tracking at bounded gain/output.
+- `HW-003`: Dynamic tracking and target-loss recovery.
+- `HW-004`: Power-cycle, prearm, sensor-invalid, and emergency cutoff safety.
+- `FIELD-001`: Repeated outdoor tracking with documented reachable sector and cable-wrap limits.
+
+## Minimum run attachments
+
+Each evidence manifest must identify:
+
+- firmware commit, PX4 base tag, build target, artifact checksum, and flash use;
+- board, airframe, target ingress link, and moving-IMU arrangement;
+- exact relevant parameters and actuator mapping;
+- test procedure and expected result;
+- observed metrics and verdict;
+- raw console log, parameter dump, ULog if available, and any photo/video stored outside Git.
+
+## Required metrics
+
+Capture measurable values rather than only `PASS` text:
+
+- target acquisition and timeout times;
+- target age at state transition;
+- output range and slew;
+- maximum bearing/pitch error for known static geometry;
+- target source system/component;
+- actuator/park values;
+- ULog path and checksum when a log is available.
+
+## Historical evidence
+
+Older root transcripts and `logs/verification/phase1_sitl.txt` are historical notes only. They use the x500 autostart path or mismatched target ports and therefore do not satisfy the canonical SITL acceptance criteria.

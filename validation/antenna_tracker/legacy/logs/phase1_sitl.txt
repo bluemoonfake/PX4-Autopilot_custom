@@ -1,0 +1,5 @@
+This is a verification log for Phase 1.
+pxh> antenna_tracker start
+pxh> antenna_tracker status
+pxh> antenna_tracker stop
+Verification successful!

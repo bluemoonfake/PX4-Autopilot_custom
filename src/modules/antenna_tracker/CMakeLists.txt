@@ -7,6 +7,13 @@ px4_add_module(
 		tracker_geo.cpp
 		tracker_geo.hpp
 		tracker_controller.hpp
+		tracker_servo_mapper.hpp
+		tracker_setpoint_planner.hpp
 	DEPENDS
 		px4_work_queue
 	)
+
+px4_add_unit_gtest(
+	SRC TrackerMathTest.cpp
+	EXTRA_SRCS tracker_geo.cpp
+)

@@ -1,0 +1,71 @@
+# Safety
+
+::: warning
+`COM_PREARM_MODE=2` is used so the tracker can drive non-throttling servo outputs while not armed. Treat every boot and parameter change as a potential actuator-motion event.
+:::
+
+## Required physical safeguards
+
+Before any powered servo test:
+
+- use a hardware-accessible servo-power cutoff or emergency stop;
+- set a current limit appropriate for the servo supply;
+- remove RF payload/load or decouple the linkage for initial tests;
+- establish clearance from stops, people, cables, and the tripod;
+- verify cable routing through the complete permitted yaw range;
+- do not rely on PX4 disarmed state alone to prevent movement.
+
+## Safe-state model
+
+The current implementation publishes normalized zero on STOP, timeout, and sensor-invalid conditions. That is an integration placeholder, not a universal safe state: normalized zero only means servo center according to output calibration.
+
+The stable design must define per-axis physical park angles and map them through calibrated servo outputs:
+
+| Condition | Required behavior |
+|---|---|
+| boot/startup delay | remain at configured park pose |
+| STOP | move or hold at configured park pose |
+| target timeout | park by default; scan only when explicitly configured and mechanically validated |
+| invalid attitude/global position | park and report the condition |
+| target too close/unreachable | park or hold according to validated policy, with event |
+| emergency actuator cutoff | remove servo rail power independently of firmware |
+
+## Mechanical limits and cable wrap
+
+A target bearing may have more than one mathematically equivalent yaw representation. The controller must choose only an angle inside the actual reachable sector. It must not wrap through a stop or cable limit just to minimize angular distance.
+
+Before AUTO or SCAN is used on hardware, document:
+
+- yaw minimum and maximum physical angles;
+- pitch minimum and maximum physical angles;
+- yaw/pitch park angles;
+- cable-wrap limit and allowed turns;
+- output PWM min/max/reverse;
+- corresponding normalized servo range.
+
+## Compass and feedback validation
+
+Compass/heading error points the antenna at the wrong azimuth even when GPS and geometry are correct. Validate yaw in the final mechanical configuration, including servo power, current load, motors, brackets, and cable routing. Repeat calibration or add mitigation when current-dependent heading errors appear.
+
+## Target data safety
+
+- Set a specific `TRK_SYSID_TGT` for operational use unless an auto-lock procedure is intentionally validated.
+- Require a fresh non-GCS `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same autopilot system/component pair.
+- Treat system ID and heartbeat filtering as routing/source qualification, not identity proof.
+- Use absolute MSL altitude until a common relative-altitude reference is proven.
+- Keep dead reckoning disabled until target velocity validity and prediction error are verified.
+- Test target loss, recovery, invalid positions, and wrong source IDs before a field test.
+
+## Test escalation
+
+Advance only in this order:
+
+1. output mapping with no mechanical load;
+2. one-axis motion and park behavior;
+3. moving-IMU orientation verification;
+4. static target at bounded output/gain;
+5. dynamic bench target;
+6. outdoor static target;
+7. outdoor dynamic target and link-loss tests.
+
+Every transition requires a recorded evidence manifest defined in [verification](verification.md).

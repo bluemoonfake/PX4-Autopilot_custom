@@ -75,12 +75,13 @@ PARAM_DEFINE_INT32(MAV_SIK_RADIO_ID, 0);
  * MAVLink airframe type
  *
  * @min 0
- * @max 22
+ * @max 23
  * @value 0 Generic micro air vehicle
  * @value 1 Fixed wing aircraft
  * @value 2 Quadrotor
  * @value 3 Coaxial helicopter
  * @value 4 Normal helicopter with tail rotor
+ * @value 5 Antenna Tracker
  * @value 7 Airship, controlled
  * @value 8 Free balloon, uncontrolled
  * @value 10 Ground rover

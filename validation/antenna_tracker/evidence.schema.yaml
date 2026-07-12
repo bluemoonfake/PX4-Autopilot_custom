@@ -1,0 +1,137 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$title: PX4 Antenna Tracker Evidence Manifest
+$type: object
+additionalProperties: false
+required:
+  - run_id
+  - test_id
+  - timestamp_utc
+  - git
+  - build
+  - environment
+  - setup
+  - expected
+  - observed
+  - verdict
+  - attachments
+properties:
+  run_id:
+    type: string
+    pattern: '^[A-Za-z0-9][A-Za-z0-9._-]+$'
+  test_id:
+    type: string
+    pattern: '^(BLD|UNIT|SITL|BENCH|HW|FIELD)-[0-9]{3}$'
+  timestamp_utc:
+    type: string
+    format: date-time
+  operator:
+    type: string
+  reviewer:
+    type: string
+  git:
+    type: object
+    additionalProperties: false
+    required: [head_commit, base_px4_tag]
+    properties:
+      head_commit:
+        type: string
+      branch:
+        type: string
+      base_px4_tag:
+        type: string
+      submodule_status:
+        type: string
+  build:
+    type: object
+    additionalProperties: false
+    required: [target]
+    properties:
+      target:
+        type: string
+        enum: [px4_sitl_default, px4_fmu-v6c_antenna_tracker]
+      command:
+        type: string
+      artifact_path:
+        type: string
+      artifact_sha256:
+        type: string
+        pattern: '^[a-fA-F0-9]{64}$'
+      flash_usage_percent:
+        type: number
+        minimum: 0
+        maximum: 100
+  environment:
+    type: object
+    additionalProperties: false
+    required: [class, airframe_id]
+    properties:
+      class:
+        type: string
+        enum: [unit, sitl, bench, hardware, field]
+      board:
+        type: string
+      airframe_id:
+        type: integer
+        const: 4099
+      operating_system:
+        type: string
+      mavlink_ingress:
+        type: string
+  setup:
+    type: object
+    additionalProperties: false
+    required: [imu_mount, parameters]
+    properties:
+      imu_mount:
+        type: string
+        enum: [moving_with_antenna, fixed_with_external_encoder, fixed_open_loop, not_applicable]
+      actuator_mapping:
+        type: string
+      servo_hardware:
+        type: string
+      parameters:
+        type: object
+        additionalProperties:
+          type: [string, number, integer, boolean]
+      target_source:
+        type: string
+  expected:
+    type: object
+    additionalProperties: true
+  observed:
+    type: object
+    additionalProperties: true
+  metrics:
+    type: object
+    additionalProperties:
+      type: [string, number, integer, boolean]
+  verdict:
+    type: string
+    enum: [pass, fail, blocked]
+  notes:
+    type: string
+  attachments:
+    type: object
+    additionalProperties: false
+    properties:
+      console_log:
+        $ref: '#/$defs/attachment'
+      parameter_dump:
+        $ref: '#/$defs/attachment'
+      ulg:
+        $ref: '#/$defs/attachment'
+      photo_or_video:
+        $ref: '#/$defs/attachment'
+      qgc_screenshot:
+        $ref: '#/$defs/attachment'
+$defs:
+  attachment:
+    type: object
+    additionalProperties: false
+    required: [location]
+    properties:
+      location:
+        type: string
+      sha256:
+        type: string
+        pattern: '^[a-fA-F0-9]{64}$'

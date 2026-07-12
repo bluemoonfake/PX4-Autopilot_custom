@@ -10,26 +10,41 @@
 #
 
 set VEHICLE_TYPE antenna_tracker
-# This is a ground tracker, not a flight vehicle. Keep it out of mc/fw/rover
-# app startup paths and only run the tracker module below.
 
 # MAV_TYPE 5 = ANTENNA_TRACKER in MAVLink enum
 param set-default MAV_TYPE 5
 param set-default EKF2_MAG_TYPE 1
 
-# Disable auto-disarm for tracker (we want servos always active)
+# Keep non-throttling servo outputs active while disarmed.
+param set-default COM_PREARM_MODE 2
 param set-default COM_DISARM_LAND -1
 param set-default COM_DISARM_PRFLT -1
 
 # Tracker default parameters
+# FC Orientation: set SENS_BOARD_ROT to match physical FC mounting.
+# Run level horizon calibration in QGC after setting SENS_BOARD_ROT.
+# TRK_YAW_TRIM / TRK_PIT_TRIM are for servo mechanical centering ONLY.
 param set-default TRK_MODE 0
+# Retained only for old parameter files. Tracker modes use TRK_MODE.
+param set-default TRK_QGC_MODE 0
+# A positional-servo command is generated from physical axis angles.
+param set-default TRK_YAW_P 0.0
+param set-default TRK_PIT_P 0.0
+param set-default TRK_YAW_SLEW 2.0
+param set-default TRK_PIT_SLEW 2.0
+param set-default TRK_YAW_MIND -180.0
+param set-default TRK_YAW_MAXD 180.0
+param set-default TRK_YAW_PARK 0.0
+param set-default TRK_PIT_MIND 0.0
+param set-default TRK_PIT_MAXD 90.0
+param set-default TRK_PIT_PARK 0.0
+param set-default TRK_DEADRECK 0
+param set-default TRK_AUTO_SCAN 0
+param set-default TRK_ALT_SRC 0
+param set-default TRK_DIST_MIN 5.0
 param set-default TRK_SERVO_TEST 0
-param set-default TRK_YAW_P 1.0
-param set-default TRK_PIT_P 1.0
 
 # Antenna tracker servo output mapping
-# Servo1 reads actuator_servos.control[0] for yaw.
-# Servo2 reads actuator_servos.control[1] for pitch.
 param set-default PWM_MAIN_FUNC1 201
 param set-default PWM_MAIN_FUNC2 202
 

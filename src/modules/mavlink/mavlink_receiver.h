@@ -48,6 +48,7 @@
 #include "mavlink_mission.h"
 #include "mavlink_parameters.h"
 #include "MavlinkStatustextHandler.hpp"
+#include "MavlinkTrackerTargetBridge.hpp"
 #include "mavlink_timesync.h"
 #include "tune_publisher.h"
 
@@ -170,6 +171,7 @@ private:
 	void handle_message_follow_target(mavlink_message_t *msg);
 	void handle_message_generator_status(mavlink_message_t *msg);
 	void handle_message_global_position_int_for_tracker(mavlink_message_t *msg);
+	void update_tracker_params();
 	void handle_message_set_gps_global_origin(mavlink_message_t *msg);
 	void handle_message_gps_rtcm_data(mavlink_message_t *msg);
 	void handle_message_heartbeat(mavlink_message_t *msg);
@@ -405,8 +407,13 @@ private:
 	hrt_abstime _heartbeat_component_udp_bridge{0};
 	hrt_abstime _heartbeat_component_uart_bridge{0};
 
-	// Tracker target sysid lock state
-	uint8_t _tracker_locked_sysid{0};
+	MavlinkTrackerTargetBridge _tracker_target_bridge{};
+	param_t _param_trk_sysid_tgt_handle{PARAM_INVALID};
+	param_t _param_trk_auto_lock_handle{PARAM_INVALID};
+	param_t _param_trk_timeout_ms_handle{PARAM_INVALID};
+	int32_t _tracker_target_sysid_param{0};
+	int32_t _tracker_auto_lock_param{0};
+	int32_t _tracker_timeout_ms_param{0};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::BAT_CRIT_THR>)     _param_bat_crit_thr,
@@ -414,9 +421,7 @@ private:
 		(ParamFloat<px4::params::BAT_LOW_THR>)      _param_bat_low_thr,
 		(ParamInt<px4::params::BAT1_N_CELLS>)       _param_bat_cells_count,
 		(ParamFloat<px4::params::BAT1_V_CHARGED>)   _param_bat_v_charged,
-		(ParamFloat<px4::params::BAT1_V_EMPTY>)     _param_bat_v_empty,
-		(ParamInt<px4::params::TRK_SYSID_TGT>)      _param_trk_sysid_tgt,
-		(ParamInt<px4::params::TRK_AUTO_LOCK>)       _param_trk_auto_lock
+		(ParamFloat<px4::params::BAT1_V_EMPTY>)     _param_bat_v_empty
 	);
 
 	// Disallow copy construction and move assignment.

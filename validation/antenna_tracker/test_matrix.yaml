@@ -1,0 +1,246 @@
+version: 1
+status_values:
+  - planned
+  - implemented
+  - verified-sitl
+  - verified-bench
+  - verified-hardware
+  - field-ready
+tests:
+  - id: BLD-001
+    gate: 0
+    title: Build canonical tracker SITL target
+    status: planned
+    environment: unit
+    prerequisites: [PX4 v1.17.0 checkout, initialized submodules]
+    acceptance:
+      - make px4_sitl_default exits successfully
+      - tracker module is present in the build
+    evidence: [build log, git commit, submodule status]
+
+  - id: BLD-002
+    gate: 0
+    title: Build FMUv6C tracker firmware with provenance
+    status: planned
+    environment: hardware
+    prerequisites: [BLD-001]
+    acceptance:
+      - make px4_fmu-v6c_antenna_tracker exits successfully
+      - artifact SHA-256 and flash usage are recorded
+    evidence: [build log, artifact checksum, git commit]
+
+  - id: UNIT-001
+    gate: 6
+    title: Geometry and angle wrapping
+    status: implemented
+    environment: unit
+    prerequisites: []
+    acceptance:
+      - cardinal bearings are correct
+      - distance, pitch, and wrap edge cases are covered
+    evidence: [test log]
+
+  - id: UNIT-002
+    gate: 6
+    title: Positional-servo mapping and safe-state logic
+    status: planned
+    environment: unit
+    prerequisites: [Gate 2 control refactor]
+    acceptance:
+      - non-neutral requested angle remains non-neutral when error is zero
+      - park mapping and sector clipping are deterministic
+      - timeout and invalid-sensor states select the documented safe command
+    evidence: [test log]
+
+  - id: UNIT-003
+    gate: 6
+    title: MAVLink tracker target admission policy
+    status: implemented
+    environment: unit
+    prerequisites: [Gate 3 MAVLink bridge]
+    acceptance:
+      - a fresh matching non-GCS autopilot heartbeat plus valid position is accepted
+      - missing or stale heartbeat, GCS, self, wrong component/system, and invalid position are rejected
+      - auto-lock remains stable until the accepted position timeout and then permits reacquisition
+      - velocity sentinel is marked invalid and cannot drive prediction
+    evidence: [test log]
+
+  - id: SITL-001
+    gate: 6
+    title: Boot airframe 4099
+    status: planned
+    environment: sitl
+    prerequisites: [BLD-001]
+    acceptance:
+      - PX4_SYS_AUTOSTART is 4099
+      - MAV_TYPE is 5
+      - antenna_tracker starts automatically
+    evidence: [console log, parameter dump]
+
+  - id: SITL-002
+    gate: 6
+    title: STOP and servo test behavior
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-001]
+    acceptance:
+      - STOP selects documented safe output
+      - servo test is bounded and explicitly enabled
+    evidence: [console log, tracker status, actuator servos]
+
+  - id: SITL-003
+    gate: 6
+    title: Fake target and home fallback geometry
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-001]
+    acceptance:
+      - cardinal target cases produce expected bearing and pitch
+      - home fallback behavior is explicit when global position is unavailable
+    evidence: [console log, tracker status]
+
+  - id: SITL-004
+    gate: 6
+    title: MAVLink static target acquisition
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-001]
+    acceptance:
+      - GLOBAL_POSITION_INT reaches tracker_target_position through the intended UDP ingress
+      - target system and validity are reported correctly
+    evidence: [sender log, PX4 console log, tracker target position]
+
+  - id: SITL-005
+    gate: 6
+    title: Dynamic MAVLink target path
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-004]
+    acceptance:
+      - bearing changes in the expected direction
+      - test duration and speed are sufficient for any claimed angular span
+    evidence: [sender log, tracker status, ULog]
+
+  - id: SITL-006
+    gate: 6
+    title: Target timeout and recovery
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-004]
+    acceptance:
+      - timeout latency is within configured tolerance
+      - configured safe action occurs
+      - tracking recovers when a valid source returns
+    evidence: [console log, tracker status, actuator servos]
+
+  - id: SITL-007
+    gate: 6
+    title: Specific system-ID source selection
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-004]
+    acceptance:
+      - nonmatching system ID is rejected
+      - matching system ID is accepted
+    evidence: [two sender logs, tracker target position]
+
+  - id: SITL-008
+    gate: 6
+    title: Auto-lock and competing source behavior
+    status: planned
+    environment: sitl
+    prerequisites: [SITL-004]
+    acceptance:
+      - first acceptable source locks
+      - competing source is rejected during lock
+      - lock release follows documented timeout policy
+    evidence: [sender logs, console log, tracker target position]
+
+  - id: BENCH-001
+    gate: 7
+    title: MAIN1 yaw and MAIN2 pitch mapping
+    status: planned
+    environment: bench
+    prerequisites: [BLD-002]
+    acceptance:
+      - Servo1 drives yaw and Servo2 drives pitch
+      - PWM min/max/disarmed/failsafe values are recorded
+    evidence: [parameter dump, photo or video, console log]
+
+  - id: BENCH-002
+    gate: 7
+    title: Servo direction, range, park, and startup behavior
+    status: planned
+    environment: bench
+    prerequisites: [BENCH-001]
+    acceptance:
+      - both axes move in intended direction
+      - bounded test cannot hit mechanical stops
+      - startup, STOP, and timeout reach park behavior
+    evidence: [video, parameter dump, console log]
+
+  - id: BENCH-003
+    gate: 7
+    title: Moving-IMU feedback and compass integrity
+    status: planned
+    environment: bench
+    prerequisites: [BENCH-002]
+    acceptance:
+      - antenna head rotation changes vehicle_attitude correctly
+      - compass remains acceptable under servo power/load
+    evidence: [video, tracker status, ULog]
+
+  - id: HW-001
+    gate: 7
+    title: Target ingress over deployed telemetry link
+    status: planned
+    environment: hardware
+    prerequisites: [BENCH-003]
+    acceptance:
+      - deployed baud, port, MAVLink instance, and source filter work
+    evidence: [link configuration, console log, tracker target position]
+
+  - id: HW-002
+    gate: 7
+    title: Static closed-loop tracking
+    status: planned
+    environment: hardware
+    prerequisites: [HW-001]
+    acceptance:
+      - known static bearings/elevations are reached within documented error bounds
+    evidence: [measurement record, ULog, video]
+
+  - id: HW-003
+    gate: 7
+    title: Dynamic tracking and target-loss recovery
+    status: planned
+    environment: hardware
+    prerequisites: [HW-002]
+    acceptance:
+      - bounded moving target tracking is stable
+      - loss and recovery follow the documented policy
+    evidence: [ULog, video, console log]
+
+  - id: HW-004
+    gate: 7
+    title: Power-cycle, sensor-invalid, and emergency cutoff safety
+    status: planned
+    environment: hardware
+    prerequisites: [BENCH-002]
+    acceptance:
+      - no uncommanded unsafe movement on power cycle
+      - invalid sensor produces safe state
+      - independent servo cutoff works
+    evidence: [video, test record]
+
+  - id: FIELD-001
+    gate: 8
+    title: Repeated outdoor target tracking
+    status: planned
+    environment: field
+    prerequisites: [HW-001, HW-002, HW-003, HW-004]
+    acceptance:
+      - static and dynamic target tests pass repeatedly
+      - timeout/recovery and reachable-sector behavior are demonstrated
+      - known limits are published
+    evidence: [ULogs, video, run manifests, release note]
