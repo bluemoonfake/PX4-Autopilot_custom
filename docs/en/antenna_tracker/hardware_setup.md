@@ -10,6 +10,9 @@ make px4_fmu-v6c_antenna_tracker
 
 # Pixhawk 6X
 make px4_fmu-v6x_antenna_tracker
+
+# MicoAir H743 (v1)
+make micoair_h743_antenna_tracker
 ```
 
 The output artifact is expected under:
@@ -17,6 +20,7 @@ The output artifact is expected under:
 ```text
 build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
 build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+build/micoair_h743_antenna_tracker/micoair_h743_antenna_tracker.px4
 ```
 
 Do not treat an existing artifact as proof that the current checkout still builds. Record the commit, build command, artifact checksum, and flash use for every release candidate.
@@ -70,7 +74,7 @@ Do not compensate for a 90°/180° board orientation error by adding large track
 
 ## Telemetry target link
 
-The production airframe reserves **TELEM1** for MAVLink instance 0 in Normal mode at **57600 baud** (`MAV_0_CONFIG=101`, `MAV_0_MODE=0`, `SER_TEL1_BAUD=57600`). This maps to `/dev/ttyS5` on FMUv6C and `/dev/ttyS6` on FMUv6X; verify the board label before wiring. QGC and the target UAV may share this routed telemetry link. For USB bench testing, use `Tools/antenna_tracker/usb_router.py`; it owns the USB device and injects test target traffic on UDP port 18570.
+The production airframe reserves **TELEM1** for MAVLink instance 0 in Normal mode at **57600 baud** (`MAV_0_CONFIG=101`, `MAV_0_MODE=0`, `SER_TEL1_BAUD=57600`). This maps to `/dev/ttyS5` on FMUv6C, `/dev/ttyS6` on FMUv6X, and `/dev/ttyS0` on MicoAir H743; verify the board label before wiring. QGC and the target UAV may share this routed telemetry link. For USB bench testing, use `Tools/antenna_tracker/usb_router.py`; it owns the USB device and injects test target traffic on UDP port 18570.
 
 A target must arrive on the normal MAVLink receiver path with a periodic `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same `(sysid, compid)`. The first production policy accepts component `MAV_COMP_ID_AUTOPILOT1`, requires a fresh non-GCS heartbeat, and then applies `TRK_SYSID_TGT` or validated auto-lock. The source system ID and heartbeat are routing/qualification mechanisms, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
 

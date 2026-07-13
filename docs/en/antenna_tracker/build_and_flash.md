@@ -69,6 +69,8 @@ make px4_fmu-v6c_antenna_tracker
 
 # Pixhawk 6X
 make px4_fmu-v6x_antenna_tracker
+
+make micoair_h743_antenna_tracker
 ```
 
 Expected artifact:
@@ -76,6 +78,7 @@ Expected artifact:
 ```text
 build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
 build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+build/micoair_h743_antenna_tracker/micoair_h743_antenna_tracker.px4
 ```
 
 Before flash, capture:
@@ -85,6 +88,7 @@ git rev-parse HEAD
 git submodule status
 sha256sum build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
 sha256sum build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+sha256sum build/micoair_h743_antenna_tracker/micoair_h743_antenna_tracker.px4
 ```
 
 Also retain the build output reporting flash use. A stale artifact copied from a previous checkout is not valid release evidence.

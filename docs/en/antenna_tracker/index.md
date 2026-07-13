@@ -14,7 +14,7 @@ The firmware is a SITL-capable and limited bench-test candidate. It is **not fie
 - Computes bearing, elevation, distance, timeout state, and diagnostic status.
 - Publishes normalized yaw and pitch commands through `actuator_servos`.
 - Maps Servo 1 to yaw and Servo 2 to pitch through the PX4 output-function pipeline.
-- Provides a dedicated airframe, `4099_antenna_tracker`, and an FMUv6C build target, `px4_fmu-v6c_antenna_tracker`.
+- Provides a dedicated airframe, `4099_antenna_tracker`, and hardware build targets including `px4_fmu-v6c_antenna_tracker`, `px4_fmu-v6x_antenna_tracker`, and `micoair_h743_antenna_tracker`.
 
 ## Safety-critical architecture constraint
 
@@ -42,6 +42,7 @@ If the FC remains fixed on the tripod, its attitude does not describe the antenn
 | Hardware airframe | `ROMFS/px4fmu_common/init.d/airframes/4099_antenna_tracker` |
 | POSIX/SITL airframe | `ROMFS/px4fmu_common/init.d-posix/airframes/4099_antenna_tracker` |
 | FMUv6C target | `boards/px4/fmu-v6c/antenna_tracker.px4board` |
+| MicoAir H743 target | `boards/micoair/h743/antenna_tracker.px4board` |
 | Tracker utilities | `Tools/antenna_tracker/` |
 | Test evidence contract | `validation/antenna_tracker/` |
 
