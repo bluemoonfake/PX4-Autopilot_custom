@@ -17,7 +17,7 @@ MAV_TYPE = 5
 
 `MAV_TYPE=5` is MAVLink's Antenna Tracker type. `@class Rover` is presently a QGC airframe-metadata compatibility shim; it does not make the firmware run rover controllers. The dedicated airframe sets `VEHICLE_TYPE=antenna_tracker`, avoiding the standard multicopter, fixed-wing, and rover application startup paths.
 
-The firmware roadmap includes adding the missing human-readable Antenna Tracker value to PX4's `MAV_TYPE` parameter metadata. Until then, some QGC views may render the numeric type as unknown even though MAVLink type 5 is correct.
+PX4 parameter metadata explicitly exposes `MAV_TYPE=5` as **Antenna Tracker**. QGC therefore receives both the correct MAVLink vehicle type and a readable parameter value.
 
 ## Stock-QGC operator surface
 
@@ -34,7 +34,7 @@ The firmware roadmap includes adding the missing human-readable Antenna Tracker 
 
 Tracker `STOP`, `AUTO`, `SCAN`, and `MANUAL` are application submodes, not PX4 vehicle flight modes. The project must not reinterpret unrelated PX4 navigation states as tracker actions in the production path.
 
-The current `TRK_QGC_MODE` compatibility behavior maps PX4 Position, Altitude, and Manual navigation states to tracker modes. This is fragile: Commander may change navigation state as part of health or estimator fallback, causing unrequested tracker behavior. The roadmap therefore deprecates this mapping and makes direct tracker mode selection the default.
+`TRK_QGC_MODE` is retained only for compatibility with older parameter files and is disabled by the airframe. It has no production navigation-mode mapping: Commander navigation-state changes cannot select tracker AUTO, SCAN, or MANUAL.
 
 For stock QGC, use `TRK_MODE` and the tracker status/event surface. This is more honest and safer than advertising unsupported custom flight-mode semantics.
 
@@ -63,10 +63,10 @@ Do not use servo trim to compensate for incorrect FC orientation. Set `SENS_BOAR
 
 ## Events and logs
 
-Future firmware phases must emit standard PX4 Events on meaningful state edges, including:
+The tracker emits standard PX4 Events on meaningful state edges, including:
 
 - target acquired or lost;
-- source rejected or invalid;
+- source rejected by MAVLink admission policy;
 - target outside reachable yaw sector;
 - entry to scan mode;
 - parking outputs due to STOP, timeout, or invalid sensors.

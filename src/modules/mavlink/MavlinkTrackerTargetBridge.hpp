@@ -47,6 +47,7 @@ public:
 		InvalidComponent,
 		InvalidPosition,
 		InvalidAltitude,
+		InvalidTimestamp,
 		HeartbeatMissing,
 		HeartbeatStale,
 		GcsSource,
@@ -61,6 +62,7 @@ public:
 		int32_t lat{0};
 		int32_t lon{0};
 		int32_t alt_mm{0};
+		uint32_t time_boot_ms{0};
 		int16_t vx_cm_s{0};
 		int16_t vy_cm_s{0};
 		int16_t vz_cm_s{0};
@@ -95,9 +97,12 @@ private:
 		uint8_t system_id{0};
 		uint8_t component_id{0};
 		uint8_t source_type{0};
+		uint32_t last_position_time_boot_ms{0};
+		bool has_position_time{false};
 	};
 
-	const HeartbeatSource *find_heartbeat(uint8_t system_id, uint8_t component_id) const;
+	HeartbeatSource *find_heartbeat(uint8_t system_id, uint8_t component_id);
+	static bool time_boot_is_newer(uint32_t newer, uint32_t older);
 	void clear_lock();
 
 	HeartbeatSource _heartbeat_sources[MAX_HEARTBEAT_SOURCES] {};

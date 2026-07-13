@@ -45,7 +45,7 @@ Read [the tracker documentation](docs/en/antenna_tracker/index.md) and use [the 
 
 ## Gate 1 — Honest stock-QGC integration
 
-**State:** planned.
+**State:** implemented; SITL/bench evidence remains required before verification.
 
 ### Objective
 
@@ -86,7 +86,7 @@ Make the tracker clearly usable in unmodified QGroundControl without claiming cu
 
 ## Gate 2 — Positional-servo control architecture
 
-**State:** planned. This is the highest-priority behavior refactor before field tracking.
+**State:** implemented; bench validation remains required before field tracking.
 
 ### Problem to solve
 
@@ -143,7 +143,7 @@ target source
 
 ## Gate 3 — MAVLink target bridge hardening
 
-**State:** planned.
+**State:** implemented; SITL and deployed-link evidence remains required before verification.
 
 ### Work
 
@@ -185,7 +185,7 @@ target source
 
 ## Gate 4 — Board, airframe, and startup safety
 
-**State:** planned.
+**State:** implemented; bench and hardware startup-safety evidence remains required before verification.
 
 ### Work
 

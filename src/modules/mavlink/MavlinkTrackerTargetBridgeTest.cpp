@@ -49,6 +49,7 @@ MavlinkTrackerTargetBridge::PositionInput valid_position(uint8_t system_id = 2,
 	input.lat = 473977420;
 	input.lon = 85455940;
 	input.alt_mm = 588000;
+	input.time_boot_ms = 1;
 	input.vx_cm_s = 100;
 	input.vy_cm_s = 200;
 	input.vz_cm_s = 0;
@@ -127,6 +128,25 @@ TEST(MavlinkTrackerTargetBridge, AppliesConfiguredSystemAndFieldValidation)
 	EXPECT_FALSE(result.velocity_valid);
 }
 
+TEST(MavlinkTrackerTargetBridge, AutoLockIsNotAcquiredUntilAdmissionIsFullyQualified)
+{
+	MavlinkTrackerTargetBridge bridge;
+	bridge.configure(0, true, 5000000);
+	bridge.observe_heartbeat(2, MAV_COMP_ID_AUTOPILOT1, MAV_TYPE_QUADROTOR, 1000);
+
+	auto invalid_position = valid_position(2);
+	invalid_position.lat = 900000001;
+	auto result = bridge.evaluate(invalid_position, 1, true, 1001);
+	EXPECT_FALSE(result.accepted);
+	EXPECT_FALSE(result.lock_acquired);
+	EXPECT_EQ(bridge.locked_system_id(), 0);
+
+	result = bridge.evaluate(valid_position(2), 1, true, 1002);
+	EXPECT_TRUE(result.accepted);
+	EXPECT_TRUE(result.lock_acquired);
+	EXPECT_EQ(bridge.locked_system_id(), 2);
+}
+
 TEST(MavlinkTrackerTargetBridge, TracksMoreThanOneHeartbeatSource)
 {
 	MavlinkTrackerTargetBridge bridge;
@@ -185,4 +205,20 @@ TEST(MavlinkTrackerTargetBridge, RejectsWhenBridgeOrSelectionIsDisabled)
 
 	result = bridge.evaluate(valid_position(), 1, true, 1001);
 	EXPECT_EQ(result.reason, MavlinkTrackerTargetBridge::RejectionReason::AutoLockDisabled);
+}
+
+TEST(MavlinkTrackerTargetBridge, RejectsNonIncreasingPositionTimestampWhileSourceIsFresh)
+{
+	MavlinkTrackerTargetBridge bridge;
+	bridge.configure(2, false, 5000000);
+	bridge.observe_heartbeat(2, MAV_COMP_ID_AUTOPILOT1, MAV_TYPE_QUADROTOR, 1000);
+
+	auto position = valid_position(2);
+	position.time_boot_ms = 100;
+	EXPECT_TRUE(bridge.evaluate(position, 1, true, 1001).accepted);
+	EXPECT_EQ(bridge.evaluate(position, 1, true, 1002).reason,
+		  MavlinkTrackerTargetBridge::RejectionReason::InvalidTimestamp);
+
+	position.time_boot_ms = 101;
+	EXPECT_TRUE(bridge.evaluate(position, 1, true, 1003).accepted);
 }

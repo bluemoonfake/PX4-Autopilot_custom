@@ -21,6 +21,7 @@ uint64 last_update_us		# [us] Time of last accepted MAVLink update
 # Appended source metadata. Keep original fields above in their existing order.
 uint8 source_component		# MAVLink component ID that supplied the target
 uint8 source_instance		# PX4 MAVLink instance that accepted the message
+uint32 target_age_ms		# [ms] Age at publication; consumers calculate live age from last_update_us
 bool position_valid		# Latitude/longitude/altitude passed validation
 bool velocity_valid		# Velocity fields are finite and usable for prediction
 bool altitude_valid		# Absolute MSL altitude is valid

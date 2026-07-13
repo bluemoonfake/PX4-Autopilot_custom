@@ -95,27 +95,57 @@ MavlinkTrackerTargetBridge::Evaluation MavlinkTrackerTargetBridge::evaluate(cons
 		return result;
 	}
 
+	// A previously identified GCS is rejected before source selection. A source
+	// without a qualifying HEARTBEAT is rejected later by the heartbeat policy.
+	HeartbeatSource *heartbeat = find_heartbeat(input.system_id, input.component_id);
+
+	if (heartbeat != nullptr && heartbeat->source_type == MAV_TYPE_GCS) {
+		result.reason = RejectionReason::GcsSource;
+		return result;
+	}
+
+	// Keep the admission ordering explicit: identity selection precedes
+	// component/heartbeat qualification. Do not acquire a new lock until every
+	// later policy check has succeeded.
+	bool release_lock = false;
+
+	if (_target_system == 0 && _auto_lock && _locked_system_id != 0 && _last_accepted_update_us > 0
+	    && _target_timeout_us > 0 && now_us >= _last_accepted_update_us
+	    && now_us - _last_accepted_update_us > _target_timeout_us) {
+		// Defer the mutation until a replacement has passed heartbeat and field
+		// validation. A stale or malformed competing source must not release a
+		// previously selected target.
+		release_lock = true;
+	}
+
+	bool acquire_lock = false;
+
+	if (_target_system != 0) {
+		if (input.system_id != static_cast<uint8_t>(_target_system)) {
+			result.reason = RejectionReason::WrongSystem;
+			return result;
+		}
+
+	} else if (_auto_lock) {
+		if (_locked_system_id == 0 || release_lock) {
+			acquire_lock = true;
+
+		} else if (input.system_id != _locked_system_id || input.component_id != _locked_component_id) {
+			result.reason = RejectionReason::LockedToOtherSource;
+			return result;
+		}
+
+	} else {
+		result.reason = RejectionReason::AutoLockDisabled;
+		return result;
+	}
+
 	if (input.component_id == 0 || input.component_id != MAV_COMP_ID_AUTOPILOT1) {
 		result.reason = RejectionReason::InvalidComponent;
 		return result;
 	}
 
-	result.position_valid = input.lat >= -900000000 && input.lat <= 900000000
-				&& input.lon >= -1800000000 && input.lon <= 1800000000;
-	result.altitude_valid = input.alt_mm != INT32_MAX;
-	result.velocity_valid = input.vx_cm_s != INT16_MAX && input.vy_cm_s != INT16_MAX && input.vz_cm_s != INT16_MAX;
-
-	if (!result.position_valid) {
-		result.reason = RejectionReason::InvalidPosition;
-		return result;
-	}
-
-	if (!result.altitude_valid) {
-		result.reason = RejectionReason::InvalidAltitude;
-		return result;
-	}
-
-	const HeartbeatSource *heartbeat = find_heartbeat(input.system_id, input.component_id);
+	heartbeat = find_heartbeat(input.system_id, input.component_id);
 
 	if (heartbeat == nullptr || heartbeat->last_update_us == 0 || now_us < heartbeat->last_update_us) {
 		result.reason = RejectionReason::HeartbeatMissing;
@@ -135,54 +165,65 @@ MavlinkTrackerTargetBridge::Evaluation MavlinkTrackerTargetBridge::evaluate(cons
 	}
 
 	result.heartbeat_valid = true;
+	result.position_valid = input.lat >= -900000000 && input.lat <= 900000000
+				&& input.lon >= -1800000000 && input.lon <= 1800000000;
+	result.altitude_valid = input.alt_mm != INT32_MAX;
+	result.velocity_valid = input.vx_cm_s != INT16_MAX && input.vy_cm_s != INT16_MAX && input.vz_cm_s != INT16_MAX;
 
-	if (_target_system == 0 && _auto_lock && _locked_system_id != 0 && _last_accepted_update_us > 0
-	    && _target_timeout_us > 0 && now_us >= _last_accepted_update_us
-	    && now_us - _last_accepted_update_us > _target_timeout_us) {
+	if (!result.position_valid) {
+		result.reason = RejectionReason::InvalidPosition;
+		return result;
+	}
+
+	if (!result.altitude_valid) {
+		result.reason = RejectionReason::InvalidAltitude;
+		return result;
+	}
+
+	if (heartbeat->has_position_time && _last_accepted_update_us > 0 && _target_timeout_us > 0
+	    && now_us >= _last_accepted_update_us && now_us - _last_accepted_update_us <= _target_timeout_us
+	    && !time_boot_is_newer(input.time_boot_ms, heartbeat->last_position_time_boot_ms)) {
+		result.reason = RejectionReason::InvalidTimestamp;
+		return result;
+	}
+
+	if (release_lock) {
 		result.released_system_id = _locked_system_id;
 		result.released_component_id = _locked_component_id;
 		clear_lock();
 		result.lock_released = true;
 	}
 
-	if (_target_system != 0) {
-		if (input.system_id != static_cast<uint8_t>(_target_system)) {
-			result.reason = RejectionReason::WrongSystem;
-			return result;
-		}
+	_last_accepted_update_us = now_us;
+	heartbeat->last_position_time_boot_ms = input.time_boot_ms;
+	heartbeat->has_position_time = true;
 
-	} else if (_auto_lock) {
-		if (_locked_system_id == 0) {
-			_locked_system_id = input.system_id;
-			_locked_component_id = input.component_id;
-			result.lock_acquired = true;
-
-		} else if (input.system_id != _locked_system_id || input.component_id != _locked_component_id) {
-			result.reason = RejectionReason::LockedToOtherSource;
-			return result;
-		}
-
-	} else {
-		result.reason = RejectionReason::AutoLockDisabled;
-		return result;
+	if (acquire_lock) {
+		_locked_system_id = input.system_id;
+		_locked_component_id = input.component_id;
+		result.lock_acquired = true;
 	}
 
-	_last_accepted_update_us = now_us;
 	result.reason = RejectionReason::Accepted;
 	result.accepted = true;
 	return result;
 }
 
-const MavlinkTrackerTargetBridge::HeartbeatSource *MavlinkTrackerTargetBridge::find_heartbeat(uint8_t system_id,
-		uint8_t component_id) const
+MavlinkTrackerTargetBridge::HeartbeatSource *MavlinkTrackerTargetBridge::find_heartbeat(uint8_t system_id,
+		uint8_t component_id)
 {
-	for (const HeartbeatSource &source : _heartbeat_sources) {
+	for (HeartbeatSource &source : _heartbeat_sources) {
 		if (source.system_id == system_id && source.component_id == component_id) {
 			return &source;
 		}
 	}
 
 	return nullptr;
+}
+
+bool MavlinkTrackerTargetBridge::time_boot_is_newer(uint32_t newer, uint32_t older)
+{
+	return static_cast<int32_t>(newer - older) > 0;
 }
 
 void MavlinkTrackerTargetBridge::clear_lock()

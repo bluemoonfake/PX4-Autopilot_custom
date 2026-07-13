@@ -18,10 +18,12 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_global_position.h>
 
-#include "tracker_controller.hpp"
+#include "tracker_axis_controller.hpp"
 #include "tracker_geo.hpp"
 #include "tracker_servo_mapper.hpp"
 #include "tracker_setpoint_planner.hpp"
+#include "tracker_target_manager.hpp"
+#include "tracker_events.hpp"
 
 using namespace time_literals;
 
@@ -52,7 +54,6 @@ private:
 	void run_scan(float dt);
 	void run_manual(float dt);
 
-	float apply_slew_rate(float desired, float previous, float slew_time, float dt);
 	static bool is_global_position_valid(const vehicle_global_position_s &gpos);
 	static bool is_attitude_valid(const vehicle_attitude_s &attitude);
 
@@ -78,23 +79,14 @@ private:
 	TrackerSetpointPlanner _setpoint_planner;
 	TrackerServoMapper _yaw_servo_mapper;
 	TrackerServoMapper _pitch_servo_mapper;
-	TrackerPID _yaw_pid;
-	TrackerPID _pitch_pid;
+	TrackerAxisController _yaw_axis_controller;
+	TrackerAxisController _pitch_axis_controller;
+	TrackerTargetManager _target_manager;
+	TrackerEvents _events;
 
 	// Target selection and prediction cache.
-	bool _target_valid{false};
-	uint8_t _target_sysid{0};
-	uint8_t _target_component{0};
-	bool _target_velocity_valid{false};
-	uint64_t _last_target_update_us{0};
 	int32_t _configured_target_sysid{-1};
 	int32_t _configured_auto_lock{-1};
-	int32_t _last_target_lat_e7{0};
-	int32_t _last_target_lon_e7{0};
-	int32_t _last_target_alt_mm{0};
-	float _last_target_vx{0.f};
-	float _last_target_vy{0.f};
-	float _last_target_vz{0.f};
 
 	// Current geometry, setpoints, and output diagnostics.
 	float _bearing_rad{0.f};
@@ -114,10 +106,6 @@ private:
 	bool _pitch_clipped{false};
 	uint8_t _state_reason{tracker_status_s::REASON_NONE};
 
-	// Previous normalized output values used by the bounded output slew limiter.
-	float _prev_yaw_output{0.f};
-	float _prev_pitch_output{0.f};
-
 	// SCAN state expressed in physical axis degrees.
 	float _scan_yaw_deg{0.f};
 	float _scan_pitch_deg{0.f};
@@ -135,6 +123,7 @@ private:
 	float _servo_test_phase{0.f};
 	uint64_t _boot_time_us{0};
 	bool _startup_delay_done{false};
+	bool _axis_outputs_initialized{false};
 	uint64_t _last_run_us{0};
 	float _prev_bearing_rad{0.f};
 	float _prev_pitch_target_rad{0.f};

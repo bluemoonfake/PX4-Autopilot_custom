@@ -69,4 +69,7 @@ float pitch_rad(float delta_alt_m, float horizontal_dist_m);
  */
 float wrap_pi(float angle_rad);
 
+/** Wrap an angle in degrees to [-180, 180]. */
+float wrap_180_deg(float angle_deg);
+
 } // namespace tracker_geo

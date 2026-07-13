@@ -46,7 +46,7 @@ Validate wiring, rail power, and physical direction with the antenna/load discon
 3. Power the FC and calibrate accelerometer, gyro, compass, and level horizon.
 4. Set `SENS_BOARD_ROT` to the physical FC orientation.
 5. With servo command trim at zero, verify in `antenna_tracker status` that rotating the assembly clockwise increases yaw and that pitch sign matches physical movement.
-6. Configure PWM output min/max/disarmed/failsafe values conservatively in QGC Actuators.
+6. Configure PWM output min/max/disarmed/failsafe values conservatively in QGC Actuators. The airframe defaults MAIN1 to 1000/2000 us with 1500 us disarmed (yaw park), and MAIN2 to 1000/2000 us with 1000 us disarmed (0° pitch park). If either park angle is changed, set its PWM disarmed value to the calibrated park PWM before connecting servo power.
 7. Run actuator tests with no RF load and enough clearance for all motion.
 8. Verify yaw/pitch direction, neutral, and mechanical range one axis at a time.
 9. Verify STOP and target-timeout behavior before enabling AUTO.
@@ -65,10 +65,10 @@ Do not compensate for a 90°/180° board orientation error by adding large track
 
 ## Telemetry target link
 
-The hardware target does not currently hard-code a target MAVLink serial link in the airframe. The desired port, baud rate, MAVLink instance, and routing policy must be explicitly documented and validated for the deployed board before field use.
+The production airframe reserves **TELEM1** (`/dev/ttyS5` on FMUv6C) for MAVLink instance 0 in Normal mode at **57600 baud** (`MAV_0_CONFIG=101`, `MAV_0_MODE=0`, `SER_TEL1_BAUD=57600`). QGC and the target UAV may share this routed telemetry link. For USB bench testing, use `Tools/antenna_tracker/usb_router.py`; it owns the USB device and injects test target traffic on UDP port 18570.
 
 A target must arrive on the normal MAVLink receiver path with a periodic `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same `(sysid, compid)`. The first production policy accepts component `MAV_COMP_ID_AUTOPILOT1`, requires a fresh non-GCS heartbeat, and then applies `TRK_SYSID_TGT` or validated auto-lock. The source system ID and heartbeat are routing/qualification mechanisms, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
 
 ## Positional servo assumption
 
-The current product direction is positional yaw and pitch servos. The future controller must command calibrated physical positions, respect mechanical sectors, and park safely. Continuous-rotation, relay, stepper, or encoder-based axes require their own actuator/feedback design and are outside the first stable milestone.
+The controller commands calibrated physical positions, respects mechanical sectors, and parks safely. Continuous-rotation, relay, stepper, or encoder-based axes require their own actuator/feedback design and are outside the first stable milestone.

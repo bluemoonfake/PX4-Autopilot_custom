@@ -38,13 +38,7 @@ The hardware airframe assigns:
 
 The tracking module must not produce raw PWM microseconds. The PWM driver remains responsible for PWM conversion, reversal, and output constraints.
 
-## Current control limitation
-
-The current AUTO path derives yaw/pitch error from `vehicle_attitude` and applies PID output directly to a normalized servo command. That behavior is usable for early integration experiments, but it is not the desired long-term model for **positional RC servos**.
-
-A positional servo treats PWM as a requested shaft position. A controller whose command is only a function of instantaneous angle error can return to neutral as the error approaches zero, even when the desired antenna orientation is not the servo-neutral angle. That must be corrected before field use.
-
-## Target architecture for positional servos
+## Positional-servo architecture
 
 The intended runtime structure is:
 
@@ -72,13 +66,11 @@ All operating modes must use this same angle-domain path:
 
 `tracker_target_position` is published from MAVLink `GLOBAL_POSITION_INT` only when the local vehicle is `MAV_TYPE_ANTENNA_TRACKER` and the source has a fresh qualifying `HEARTBEAT` from the same system/component pair. The production bridge accepts `MAV_COMP_ID_AUTOPILOT1`, rejects self and GCS sources, then applies configured system-ID selection or validated auto-lock. Auto-lock remains bound to the accepted system/component until no accepted position update arrives within `TRK_TIMEOUT_MS`.
 
-The topic appends source component, MAVLink instance, heartbeat/type, position, altitude, and velocity validity metadata. Unknown velocity is stored as zero with `velocity_valid=false`, so it cannot drive prediction. Update age is measured from the local receipt time rather than the target's unsynchronized boot clock.
+The topic appends source component, MAVLink instance, receipt age, heartbeat/type, position, altitude, and velocity validity metadata. `target_age_ms` is zero when the receiver publishes an accepted update; consumers derive its live age from `last_update_us` using the local PX4 clock. Unknown velocity is stored as zero with `velocity_valid=false`, so it cannot drive prediction.
 
 Production altitude computation uses the absolute MSL altitude. `relative_alt` belongs to the target vehicle's home reference and must not be treated as a height difference to the tracker unless the system proves both homes share a reference.
 
-## Planned source decomposition
-
-The following separation is planned; do not create parallel implementations before the corresponding roadmap gate:
+## Source decomposition
 
 | Component | Responsibility |
 |---|---|

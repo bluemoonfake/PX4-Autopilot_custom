@@ -27,6 +27,7 @@ param set-default COM_DISARM_PRFLT -1
 param set-default TRK_MODE 0
 # Retained only for old parameter files. Tracker modes use TRK_MODE.
 param set-default TRK_QGC_MODE 0
+param set-default TRK_STRT_DLY 2.0
 param set-default TRK_YAW_P 0.0
 param set-default TRK_PIT_P 0.0
 param set-default TRK_YAW_SLEW 2.0

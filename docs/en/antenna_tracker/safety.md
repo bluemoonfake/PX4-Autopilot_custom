@@ -17,9 +17,7 @@ Before any powered servo test:
 
 ## Safe-state model
 
-The current implementation publishes normalized zero on STOP, timeout, and sensor-invalid conditions. That is an integration placeholder, not a universal safe state: normalized zero only means servo center according to output calibration.
-
-The stable design must define per-axis physical park angles and map them through calibrated servo outputs:
+The implementation defines per-axis physical park angles and maps them through calibrated servo outputs. Normalized zero is never used as an assumed safe command:
 
 | Condition | Required behavior |
 |---|---|
@@ -27,7 +25,8 @@ The stable design must define per-axis physical park angles and map them through
 | STOP | move or hold at configured park pose |
 | target timeout | park by default; scan only when explicitly configured and mechanically validated |
 | invalid attitude/global position | park and report the condition |
-| target too close/unreachable | park or hold according to validated policy, with event |
+| target too close/unreachable | park according to the configured physical park pose |
+| PWM failsafe | output the calibrated yaw/pitch park PWM values |
 | emergency actuator cutoff | remove servo rail power independently of firmware |
 
 ## Mechanical limits and cable wrap
@@ -41,6 +40,7 @@ Before AUTO or SCAN is used on hardware, document:
 - yaw/pitch park angles;
 - cable-wrap limit and allowed turns;
 - output PWM min/max/reverse;
+- output PWM disarmed and failsafe values, both matching the calibrated park pose;
 - corresponding normalized servo range.
 
 ## Compass and feedback validation

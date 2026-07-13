@@ -33,6 +33,21 @@ public:
 		return math::constrain(output, _output_min, _output_max);
 	}
 
+	/** Convert a bounded normalized test command back to the calibrated angle domain. */
+	float angle_for_output(float output) const
+	{
+		const float adjusted_output = math::constrain(output, _output_min, _output_max) - _trim;
+		const float output_span = _output_max - _output_min;
+		float ratio = output_span > 1e-3f ? (adjusted_output - _output_min) / output_span : 0.5f;
+		ratio = math::constrain(ratio, 0.f, 1.f);
+
+		if (_reverse) {
+			ratio = 1.f - ratio;
+		}
+
+		return _angle_min_deg + ratio * (_angle_max_deg - _angle_min_deg);
+	}
+
 private:
 	float _angle_min_deg{-90.f};
 	float _angle_max_deg{90.f};

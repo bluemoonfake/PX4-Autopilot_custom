@@ -2522,6 +2522,7 @@ MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_
 	input.lat = gpos.lat;
 	input.lon = gpos.lon;
 	input.alt_mm = gpos.alt;
+	input.time_boot_ms = gpos.time_boot_ms;
 	input.vx_cm_s = gpos.vx;
 	input.vy_cm_s = gpos.vy;
 	input.vz_cm_s = gpos.vz;
@@ -2530,8 +2531,19 @@ MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_
 				_mavlink.get_system_type() == MAV_TYPE_ANTENNA_TRACKER, now);
 
 	if (!evaluation.accepted) {
+		if (_tracker_last_rejection_reason != static_cast<uint8_t>(evaluation.reason)) {
+			/* EVENT
+			 * @description A MAVLink GLOBAL_POSITION_INT source was rejected by the tracker source-admission policy.
+			 */
+			events::send<uint8_t>(events::ID("tracker_target_source_rejected"), events::Log::Warning,
+						      "Tracker target source rejected ({1})", static_cast<uint8_t>(evaluation.reason));
+			_tracker_last_rejection_reason = static_cast<uint8_t>(evaluation.reason);
+		}
+
 		return;
 	}
+
+	_tracker_last_rejection_reason = UINT8_MAX;
 
 	if (evaluation.lock_released) {
 		PX4_INFO("Tracker released timed-out target %u/%u", evaluation.released_system_id,
@@ -2556,6 +2568,7 @@ MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_
 	target.last_update_us = now;
 	target.source_component = msg->compid;
 	target.source_instance = static_cast<uint8_t>(_mavlink.get_instance_id());
+	target.target_age_ms = 0;
 	target.position_valid = evaluation.position_valid;
 	target.velocity_valid = evaluation.velocity_valid;
 	target.altitude_valid = evaluation.altitude_valid;

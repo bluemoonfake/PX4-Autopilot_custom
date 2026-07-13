@@ -10,7 +10,7 @@ tests:
   - id: BLD-001
     gate: 0
     title: Build canonical tracker SITL target
-    status: planned
+    status: implemented
     environment: unit
     prerequisites: [PX4 v1.17.0 checkout, initialized submodules]
     acceptance:
@@ -21,7 +21,7 @@ tests:
   - id: BLD-002
     gate: 0
     title: Build FMUv6C tracker firmware with provenance
-    status: planned
+    status: implemented
     environment: hardware
     prerequisites: [BLD-001]
     acceptance:
@@ -43,7 +43,7 @@ tests:
   - id: UNIT-002
     gate: 6
     title: Positional-servo mapping and safe-state logic
-    status: planned
+    status: implemented
     environment: unit
     prerequisites: [Gate 2 control refactor]
     acceptance:

@@ -57,4 +57,17 @@ float wrap_pi(float angle_rad)
 	return angle_rad;
 }
 
+float wrap_180_deg(float angle_deg)
+{
+	while (angle_deg > 180.f) {
+		angle_deg -= 360.f;
+	}
+
+	while (angle_deg < -180.f) {
+		angle_deg += 360.f;
+	}
+
+	return angle_deg;
+}
+
 } // namespace tracker_geo

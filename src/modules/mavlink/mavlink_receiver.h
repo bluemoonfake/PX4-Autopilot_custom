@@ -414,6 +414,7 @@ private:
 	int32_t _tracker_target_sysid_param{0};
 	int32_t _tracker_auto_lock_param{0};
 	int32_t _tracker_timeout_ms_param{0};
+	uint8_t _tracker_last_rejection_reason{UINT8_MAX};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::BAT_CRIT_THR>)     _param_bat_crit_thr,
