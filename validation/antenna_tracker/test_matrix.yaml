@@ -90,7 +90,7 @@ tests:
   - id: SITL-001
     gate: 6
     title: Boot airframe 4099
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [BLD-001]
     acceptance:
@@ -102,7 +102,7 @@ tests:
   - id: SITL-002
     gate: 6
     title: STOP and servo test behavior
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:
