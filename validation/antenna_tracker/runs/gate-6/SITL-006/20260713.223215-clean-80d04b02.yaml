@@ -29,18 +29,19 @@ expected:
   safe_action: park command
   recovery: accepted when source returns
 observed:
-  active_target_age_ms: 84
-  timeout_target_age_ms: 5512
+  timeout_target_age_ms: 2028
+  timeout_latency_error_ms: 28
   timeout_target_valid: false
-  timeout_actuator_servos: '[0.00000, -1.00000, nan, nan, nan, nan, nan, nan]'
-  recovery_target_age_ms: 156
+  safe_park_command_deg: yaw 0.0, pitch 0.0
+  safe_park_actuator_servos: '[0.00000, -1.00000, nan, nan, nan, nan, nan, nan]'
+  recovery_target_age_ms: 28
   recovery_target_valid: true
 verdict: pass
-notes: 'Sender logs: first burst SHA-256 f2a195853dde27f6273ed9d0ea31c9be8c178960e87e7b1794c3cb516884d582; recovery burst SHA-256 0c53a8fe31b0498bd8860d6e8205c7de8e19be06904b4107ed7ed5d7da9edc9b.'
+notes: 'ULog transition analysis is /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-006c-ulog-analysis.log (SHA-256 166d92b4cabf1ec0a683ff0280e37678b6fd6d0d0a5e609c5b126fed277e6521). Sender logs: first burst SHA-256 f2a195853dde27f6273ed9d0ea31c9be8c178960e87e7b1794c3cb516884d582; recovery burst SHA-256 dbe2e04aa1f1450d3f3289e823e494727db6f8bf31d25318a86bff2a62b8c8aa.'
 attachments:
   console_log:
-    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-006b-console.log
-    sha256: ad475a6aa7a386ceebe4ab1e6310328da66c057929e3ce089c1dea03906fe7ac
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-006c-console.log
+    sha256: 1b31aa54b457a65bf02b5b99d28c7987391b729573affd6380eb6e68082a3d3c
   ulg:
-    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_27_17.ulg
-    sha256: 1af6ec1a01a3877e39c29595bc3f6141ba5c9b12965b66a474884063060c8a87
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_35_51.ulg
+    sha256: e24b40ba6a979bd91d8ef3894a745502036b6fbd677203e07ca3972cd47a952f
