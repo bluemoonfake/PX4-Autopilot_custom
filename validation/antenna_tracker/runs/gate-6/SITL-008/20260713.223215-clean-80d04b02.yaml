@@ -1,0 +1,44 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-008
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: UDP localhost port 18570
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 0
+    TRK_AUTO_LOCK: 1
+    TRK_TIMEOUT_MS: 2000
+  target_source: source 2/1 locks first; source 3/1 competes and remains active after source 2 stops
+expected:
+  initial_lock: system 2
+  competing_source: rejected while locked
+  reacquisition_after_timeout: system 3
+observed:
+  initial_target_system: 2
+  competing_target_system: 2
+  post_timeout_target_system: 3
+  post_timeout_target_valid: true
+verdict: pass
+notes: 'Sender SHA-256: sysid 2 915d697777b7a17723c33194bf30d81ebc80a1c17bbdd30e2429bcc1988b7ac7; sysid 3 88338f00cfd90beea594ed8ff3bfbb7e0915906a4461b83a4b007712cd762d0a.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-008-console.log
+    sha256: 8209043f836b6e208f7a72520c48ec5e716a32b31cdb22038c83d4c75c460490
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_29_08.ulg
+    sha256: 46882da843eecb57be09dff01ec720a4f31cb501d6a7cdecbc5cc399df381bee

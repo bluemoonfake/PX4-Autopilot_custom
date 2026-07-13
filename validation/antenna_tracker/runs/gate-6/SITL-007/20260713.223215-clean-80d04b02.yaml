@@ -1,0 +1,42 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-007
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: UDP localhost port 18570
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_AUTO_LOCK: 0
+  target_source: sequential static GLOBAL_POSITION_INT sources 3/1 then 2/1
+expected:
+  sysid_3: rejected
+  sysid_2: accepted
+observed:
+  sysid_3_tracker_target_position: never published
+  sysid_3_target_valid: false
+  sysid_2_target_system: 2
+  sysid_2_target_valid: true
+verdict: pass
+notes: 'Sender SHA-256: sysid 3 dc37461a47f75145cd7ebce98e07d25fad3df2cfe8dc781e309ec544e2c7d60f; sysid 2 dbe2e04aa1f1450d3f3289e823e494727db6f8bf31d25318a86bff2a62b8c8aa.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-007-console.log
+    sha256: 55da6dfbe7afe27e3e0c410c076245f54c9ab4c7d8b02bca6cd1a2c703133727
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_28_13.ulg
+    sha256: 6f636e2e5fcbaa9509384f8e7b5a19c5f0c8ea1043c6c04cbd683c6a55294db2

@@ -1,0 +1,38 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-003
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_TGT_ALT: 588000
+  target_source: fake target parameters; live SIH global position
+expected:
+  cardinal_target_cases: bearing 0, 90, 180, and 270 degrees
+  home_fallback: explicit behavior when live global position is unavailable
+observed:
+  cardinal_bearings_rad: [6.27295, 1.57627, 3.12755, 4.71682]
+  cardinal_pitch_rad: [0.78760, 0.78448, 0.78099, 0.78005]
+  distances_m: [99.40180, 99.72269, 99.80718, 100.54354]
+  fake_target_valid: true
+  home_fallback_runtime: not_exercised
+verdict: blocked
+notes: Cardinal fake-target behavior passed. Canonical SIH continuously publishes vehicle_global_position. An EKF-stop probe did not provide a safe independent global-position fault injection, so no claim is made for the home-fallback branch.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-003-fake-cardinal-warm-console.log
+    sha256: 67fef36bc3fd0d0a3c459ce378858c57be50f99a117f552c815d43fbf4dec3b6

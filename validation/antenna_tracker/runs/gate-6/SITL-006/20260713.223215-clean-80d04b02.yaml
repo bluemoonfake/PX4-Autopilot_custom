@@ -1,0 +1,46 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-006
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: UDP localhost port 18570
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_TIMEOUT_MS: 2000
+    TRK_AUTO_SCAN: 0
+  target_source: two static GLOBAL_POSITION_INT bursts from 2/1
+expected:
+  timeout: target invalid after configured timeout
+  safe_action: park command
+  recovery: accepted when source returns
+observed:
+  active_target_age_ms: 84
+  timeout_target_age_ms: 5512
+  timeout_target_valid: false
+  timeout_actuator_servos: '[0.00000, -1.00000, nan, nan, nan, nan, nan, nan]'
+  recovery_target_age_ms: 156
+  recovery_target_valid: true
+verdict: pass
+notes: 'Sender logs: first burst SHA-256 f2a195853dde27f6273ed9d0ea31c9be8c178960e87e7b1794c3cb516884d582; recovery burst SHA-256 0c53a8fe31b0498bd8860d6e8205c7de8e19be06904b4107ed7ed5d7da9edc9b.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-006b-console.log
+    sha256: ad475a6aa7a386ceebe4ab1e6310328da66c057929e3ce089c1dea03906fe7ac
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_27_17.ulg
+    sha256: 1af6ec1a01a3877e39c29595bc3f6141ba5c9b12965b66a474884063060c8a87

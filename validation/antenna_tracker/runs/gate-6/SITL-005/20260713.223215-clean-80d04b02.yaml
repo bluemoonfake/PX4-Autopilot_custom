@@ -1,0 +1,46 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-005
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: UDP localhost port 18570
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_DEADRECK: 0
+  target_source: circular GLOBAL_POSITION_INT source 2/1
+expected:
+  bearing_direction: increasing clockwise through a full orbit
+  target_valid: true
+observed:
+  radius_m: 200
+  speed_m_s: 15
+  sender_duration_s: 90.1
+  positions_sent: 450
+  heartbeats_sent: 90
+  full_orbit_observed: true
+  final_target_valid: true
+  final_bearing_rad: 0.29257
+verdict: pass
+notes: Sender crossed 356.2 degrees to 0.5 degrees at approximately 84 seconds, demonstrating a complete orbit. ULog records tracker status for the run.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-005-console.log
+    sha256: 55708fbee34030fc72e62ea8a579d91577ecfb47f3a276f957e65bfcdd704dd6
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/rootfs/log/2026-07-13/22_24_26.ulg
+    sha256: eedc1e21d251b1ca039a914a84c03b87e6de862672179f7733c54f803ca8bb5a

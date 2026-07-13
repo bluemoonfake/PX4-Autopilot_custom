@@ -124,7 +124,7 @@ tests:
   - id: SITL-004
     gate: 6
     title: MAVLink static target acquisition
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:
@@ -135,7 +135,7 @@ tests:
   - id: SITL-005
     gate: 6
     title: Dynamic MAVLink target path
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -146,7 +146,7 @@ tests:
   - id: SITL-006
     gate: 6
     title: Target timeout and recovery
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -158,7 +158,7 @@ tests:
   - id: SITL-007
     gate: 6
     title: Specific system-ID source selection
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -169,7 +169,7 @@ tests:
   - id: SITL-008
     gate: 6
     title: Auto-lock and competing source behavior
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:

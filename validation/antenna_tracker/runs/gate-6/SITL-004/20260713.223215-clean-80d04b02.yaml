@@ -1,0 +1,42 @@
+run_id: 20260713.223215-clean-80d04b02
+test_id: SITL-004
+timestamp_utc: '2026-07-13T22:32:15Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: UDP localhost port 18570, MAVLink instance 0
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_AUTO_LOCK: 0
+  target_source: GLOBAL_POSITION_INT with HEARTBEAT from 2/1
+expected:
+  target_system: 2
+  target_valid: true
+observed:
+  target_system: 2
+  source_component: 1
+  source_instance: 0
+  heartbeat_valid: true
+  bearing_rad: 1.57537
+  pitch_rad: 0.78470
+  distance_m: 99.87295
+verdict: pass
+notes: Sender log is /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-004-sender-pass.log (SHA-256 4afe6a2a4e8d10ed375cecec32ba09e660cc79bc609d830b839b6efa69de0afe).
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-004-console-pass.log
+    sha256: ec64c9456f6f22b0bc964c2bf1178de9fcb539b94fc44dc696c3850c64e66b3e
