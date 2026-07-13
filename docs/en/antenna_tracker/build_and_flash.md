@@ -64,13 +64,18 @@ For circular tests, do not claim one complete orbit unless duration and speed co
 ## Build the hardware firmware
 
 ```bash
+# Pixhawk 6C
 make px4_fmu-v6c_antenna_tracker
+
+# Pixhawk 6X
+make px4_fmu-v6x_antenna_tracker
 ```
 
 Expected artifact:
 
 ```text
 build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
+build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
 ```
 
 Before flash, capture:
@@ -79,6 +84,7 @@ Before flash, capture:
 git rev-parse HEAD
 git submodule status
 sha256sum build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
+sha256sum build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
 ```
 
 Also retain the build output reporting flash use. A stale artifact copied from a previous checkout is not valid release evidence.
