@@ -29,6 +29,28 @@ tests:
       - artifact SHA-256 and flash usage are recorded
     evidence: [build log, artifact checksum, git commit]
 
+  - id: BLD-003
+    gate: 0
+    title: Build FMUv6X tracker firmware with provenance
+    status: implemented
+    environment: hardware
+    prerequisites: [BLD-001]
+    acceptance:
+      - make px4_fmu-v6x_antenna_tracker exits successfully
+      - artifact SHA-256 and flash usage are recorded
+    evidence: [build log, artifact checksum, git commit]
+
+  - id: BLD-004
+    gate: 0
+    title: Build MicoAir H743 tracker firmware with provenance
+    status: implemented
+    environment: hardware
+    prerequisites: [BLD-001]
+    acceptance:
+      - make micoair_h743_antenna_tracker exits successfully
+      - artifact SHA-256 and flash usage are recorded
+    evidence: [build log, artifact checksum, git commit]
+
   - id: UNIT-001
     gate: 6
     title: Geometry and angle wrapping

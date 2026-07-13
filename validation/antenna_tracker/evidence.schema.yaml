@@ -48,7 +48,11 @@ properties:
     properties:
       target:
         type: string
-        enum: [px4_sitl_default, px4_fmu-v6c_antenna_tracker]
+        enum:
+          - px4_sitl_default
+          - px4_fmu-v6c_antenna_tracker
+          - px4_fmu-v6x_antenna_tracker
+          - micoair_h743_antenna_tracker
       command:
         type: string
       artifact_path:
