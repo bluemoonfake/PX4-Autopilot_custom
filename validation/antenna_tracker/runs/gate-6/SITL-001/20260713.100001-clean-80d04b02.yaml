@@ -1,0 +1,42 @@
+run_id: 20260713.100001-clean-80d04b02
+test_id: SITL-001
+timestamp_utc: '2026-07-13T10:00:01Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/submodule-status.txt (SHA-256 78366f119039b629c329b8e9451b90461fb9e68435379d97aada7d03f8c10210)
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+  mavlink_ingress: localhost UDP defaults; no target injected
+setup:
+  imu_mount: not_applicable
+  parameters:
+    PX4_SYS_AUTOSTART: 4099
+    MAV_TYPE: 5
+  target_source: none
+expected:
+  SYS_AUTOSTART: 4099
+  MAV_TYPE: 5
+  antenna_tracker_autostarts: true
+observed:
+  SYS_AUTOSTART: 4099
+  MAV_TYPE: 5
+  antenna_tracker_status: running in STOP mode
+verdict: pass
+notes: Command was PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4. The console log includes both parameter output and module status.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/SITL-001-002-console.log
+    sha256: 6e0c9bc9f8fa90c3f7698101d2d9c2710d397c89a75b767e1f97d185ed8ffd05
+  parameter_dump:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/SITL-001-002-console.log
+    sha256: 6e0c9bc9f8fa90c3f7698101d2d9c2710d397c89a75b767e1f97d185ed8ffd05

@@ -1,0 +1,40 @@
+run_id: 20260713.100001-clean-80d04b02
+test_id: SITL-002
+timestamp_utc: '2026-07-13T10:00:01Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/submodule-status.txt (SHA-256 78366f119039b629c329b8e9451b90461fb9e68435379d97aada7d03f8c10210)
+build:
+  target: px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: 6ec5392276fa78b70334b06208d2e515fdad5297f4d19de76a28312180b6ad89
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 0
+    TRK_SERVO_TEST: 0
+  target_source: none
+expected:
+  stop_safe_output: yaw 0.0 and pitch -1.0
+  servo_test_requires_explicit_enable: true
+  servo_test_bounded: true
+observed:
+  stop_actuator_servos: '[0.00000, -1.00000, nan, nan, nan, nan, nan, nan]'
+  explicit_enable: TRK_SERVO_TEST changed from 0 to 1
+  servo_test_state: 5
+  servo_test_actuator_servos: '[-0.15000, -0.30000, nan, nan, nan, nan, nan, nan]'
+  after_disable_actuator_servos: '[0.00000, -1.00000, nan, nan, nan, nan, nan, nan]'
+verdict: pass
+notes: The exact test sample depends on sweep phase. The observed normalized controls remain within the implementation's bounded test range and revert to STOP after disabling the parameter.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/SITL-001-002-console.log
+    sha256: 6e0c9bc9f8fa90c3f7698101d2d9c2710d397c89a75b767e1f97d185ed8ffd05

@@ -1,0 +1,35 @@
+run_id: 20260713.095854-clean-80d04b02
+test_id: BLD-004
+timestamp_utc: '2026-07-13T09:58:54Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/submodule-status.txt (SHA-256 78366f119039b629c329b8e9451b90461fb9e68435379d97aada7d03f8c10210)
+build:
+  target: micoair_h743_antenna_tracker
+  command: make micoair_h743_antenna_tracker
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/micoair_h743_antenna_tracker/micoair_h743_antenna_tracker.px4
+  artifact_sha256: 2c9fae62741115af20cb5f847ab97896177e969a18137ca7598c9cce9faa3943
+  flash_usage_percent: 81.59
+environment:
+  class: hardware
+  board: micoair_h743
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters: {}
+expected:
+  build_exit_code: 0
+  flash_usage_recorded: true
+observed:
+  build_exit_code: 0
+  flash_usage: 1604172 B of 1920 KB (81.59%)
+verdict: pass
+notes: Fresh MicoAir H743 artifact built from the same clean provenance as the V6C/V6X artifacts.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/BLD-004-build.log
+    sha256: fb62b1172e0aefe4515963e02dd32fc8c738ae29dea4ee9f2b0874eb2c5a1604

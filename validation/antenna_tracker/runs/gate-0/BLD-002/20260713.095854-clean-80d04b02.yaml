@@ -1,0 +1,35 @@
+run_id: 20260713.095854-clean-80d04b02
+test_id: BLD-002
+timestamp_utc: '2026-07-13T09:58:54Z'
+operator: Codex
+git:
+  head_commit: 80d04b02de348a26f4b2e544f2bd59b53e8473a8
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/submodule-status.txt (SHA-256 78366f119039b629c329b8e9451b90461fb9e68435379d97aada7d03f8c10210)
+build:
+  target: px4_fmu-v6c_antenna_tracker
+  command: make px4_fmu-v6c_antenna_tracker
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_fmu-v6c_antenna_tracker/px4_fmu-v6c_antenna_tracker.px4
+  artifact_sha256: b0c68bb4c4afe5e52a37ad5c05581cb4fb9d3f64a28fcf14c8f6f1017d459655
+  flash_usage_percent: 79.92
+environment:
+  class: hardware
+  board: px4_fmu-v6c
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters: {}
+expected:
+  build_exit_code: 0
+  flash_usage_recorded: true
+observed:
+  build_exit_code: 0
+  flash_usage: 1571244 B of 1920 KB (79.92%)
+verdict: pass
+notes: Fresh artifact; it supersedes prior V6C output that predated the current provenance commit.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/BLD-002-build.log
+    sha256: bfd63eb43582212b0c00cdd938373b1116ea550d00f811bcb236164e47f8cb5f
