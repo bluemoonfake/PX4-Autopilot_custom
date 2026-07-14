@@ -58,5 +58,5 @@ verdict: blocked
 notes: 'This is a configuration-provenance snapshot, not evidence of physical servo motion. AUX is a valid PX4 output bank for actuator_servos. The pitch park command remains inconsistent with AUX2 disarmed and failsafe values: with a 0..90 degree pitch range, TRK_PIT_PARK=0 maps to AUX2 minimum (1400 us), while disarmed/failsafe are 1500 us. Align those values before connecting the pitch servo. SDLOG_MODE=0 explains why an unarmed tracker bench run does not create an SD-card ULog.'
 attachments:
   parameter_dump:
-    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/param_tracker_px4_v6x_July14.params
+    location: git:7670a10a5e:param_tracker_px4_v6x_July14.params
     sha256: dd5e0c2636a720a86a407b077824755339181d8f715005f18907d54ee48842bc
