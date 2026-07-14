@@ -1,0 +1,66 @@
+run_id: 20260714.125852-v6x-usb-router-ingress
+test_id: HW-001
+timestamp_utc: '2026-07-14T12:58:52Z'
+operator: Codex
+git:
+  head_commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: hardware
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04 router host; NuttX target
+  mavlink_ingress: UDP 127.0.0.1:18570 through usb_router.py to /dev/ttyACM0 at 2000000, PX4 MAVLink instance 2
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: servo supply disconnected; pitch mechanics deferred
+  parameters:
+    TRK_MODE: 0
+    TRK_SYSID_TGT: 2
+    SYS_AUTOSTART: 4099
+    MAV_TYPE: 5
+  target_source: send_target.py static MAVLink vehicle system/component 2/1 at 5 Hz
+expected:
+  deployed_route: UDP injection reaches PX4 through the documented USB router and MAVLink instance
+  source_filter: configured vehicle is accepted while wrong system and GCS sources are rejected
+  recovery: valid source updates resume after rejected traffic
+  safety: non-actuating ingress test remains at STOP/park
+observed:
+  router_serial_device: /dev/ttyACM0
+  router_serial_baud: 2000000
+  router_injection_port: 18570
+  px4_mavlink_instance: 2
+  router_injection_bytes: 1970
+  sender_positions: 50
+  sender_heartbeats: 10
+  router_target_samples: 48
+  router_target_median_period_s: 0.200265
+  router_target_maximum_period_s: 0.201747
+  accepted_target_system: 2
+  accepted_source_component: 1
+  accepted_source_instance: 2
+  wrong_system_coordinate_samples: 0
+  gcs_coordinate_samples: 0
+  valid_source_recovery: true
+  tracker_mode: STOP
+  yaw_output_range: 0.0 to 0.0
+  pitch_output_range: 0.0 to 0.0
+  ulog_dropouts: 0
+metrics:
+  primary_ulog_duration_s: 109
+  primary_tracker_target_samples: 48
+  filter_ulog_duration_s: 561
+  filter_tracker_target_samples: 45
+verdict: pass
+notes: 'HW-001 was intentionally run out of the mechanical prerequisite order after the user deferred pitch mechanics. This is safe because TRK_MODE remained STOP and servo power was disconnected. It verifies the selected deployed USB-router architecture, not the inactive /dev/ttyS6 UART. If production changes to a radio/UART link, repeat HW-001 on that link. Detailed analysis SHA-256: 23edb435e8630a79fb907aaeb03d57cbeea868f324aa9709167b1f3106ce3a72.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/HW-001/20260714.125852-v6x-usb-router-ingress-console.txt
+    sha256: 3fe5f6baf95004db8e07c6911380ec4b733b59447b5eed835a581d8fe6075add
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_hw001_usb_router_41927b6f_2026-07-14-19-58-52.ulg
+    sha256: 35448790505dc86c5da0cdf193a644e7788f2019a94179215cfb53c0b3a03dc3

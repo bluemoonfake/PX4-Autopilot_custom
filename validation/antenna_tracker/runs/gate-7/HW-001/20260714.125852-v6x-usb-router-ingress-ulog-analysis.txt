@@ -1,0 +1,51 @@
+HW-001 ULog analysis: deployed USB-router ingress
+=================================================
+
+Primary ULog
+------------
+Path: /home/ubuntu/Dev/PX4_tracker/log_hw001_usb_router_41927b6f_2026-07-14-19-58-52.ulg
+SHA-256: 35448790505dc86c5da0cdf193a644e7788f2019a94179215cfb53c0b3a03dc3
+Firmware: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+Board: PX4_FMU_V6X / V6X001
+Duration: 109 s
+Dropouts: 0
+
+Topic counts:
+- tracker_target_position: 48
+- tracker_status: 2185
+- actuator_servos: 5460
+- event: 33
+
+All 48 tracker target samples contain:
+- target_system: 2
+- source_component: 1
+- source_instance: 2
+- source_type: 2 (MAVLink)
+- valid: true
+- lat/lon: 0/8993
+- alt_mm/relative_alt_mm: 20000/20000
+
+Target samples span 20.568401 to 29.981811 s. Median period is 0.200265 s and
+maximum period is 0.201747 s, consistent with the configured 5 Hz sender.
+
+TRK_MODE and tracker state remained STOP. Tracker yaw/pitch outputs and
+actuator_servos control[0]/control[1] remained exactly 0.0.
+
+Negative-filter companion ULog
+------------------------------
+Path: /home/ubuntu/Dev/PX4_tracker/log_hw001_usb_41927b6f_2026-07-14-19-46-40.ulg
+SHA-256: c68507ae37683b48c3295be5d0233eb6d9dc02f8c8bad338d95155bdbb7679e6
+Duration: 561 s
+Dropouts: 0
+
+The companion run contains 45 accepted target samples, all system/component
+2/1 on source instance 2. Accepted coordinates are only lon 10001798 (25
+samples) and lon 10002798 (20 samples). Wrong-system lon 20001798 and GCS lon
+30001798 each have zero samples, proving the configured system and GCS filters.
+
+Conclusion
+----------
+The deployed bench route UDP 18570 -> usb_router.py -> /dev/ttyACM0 -> PX4
+MAVLink instance 2 passes target ingress, fixed source filtering, and recovery.
+This result does not validate the inactive /dev/ttyS6 radio port; if production
+changes from the USB-router architecture to that UART, HW-001 must be repeated.

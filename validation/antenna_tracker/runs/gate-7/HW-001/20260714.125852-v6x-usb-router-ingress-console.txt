@@ -1,0 +1,83 @@
+HW-001 V6X deployed USB-router target ingress
+==============================================
+
+Firmware
+--------
+- board: PX4_FMU_V6X / V6X
+- git hash: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+- build variant: antenna_tracker
+- SYS_AUTOSTART: 4099
+- TRK_MODE: 0 (STOP)
+- TRK_SYSID_TGT: 2
+
+MAVLink configuration
+---------------------
+- instance 0: serial /dev/ttyS6 at 57600, forwarding on, no RX in this run
+- instance 1: UDP local/remote port 14550
+- instance 2: USB CDC /dev/ttyACM0 at 2000000, forwarding on, MAVLink 2
+
+Direct USB source-filter phase
+------------------------------
+1. Valid vehicle source system/component 2/1 sent 25 HEARTBEAT and
+   GLOBAL_POSITION_INT pairs. tracker_target_position accepted:
+   - timestamp: 324574407 us
+   - lon: 10001798
+   - alt_mm: 20000
+   - target_system/source_component/source_instance: 2/1/2
+2. Wrong vehicle system 3/1 sent 25 pairs using lon 20001798. The tracker topic
+   retained timestamp 324574407 and lon 10001798; the wrong coordinate did not
+   appear in the ULog.
+3. GCS source 2/190 sent 25 pairs using lon 30001798. The tracker topic again
+   retained timestamp 324574407 and lon 10001798; the GCS coordinate did not
+   appear in the ULog.
+4. Valid source 2/1 returned with lon 10002798 and alt_mm 21000. The tracker
+   topic updated to timestamp 511868989, proving recovery.
+
+Direct-filter ULog:
+- /home/ubuntu/Dev/PX4_tracker/log_hw001_usb_41927b6f_2026-07-14-19-46-40.ulg
+- SHA-256: c68507ae37683b48c3295be5d0233eb6d9dc02f8c8bad338d95155bdbb7679e6
+- duration: 561 s
+- dropouts: 0
+- tracker_target_position: 45 samples
+- accepted lon values only: 10001798 (25), 10002798 (20)
+- forbidden lon 20001798 count: 0
+- forbidden lon 30001798 count: 0
+
+Deployed router phase
+---------------------
+Router command:
+  python3 Tools/antenna_tracker/usb_router.py --device /dev/ttyACM0 --baud 2000000
+
+Route:
+  send_target.py -> udpout:127.0.0.1:18570
+  usb_router inject bind: 127.0.0.1:18570
+  usb_router serial: /dev/ttyACM0 at 2000000
+  PX4 receiver: MAVLink instance 2
+
+Target command:
+  python3 Tools/antenna_tracker/send_target.py \
+    --port udpout:127.0.0.1:18570 --sysid 2 --compid 1 \
+    --duration 10 --mode static --radius 100 --alt 20 \
+    --center-lat 0 --center-lon 0 --center-alt 0
+
+Sender result:
+- 50 GLOBAL_POSITION_INT messages
+- 10 HEARTBEAT messages
+- target lat/lon/alt: 0 / 8993 / 20000 mm
+
+Router counters at shutdown:
+- fc -> qgc: 2501729 bytes
+- qgc -> fc: 1320 bytes (MAVLink shell traffic)
+- inject -> fc: 1970 bytes
+
+PX4 tracker_target_position:
+- target_system/source_component/source_instance: 2/1/2
+- lat/lon: 0/8993
+- alt_mm/relative_alt_mm: 20000/20000
+- all heartbeat, position, velocity, and altitude validity flags true
+
+Safety:
+- TRK_MODE remained STOP
+- tracker and actuator_servos yaw/pitch outputs remained 0.0
+- servo power was disconnected
+- no ULog dropout

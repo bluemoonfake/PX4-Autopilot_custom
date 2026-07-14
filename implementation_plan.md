@@ -143,7 +143,9 @@ target source
 
 ## Gate 3 — MAVLink target bridge hardening
 
-**State:** verified-sitl; deployed-link `HW-001` evidence remains required before hardware verification.
+**State:** verified-hardware; `HW-001` passed on the deployed bench route
+`UDP 18570 -> usb_router.py -> USB CDC MAVLink instance 2`, including fixed
+sysid and GCS rejection evidence.
 
 ### Work
 
@@ -274,12 +276,14 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 ## Gate 7 — Bench and hardware stabilization
 
-**State:** bench validation in progress; `BENCH-001` and `BENCH-002` pass.
+**State:** bench/hardware validation in progress; `BENCH-001`, `BENCH-002`,
+and `HW-001` pass.
 `BENCH-003` now has yaw-servo load evidence with stable logging and no estimator
 reset. The stronger 2026-07-14 yaw run also stayed within the provisional
 magnetic-norm bound, but its final sample did not demonstrate return to the
 original yaw pose. The gate remains open because yaw return-to-pose and pitch
-servo load have not passed. `HW-001` through `HW-004` remain.
+servo load have not passed. Pitch mechanics are explicitly deferred; `HW-002`
+through `HW-004` remain.
 
 ### Work
 

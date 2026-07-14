@@ -215,7 +215,7 @@ tests:
   - id: HW-001
     gate: 7
     title: Target ingress over deployed telemetry link
-    status: planned
+    status: verified-hardware
     environment: hardware
     prerequisites: [BENCH-003]
     acceptance:
