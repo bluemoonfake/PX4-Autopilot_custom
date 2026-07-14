@@ -1,0 +1,13 @@
+Operator observation record, received through Codex on 2026-07-14.
+
+The operator confirms that the mechanical/output checks were completed visually
+and are correct:
+- AUX1 / Servo1 drives the yaw axis.
+- AUX2 / Servo2 drives the pitch axis.
+- Both axes move in their intended directions.
+- The configured bounded travel is mechanically clear of stops.
+- The park position is mechanically correct and startup behavior is normal.
+
+Scope note: this observation records the physical-mechanical checks only. It
+does not assert MAVLink target-loss timeout behavior; that is recorded from the
+pending console and ULog timeout run.
