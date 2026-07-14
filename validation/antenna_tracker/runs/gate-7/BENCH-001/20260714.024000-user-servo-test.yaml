@@ -1,0 +1,35 @@
+run_id: 20260714.024000-user-servo-test
+test_id: BENCH-001
+timestamp_utc: '2026-07-14T02:40:00Z'
+operator: user, transcribed by Codex
+git:
+  head_commit: not_captured_from_fc
+  base_px4_tag: v1.17.0 (not independently captured from the FC)
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x (operator-reported)
+  airframe_id: 4099
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_SERVO_TEST: 1
+    output_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch (QGC configuration observed)
+  target_source: not_applicable; module output-path pre-check only
+expected:
+  safe_stop_output: yaw 0.0 and pitch -1.0
+  servo_test_output: both assigned controls remain within [-0.5, 0.5]
+observed:
+  safe_stop_output: [0.0, -1.0]
+  sampled_servo_test_min: -0.42999
+  sampled_servo_test_max: 0.43
+  yaw_and_pitch_controls_equal_during_test: true
+  physical_servo_motion_observed: not_recorded
+  pwm_output_measured: not_recorded
+verdict: blocked
+notes: 'The console transcript confirms the tracker publishes its documented bounded servo-test override. It is not BENCH-001 pass evidence: FC firmware SHA, parameter dump, servo rail/PWM measurement, physical yaw response, and video/photo are still required. The test override currently uses TRK_SERVO_TEST and is intentionally not a TRK_MODE; a dedicated start/stop bench command is recorded in Gate 7 as planned work.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-001/20260714.024000-user-servo-test.txt
+    sha256: 06b5b9f214c32358192f6d2b0c1ae44c7115f2d4e1a9863c5db899f7da3d5084

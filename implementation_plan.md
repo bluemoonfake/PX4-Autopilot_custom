@@ -280,6 +280,10 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 3. Verify deployed telemetry target ingress and source selection.
 4. Start with static low-gain tests and bounded output, then dynamic target and loss/recovery tests.
 5. Maintain an independent servo-power cutoff through the entire gate.
+6. Improve bench operator UX: add an explicit `antenna_tracker servo_test
+   start|stop` command and report the active test override in `status`. This
+   must remain an explicit bench override, not a new tracking submode; normal
+   tracker operation continues to use `TRK_MODE`.
 
 ### Acceptance criteria
 

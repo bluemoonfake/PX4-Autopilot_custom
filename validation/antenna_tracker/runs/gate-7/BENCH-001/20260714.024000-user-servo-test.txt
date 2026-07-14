@@ -1,0 +1,66 @@
+Operator-provided PX4 MAVLink Console transcript, 2026-07-14.
+
+The first samples were captured with the tracker in its safe/park state:
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+
+The following samples were captured while TRK_SERVO_TEST was enabled for a
+few cycles:
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.41999, 0.41999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [-0.05999, -0.05999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [-0.42999, -0.42999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [-0.11000, -0.11000, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.14999, 0.14999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.37999, 0.37999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.43000, 0.43000, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.23000, 0.23000, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [-0.15999, -0.15999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [-0.20000, -0.20000, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.01999, 0.01999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.32999, 0.32999, nan, nan, nan, nan, nan, nan]
+
+TOPIC: actuator_servos
+ actuator_servos
+    control: [0.40999, 0.40999, nan, nan, nan, nan, nan, nan]
