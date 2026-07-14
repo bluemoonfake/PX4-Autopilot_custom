@@ -1,0 +1,54 @@
+run_id: 20260714.021500-clean-3ec2a2ab
+test_id: SITL-003
+timestamp_utc: '2026-07-14T02:15:00Z'
+operator: Codex
+git:
+  head_commit: 3ec2a2ab2386c687a4a8fd3cea63d24281f50646
+  branch: detached
+  base_px4_tag: v1.17.0
+build:
+  target: px4_sitl_default
+  command: make px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_sitl_default/bin/px4
+  artifact_sha256: e10fdc90539d2888f603bfc4ac162cfb17328877f81995dfebfa00b1d9b752ab
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_HOME_EN: 1
+    TRK_HOME_LAT: 473977420
+    TRK_HOME_LON: 85455940
+    TRK_HOME_ALT: 488000
+    TRK_TGT_LAT: 473986413
+    TRK_TGT_LON: 85455940
+    TRK_TGT_ALT: 588000
+  target_source: fake target parameters; live SIH attitude; tracker-local POSIX global-position fault injection
+expected:
+  cardinal_target_cases: bearing 0, 90, 180, and 270 degrees with approximately 45-degree elevation
+  home_fallback: when tracker-local global position is forced invalid, configured TRK_HOME is used while fresh vehicle_attitude remains valid
+observed:
+  cardinal_bearings_rad: [6.27543, 1.57917, 3.13832, 4.70007]
+  cardinal_pitch_rad: [0.77892, 0.78281, 0.78774, 0.77253]
+  cardinal_distances_m: [100.08978, 99.67948, 99.09657, 101.24345]
+  pre_fault_position_source: vehicle_global_position
+  home_fallback_position_source: TRK_HOME fallback
+  home_fallback_bearing_rad: 0.0
+  home_fallback_pitch_rad: 0.78485
+  home_fallback_distance_m: 100.10904
+  home_fallback_target_valid: true
+  home_fallback_state: 1
+  attitude_timestamp_us_after_fault: 20240000
+  global_position_topic_timestamp_us_after_fault: 20236000
+  output_after_fault: [0.36189, 1.0]
+  post_fault_position_source: vehicle_global_position
+verdict: pass
+notes: The POSIX-only `antenna_tracker test gpos-loss on` hook affects only the module's local validity decision; it does not stop EKF2 or publish a competing uORB message. The fresh global-position topic is intentionally recorded to demonstrate that the injected fault is isolated to the tracker, while fresh vehicle_attitude preserves the required test condition.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/evidence-logs/20260714/SITL-003-cardinal-and-home-fallback-pass-console.log
+    sha256: bc5609506133c7f1d560e3166e70ba73955eca5a2aa226a802c9d0d470c66633

@@ -113,7 +113,7 @@ tests:
   - id: SITL-003
     gate: 6
     title: Fake target and home fallback geometry
-    status: planned
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:

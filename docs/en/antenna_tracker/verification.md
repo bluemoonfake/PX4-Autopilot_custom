@@ -33,6 +33,12 @@ The machine-readable contract lives in `validation/antenna_tracker/`:
 - `SITL-001`: Boot tracker airframe 4099 without Gazebo vehicle autostart.
 - `SITL-002`: STOP and servo-test behavior.
 - `SITL-003`: Fake target and home fallback geometry.
+
+  The canonical SITL fixture uses `antenna_tracker test gpos-loss on` only on
+  the POSIX build. It makes the tracker treat its local global-position input
+  as invalid without stopping EKF2 or changing the uORB topic, so fresh
+  `vehicle_attitude` remains available while the `TRK_HOME_*` fallback is
+  exercised. This command is not compiled into NuttX flight-controller builds.
 - `SITL-004`: Correct MAVLink ingress and static target acquisition.
 - `SITL-005`: Dynamic target path with duration consistent with expected angular travel.
 - `SITL-006`: Target timeout, safe state, and recovery.
