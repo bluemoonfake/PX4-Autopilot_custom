@@ -1,0 +1,64 @@
+run_id: 20260714.080746-clean-41927b6f
+test_id: BLD-003
+timestamp_utc: '2026-07-14T08:07:46Z'
+operator: Codex with user performing the physical USB power cycle
+git:
+  head_commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: build-required NuttX and tracker submodules matched the committed gitlinks; full baseline unchanged from the prior clean BLD manifests
+build:
+  target: px4_fmu-v6x_antenna_tracker
+  command: make px4_fmu-v6x_antenna_tracker
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+  artifact_sha256: 52fc390a7cf35a04ff7575457125d8fdbdf1fa93f01f16861c4af0830cb81183
+  flash_usage_percent: 84.36
+environment:
+  class: hardware
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04 host; NuttX target
+  mavlink_ingress: USB CDC /dev/ttyACM0
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: servo power disconnected for clean build and logger verification
+  parameters:
+    SYS_AUTOSTART: 4099
+    MAV_TYPE: 5
+    TRK_MODE: 0
+  target_source: direct USB MAVLink HEARTBEAT and GLOBAL_POSITION_INT from system/component 2/1
+expected:
+  build: clean V6X target builds and records artifact checksum and flash usage
+  flash: erase, program, and verify complete successfully
+  runtime: FC reports the exact clean commit and starts airframe 4099 tracker firmware
+  logging: tracker_target_position is recorded even though the target is first advertised after logger startup
+  safety: STOP remains at park while the diagnostic target is sent
+observed:
+  build_exit_code: 0
+  flash_bytes: 1658560
+  upload_erase_percent: 100
+  upload_program_percent: 100
+  upload_verify_percent: 100
+  runtime_git_hash: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  runtime_board: PX4_FMU_V6X
+  runtime_build_variant: antenna_tracker
+  logger_subscriptions: 223
+  ulog_duration_s: 165.62
+  ulog_dropouts: 0
+  tracker_status_samples: 3312
+  tracker_target_position_samples: 37
+  tracker_target_median_period_s: 0.200259
+  tracker_target_maximum_period_s: 0.201112
+  actuator_servos_samples: 8278
+  stop_yaw_output_range: 0.0 to 0.0
+  stop_pitch_output_range: 0.0 to 0.0
+verdict: pass
+notes: 'This supersedes the earlier BLD-003 artifact. The clean firmware was built, flashed, power-cycled, and verified on the connected V6X. The resulting ULog proves that mandatory tracker topic registration records a target first advertised after logger startup, with no dropout, while STOP remains at park.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-0/BLD-003/20260714.080746-clean-41927b6f-console.txt
+    sha256: a5e271726934277f93ef62c92e92d5b1cd29e6912658081cc21d60b53d1f59a8
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_clean_41927b6f_2026-07-14-15-07-46.ulg
+    sha256: 5ae34e5678f92703c5be819652e207459dc28a52d1388b89ceb9253ed0c46035

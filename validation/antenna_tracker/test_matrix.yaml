@@ -32,7 +32,7 @@ tests:
   - id: BLD-003
     gate: 0
     title: Build FMUv6X tracker firmware with provenance
-    status: implemented
+    status: verified-hardware
     environment: hardware
     prerequisites: [BLD-001]
     acceptance:

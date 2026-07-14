@@ -223,12 +223,10 @@ target source
 
 ## Gate 5 — Status, Events, and logging
 
-**State:** implemented and functionally confirmed on V6X: the 2026-07-14
-hardware ULog contains `tracker_status`, `tracker_target_position`,
-`actuator_servos`, and Events with no dropouts. The confirming firmware was
-built from commit `b470b2f300` with an uncommitted logger change, so a clean
-build/flash rerun is still required for final provenance. `HW-003` also remains
-required.
+**State:** implemented and verified on a clean V6X firmware build at commit
+`41927b6fe7`: the 2026-07-14 hardware ULog contains `tracker_status`,
+`tracker_target_position`, `actuator_servos`, and Events with no dropouts.
+`HW-003` remains required for dynamic tracking and loss/recovery acceptance.
 
 ### Work
 

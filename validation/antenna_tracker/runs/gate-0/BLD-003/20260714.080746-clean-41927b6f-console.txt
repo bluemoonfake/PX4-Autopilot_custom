@@ -1,0 +1,69 @@
+BLD-003 clean V6X build, flash, and runtime verification
+========================================================
+
+Source
+------
+- commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+- PX4 tag: v1.17.0-26-g41927b6fe7
+- branch: antenna_tracker
+- tracked build worktree state: clean
+- unrelated user changes in the primary worktree were not included
+
+Build
+-----
+Command: make px4_fmu-v6x_antenna_tracker
+Result: exit code 0
+Artifact: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+Artifact SHA-256: 52fc390a7cf35a04ff7575457125d8fdbdf1fa93f01f16861c4af0830cb81183
+FLASH: 1658560 bytes of 1920 KB, 84.36%
+AXI SRAM: 100636 bytes of 512 KB, 19.19%
+
+Upload
+------
+Board id: 53,0
+Board: Auterion PX4 FMU v6X.x
+Firmware size: 1658560 bytes
+Erase: 100%
+Program: 100%
+Verify: 100%
+Uploader result: rebooted successfully
+
+Runtime after physical power cycle
+----------------------------------
+HW arch: PX4_FMU_V6X
+HW type: V6X
+PX4 git-hash: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+PX4 version: 1.17.0
+Build datetime: Jul 14 2026 14:44:41
+Build variant: antenna_tracker
+SYS_AUTOSTART: 4099
+MAV_TYPE: 5
+TRK_MODE: 0
+antenna_tracker: running in STOP at approximately 50 Hz
+logger subscriptions: 223
+logger dropouts: 0
+
+Clean logger confirmation
+-------------------------
+Target generator sent 40 HEARTBEAT and GLOBAL_POSITION_INT pairs as system 2,
+component 1 while TRK_MODE remained STOP.
+
+ULog: /home/ubuntu/Dev/PX4_tracker/log_clean_41927b6f_2026-07-14-15-07-46.ulg
+ULog SHA-256: 5ae34e5678f92703c5be819652e207459dc28a52d1388b89ceb9253ed0c46035
+Duration: 165.62 s
+Dropouts: 0
+tracker_status: 3312 samples
+tracker_target_position: 37 samples
+actuator_servos: 8278 samples
+event: 33 samples
+
+tracker_target_position observations:
+- target_system 2, source_component 1, source_instance 2
+- valid, heartbeat, position, velocity, and altitude flags true
+- median period 0.200259 s; maximum period 0.201112 s
+- lat 0, lon 10001798, alt_mm 20000
+
+Safe STOP observations:
+- tracker mode/state remained STOP
+- tracker yaw/pitch outputs remained 0.0
+- actuator_servos control[0]/control[1] remained 0.0
