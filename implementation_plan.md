@@ -139,6 +139,29 @@ target source
 
 - `UNIT-002`, `SITL-002`, `SITL-003`, `SITL-006`, `BENCH-002`.
 
+### Calibration contract (required before further closed-loop hardware claims)
+
+The angle-domain mapper is only as accurate as the installed mechanics. A
+passing software mapper does not prove that a commanded angle equals the angle
+measured by the moving IMU. Before `HW-002` can pass, record a board/mechanism
+calibration profile containing the output bank/pin, PWM min/max/disarmed/
+failsafe values, physical yaw/pitch min/max/park, reversal, trim, and the
+firmware artifact SHA-256.
+
+Initial hardware acceptance limits are:
+
+- each `+/-2 deg` yaw step moves in the requested direction and settles within
+  `0.5 deg` for at least three seconds;
+- each `+/-5 deg` yaw step settles within `1.0 deg` in at most 30 seconds,
+  without more than `1.0 deg` overshoot beyond the requested angle;
+- a return-to-park step settles within `0.5 deg`;
+- apply the same limits independently to pitch after production pitch mechanics
+  are installed.
+
+An out-of-tolerance result is a calibration/mechanics blocker, not PID tuning
+permission. Correct horn position, travel, PWM endpoints, trim, and reversal
+before changing controller gains.
+
 ---
 
 ## Gate 3 — MAVLink target bridge hardening
@@ -221,6 +244,20 @@ sysid and GCS rejection evidence.
 
 - `BLD-002`, `BENCH-001`, `BENCH-002`, `HW-004`.
 
+### Deployment profiles
+
+Keep firmware build support separate from a verified wiring profile:
+
+| Profile | Intended link/output | Status |
+|---|---|---|
+| FMUv6C production candidate | TELEM1 at 57600, MAIN Servo1/Servo2 | build only; hardware route pending |
+| FMUv6X bench | USB CDC router and AUX Servo1/Servo2 | ingress verified; mechanics/calibration in progress |
+| MicoAir H743 | board build artifact | hardware pending |
+
+Never copy a bench AUX parameter export into a production MAIN airframe
+default. A deployment profile must include board, port, baud, MAVLink instance,
+output bank, calibrated PWM values, mechanism limits, and evidence link.
+
 ---
 
 ## Gate 5 — Status, Events, and logging
@@ -296,6 +333,15 @@ through `HW-004` remain.
    start|stop` command and report the active test override in `status`. This
    must remain an explicit bench override, not a new tracking submode; normal
    tracker operation continues to use `TRK_MODE`.
+7. Add a scenario runner for hardware evidence. It must timestamp target phases,
+   keep HEARTBEAT and position traffic fresh throughout each dwell, record phase
+   start/end in a machine-readable log, and issue a final STOP on normal exit or
+   error. ULog is the authority for tracker response; an interactive console
+   snapshot is only supporting evidence.
+8. Treat `TRK_HOME_EN` as a provisioned deployment setting. Production defaults
+   to disabled unless a verified tracker home is supplied; `(0,0,0)` is a
+   SITL/fixture value only. Missing global position and missing provisioned home
+   must park with a diagnostic reason.
 
 ### Acceptance criteria
 

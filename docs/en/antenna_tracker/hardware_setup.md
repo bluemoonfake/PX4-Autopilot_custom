@@ -48,6 +48,18 @@ The initial hardware airframe maps:
 
 Validate wiring, rail power, and physical direction with the antenna/load disconnected or mechanically decoupled first.
 
+The MAIN mapping is the production-candidate default. The current FMUv6X bench
+uses AUX1/AUX2 because its MAIN bank is unavailable; that is a separate bench
+profile and must not be copied into a production MAIN configuration.
+
+## Required calibration record
+
+Before AUTO, create an evidence-linked calibration record for the exact board
+and mechanism: firmware SHA-256, output bank/pin, PWM min/max/disarmed/failsafe,
+physical yaw/pitch min/max/park, trim, reversal, and servo supply. First prove
+`+/-2 deg` steps; then prove `+/-5 deg` and return-to-park. Do not use PID gains
+to compensate for an incorrect horn, endpoint, reversal, or mechanical travel.
+
 ## Bring-up sequence
 
 1. Inspect the mechanism for physical stops, cable routing, backlash, and a safe park pose.
@@ -77,6 +89,10 @@ Do not compensate for a 90°/180° board orientation error by adding large track
 The production airframe reserves **TELEM1** for MAVLink instance 0 in Normal mode at **57600 baud** (`MAV_0_CONFIG=101`, `MAV_0_MODE=0`, `SER_TEL1_BAUD=57600`). This maps to `/dev/ttyS5` on FMUv6C, `/dev/ttyS6` on FMUv6X, and `/dev/ttyS0` on MicoAir H743; verify the board label before wiring. QGC and the target UAV may share this routed telemetry link. For USB bench testing, use `Tools/antenna_tracker/usb_router.py`; it owns the USB device and injects test target traffic on UDP port 18570.
 
 A target must arrive on the normal MAVLink receiver path with a periodic `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same `(sysid, compid)`. The first production policy accepts component `MAV_COMP_ID_AUTOPILOT1`, requires a fresh non-GCS heartbeat, and then applies `TRK_SYSID_TGT` or validated auto-lock. The source system ID and heartbeat are routing/qualification mechanisms, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
+
+`TRK_HOME_EN` is disabled for production unless a verified tracker home has been
+provisioned. Coordinates `(0,0,0)` are only a SITL/bench fixture; do not enable
+home fallback with placeholder coordinates.
 
 ## Positional servo assumption
 
