@@ -1,0 +1,42 @@
+BENCH-003 V6X yaw-servo compass/load observation
+================================================
+
+Firmware reported by ULog:
+- ver_hw: PX4_FMU_V6X
+- ver_hw_subtype: V6X001
+- ver_sw: b470b2f3002b7d61e1f06abbd4e1da364853809b
+- branch: antenna_tracker
+
+Logger confirmation:
+- log_9_2026-7-14-14-22-58.ulg: duration 45 s, no dropouts
+- tracker_status: 909 samples
+- tracker_target_position: 65 samples
+- actuator_servos: 2269 samples
+- event: 53 samples
+- target samples: sysid 2, valid, about 5 Hz from 28.945 s to 41.755 s
+
+Operator console snapshots before actuator test:
+- vehicle_attitude yaw approximately -161.2 to -161.0 deg, pitch -2.3 to -2.2 deg
+- vehicle_magnetometer approximately [-0.455, 0.163, -0.047] gauss
+- sensor_preflight_mag.mag_inconsistency_angle: 0.0 rad
+
+Operator console snapshots while yaw actuator was exercised:
+- vehicle_attitude yaw approximately -162.9 to -159.7 deg, pitch about -2.2 deg
+- vehicle_magnetometer ranged through approximately
+  [-0.457, 0.157, -0.049] to [-0.454, 0.190, -0.043] gauss
+- sensor_preflight_mag.mag_inconsistency_angle: 0.0 rad
+
+ULog-derived actuator facts:
+- actuator_test function: 201 (Servo 1)
+- actuator-test interval: 201.877 s to 284.522 s
+- AUX1 physical PWM range during the run: 1458 to 1522 us
+- AUX2 remained at 1500 us
+
+Interpretation:
+- The yaw servo was energized and commanded while attitude and magnetometer
+  data remained available, with no ULog dropout.
+- The head yaw changed during the loaded interval, so component-wise magnetic
+  field and heading changes cannot be treated as a controlled same-pose
+  interference measurement.
+- The pitch servo was not loaded. This run improves BENCH-003 evidence but does
+  not close the complete two-axis compass-under-load acceptance criterion.

@@ -131,8 +131,8 @@ void LoggedTopics::add_default_topics()
 	add_topic("trajectory_setpoint", 200);
 	// Keep tracker diagnostics in ordinary ULogs without requiring a dedicated
 	// logger profile. These rates are low compared with estimator topics.
-	add_optional_topic("tracker_status", 50);
-	add_optional_topic("tracker_target_position", 100);
+	add_topic("tracker_status", 50);
+	add_topic("tracker_target_position", 100);
 	add_topic("transponder_report");
 	add_topic("vehicle_acceleration", 50);
 	add_topic("vehicle_air_data", 200);

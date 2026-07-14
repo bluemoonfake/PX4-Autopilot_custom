@@ -1,0 +1,56 @@
+run_id: 20260714.072724-v6x-yaw-servo-compass
+test_id: BENCH-003
+timestamp_utc: '2026-07-14T07:27:24Z'
+operator: user, analyzed by Codex
+git:
+  head_commit: b470b2f3002b7d61e1f06abbd4e1da364853809b
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: yaw servo energized and exercised; pitch output remained neutral
+  parameters:
+    TRK_MODE: 0
+    TRK_SERVO_TEST: 0
+  target_source: prior sysid-2 MAVLink target retained in the same boot session
+expected:
+  logging: tracker target, tracker status, servo command, attitude, magnetometer, and event topics are recorded without dropout
+  yaw_load: attitude and magnetometer remain valid while the yaw servo is energized and commanded
+  complete_compass_test: both production servos are loaded and heading is compared at the same fixed pose
+observed:
+  ulog_dropouts: 0
+  tracker_status_samples: 6240
+  tracker_target_position_samples: 65
+  tracker_target_system: 2
+  tracker_target_valid_samples: 65
+  tracker_target_median_period_s: 0.200152
+  actuator_servos_samples: 15596
+  actuator_test_function: 201
+  yaw_servo_test_interval_s: 201.877 to 284.522
+  aux1_pwm_range_us: 1458 to 1522
+  aux2_pwm_range_us: 1500 to 1500
+  baseline_heading_range_deg: -161.259 to -160.773
+  active_heading_range_deg: -163.724 to -158.012
+  baseline_mag_norm_mean_ga: 0.486354
+  active_mag_norm_range_ga: 0.483311 to 0.494820
+  active_mag_norm_delta_from_baseline: -0.63% to +1.74%
+  mag_inconsistency_angle_rad: 0.0
+  estimator_reset_during_load: false
+  fixed_pose_comparison: not controlled because yaw head moved
+  pitch_servo_load: not tested
+verdict: blocked
+notes: 'This run closes the hardware logging symptom: tracker_target_position is present at about 5 Hz together with tracker_status, actuator_servos, attitude, magnetometer, and events. It also provides useful yaw-servo load evidence. BENCH-003 remains blocked because head motion confounds a same-pose heading comparison and AUX2/pitch was not loaded. The firmware reports b470b2f300, but the mandatory logger registration was an uncommitted build-time change; repeat from a clean commit for release provenance. Detailed analysis SHA-256: 97faddb10c15e784868d3bc821595e014812dba6da1ba282a4171f28dd7d84a4.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-003/20260714.072724-v6x-yaw-servo-compass-console.txt
+    sha256: 884ddfb5d7007c7993a7aaebf09ba835a7fa64cdddc15b0eb901f2153f58c5cb
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_9_2026-7-14-14-27-24.ulg
+    sha256: 7443e5129a8de8d48211f818ec7b5e8031f043132df6f26ec2f7482d8ff21701

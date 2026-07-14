@@ -1,0 +1,64 @@
+ULog analysis: V6X yaw-servo load and tracker topic logging
+===========================================================
+
+ULog: /home/ubuntu/Dev/PX4_tracker/log_9_2026-7-14-14-27-24.ulg
+SHA-256: 7443e5129a8de8d48211f818ec7b5e8031f043132df6f26ec2f7482d8ff21701
+Duration: 311 s
+Dropouts: 0
+Firmware-reported commit: b470b2f3002b7d61e1f06abbd4e1da364853809b
+
+Topic coverage
+--------------
+- tracker_status: 6240 samples
+- tracker_target_position: 65 samples
+- actuator_servos: 15596 samples
+- actuator_test: 183 samples
+- vehicle_attitude: 60837 samples
+- vehicle_magnetometer: 623 samples
+- sensor_preflight_mag: 624 samples
+- event: 54 samples
+
+The target topic contains 65 valid sysid-2 samples from 28.945 s through
+41.755 s. Its median inter-sample interval is 0.200152 s and maximum interval
+is 0.200545 s. This functionally confirms that the tracker target is present
+in an ordinary hardware ULog when it is advertised after logger startup.
+
+Servo-load interval
+-------------------
+`actuator_test` exercised function 201 (Servo 1) from 201.877 s through
+284.522 s. AUX1 output ranged from 1458 to 1522 us. AUX2 remained at 1500 us,
+so this is yaw-only load evidence.
+
+Baseline, 150-195 s:
+- heading mean -160.910 deg, range -161.259 to -160.773 deg
+- magnetic norm mean 0.486354 gauss, range 0.484583 to 0.488211 gauss
+- mag inconsistency angle 0.0 rad
+- AUX1/AUX2 1500/1500 us
+
+Yaw-servo active, 202-284.5 s:
+- heading range -163.724 to -158.012 deg
+- magnetic norm mean 0.487174 gauss, range 0.483311 to 0.494820 gauss
+- active magnetic-norm range is -0.63% to +1.74% relative to the baseline mean
+- mag inconsistency angle 0.0 rad
+- AUX1 1458-1522 us; AUX2 1500 us
+
+Post-test, 286-310 s:
+- heading mean -164.940 deg
+- magnetic norm mean 0.485453 gauss
+- mag inconsistency angle 0.0 rad
+- AUX1/AUX2 1500/1500 us
+
+Conclusion
+----------
+No logging dropout, estimator reset, or loss of attitude/magnetometer data was
+observed while the yaw servo was commanded. However, the head moved by several
+degrees during the active interval, which confounds a fixed-pose compass
+comparison, and the pitch servo was not loaded. BENCH-003 therefore remains
+blocked pending a final-configuration, two-axis, same-pose load test.
+
+Provenance note
+---------------
+The binary reports commit b470b2f300, while the logger mandatory-topic change
+was uncommitted at build time. The functional result is valid for diagnosis,
+but a clean source commit, rebuild, flash, and short confirmation ULog are
+required for release provenance.

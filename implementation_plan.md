@@ -223,7 +223,12 @@ target source
 
 ## Gate 5 — Status, Events, and logging
 
-**State:** implemented with a validation gap; events and `tracker_status` are present in hardware ULog, but `tracker_target_position` was absent because it was optional and not advertised when the logger initialized. `HW-003` also remains required.
+**State:** implemented and functionally confirmed on V6X: the 2026-07-14
+hardware ULog contains `tracker_status`, `tracker_target_position`,
+`actuator_servos`, and Events with no dropouts. The confirming firmware was
+built from commit `b470b2f300` with an uncommitted logger change, so a clean
+build/flash rerun is still required for final provenance. `HW-003` also remains
+required.
 
 ### Work
 
@@ -271,7 +276,11 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 ## Gate 7 — Bench and hardware stabilization
 
-**State:** bench validation in progress; `BENCH-001` and `BENCH-002` pass, while compass-under-load `BENCH-003` and `HW-001` through `HW-004` remain.
+**State:** bench validation in progress; `BENCH-001` and `BENCH-002` pass.
+`BENCH-003` now has yaw-servo load evidence with stable logging and no estimator
+reset, but remains open because the pitch servo was not loaded and the yaw
+motion prevents a strict same-pose heading comparison. `HW-001` through
+`HW-004` remain.
 
 ### Work
 
