@@ -1,0 +1,46 @@
+run_id: 20260714.033140-v6x-logger-preflight
+test_id: BENCH-002
+timestamp_utc: '2026-07-14T03:31:40Z'
+operator: user, transcribed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: not_applicable
+  parameters:
+    SDLOG_BACKEND: 3
+    SDLOG_MODE: 2
+    SDLOG_PROFILE: 49
+  target_source: not_applicable; logging preflight before MAVLink timeout test
+expected:
+  logger: full SD-card file logging is active while the tracker remains disarmed
+  log_quality: no logger dropouts before the bench test starts
+  log_topics: default tracker topics and actuator_servos are available for analysis
+observed:
+  logger_mode: all
+  logger_subscriptions: 222
+  log_file: /fs/microsd/log/2026-07-14/03_31_40.ulg
+  bytes_written_mib: 1.4
+  average_write_rate_kib_s: 58.64
+  dropouts: 0
+  maximum_dropout_s: 0.0
+  maximum_buffer_used_bytes: 41216
+  buffer_capacity_bytes: 65536
+metrics:
+  buffer_peak_percent: 62.89
+  sdlog_profile_source: operator statement; export with profile 49 pending
+verdict: blocked
+notes: 'The ULog writer is demonstrably running with headroom and no dropouts, removing the earlier unarmed-logging blocker. “mode: all” describes enabled logger backends, not the SDLOG_PROFILE value. This is only a logging preflight: BENCH-002 remains blocked until bounded physical servo direction/range plus MAVLink timeout-to-park are observed. Download the ULog and record its SHA-256 after the timeout run.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-002/20260714.033140-v6x-logger-preflight-console.txt
+    sha256: b0f47122c7879c020699c6cfb69143659224ed56cd2cf88b044d545f4ec8f9ec
+  ulg:
+    location: /fs/microsd/log/2026-07-14/03_31_40.ulg
