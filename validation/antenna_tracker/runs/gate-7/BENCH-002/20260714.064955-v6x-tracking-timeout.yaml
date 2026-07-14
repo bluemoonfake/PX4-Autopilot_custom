@@ -1,0 +1,71 @@
+run_id: 20260714.064955-v6x-tracking-timeout
+test_id: BENCH-002
+timestamp_utc: '2026-07-14T06:49:55Z'
+operator: user, analyzed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  mavlink_ingress: /dev/ttyACM0 through usb_router.py, UDP injection port 18570
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_TIMEOUT_MS: 2000
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_YAW_PARK: 0
+    TRK_PIT_MIND: -15
+    TRK_PIT_MAXD: 15
+    TRK_PIT_PARK: 0
+  target_source: static HEARTBEAT and GLOBAL_POSITION_INT from system/component 2/1
+expected:
+  tracking: fresh qualified target enters STATE_TRACKING and produces a bounded non-park output
+  reachable_sector: out-of-sector yaw is clipped to the configured mechanical limit
+  timeout: target becomes invalid near TRK_TIMEOUT_MS
+  safe_action: both outputs slew to configured park after timeout
+  events: acquisition, clipping, loss, and parking transitions are emitted
+observed:
+  source_system: 2
+  source_component: 1
+  source_instance: 2
+  admitted_position_flags: heartbeat, position, velocity, and altitude valid
+  active_state: 1
+  active_reason: 6
+  active_yaw_clipped: true
+  active_yaw_command_deg: -15.0
+  representative_tracking_output: '[-1.00000, 0.14822]'
+  timeout_state: 2
+  timeout_reason: 3
+  timeout_ages_ms: 2027, 2041, 2055, 2017, 2058, 2014
+  final_park_output: '[0.00000, 0.00000]'
+  target_cycles: 6
+  ulog_dropouts: 0
+  tracker_status_samples: 8582
+  actuator_servos_samples: 21453
+  event_samples: 56
+  tracker_target_position_in_ulog: false
+metrics:
+  configured_timeout_ms: 2000
+  mean_observed_timeout_ms: 2035.3
+  maximum_timeout_error_ms: 58
+  minimum_park_settle_ms: 940.001
+  maximum_park_settle_ms: 1000.064
+  ulog_duration_s: 429
+verdict: pass
+notes: 'This supersedes the earlier sensor-invalid timeout run as the strongest BENCH-002 evidence: all six acquisitions entered TRACKING with a non-park command, then timed out and slewed to park. The target geometry intentionally exercised sector clipping and is not an independent pointing-accuracy measurement, so HW-002 remains open. Detailed analysis: validation/antenna_tracker/runs/gate-7/BENCH-002/20260714.064955-v6x-tracking-timeout-ulog-analysis.txt (SHA-256 97a0adc0a3b37e820f495e58cd5f233db85a07313e391d4ef149ae8f067b153a). The missing tracker_target_position ULog dataset remains a Gate 5 gap.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-002/20260714.064955-v6x-tracking-timeout-console.txt
+    sha256: 9775ae23306a65261331e898fcd4c9e53cf642540ac9d54f86b4ea76ea642dee
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_5_2026-7-14-13-57-06.ulg
+    sha256: 1c315dc2dcc2c46c69e71128f7e78993c59498e11bda69c45ef578240228b0a1

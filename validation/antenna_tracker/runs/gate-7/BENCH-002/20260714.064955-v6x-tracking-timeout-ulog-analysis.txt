@@ -1,0 +1,46 @@
+Source ULog: /home/ubuntu/Dev/PX4_tracker/log_5_2026-7-14-13-57-06.ulg
+SHA-256: 1c315dc2dcc2c46c69e71128f7e78993c59498e11bda69c45ef578240228b0a1
+Firmware: PX4_FMU_V6X, 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+Duration: 429 seconds
+Dropouts: 0
+
+Recorded datasets relevant to the tracker:
+- tracker_status: 8582 samples
+- actuator_servos: 21453 samples
+- event: 56 samples
+- vehicle_attitude: 84086 samples
+- vehicle_magnetometer: 858 samples
+- tracker_target_position: absent
+
+Six target-valid to timeout transitions were extracted from tracker_status:
+
+  Transition  timeout age  tracking output before timeout  park settle time
+  ----------  -----------  ------------------------------  ----------------
+      1          2027 ms             (-1.000, 1.000)          1000.064 ms
+      2          2041 ms             (-1.000, 0.154)           960.001 ms
+      3          2055 ms             (-1.000, 0.148)           940.001 ms
+      4          2017 ms             (-1.000, 0.148)           999.680 ms
+      5          2058 ms             (-1.000, 0.148)           960.350 ms
+      6          2014 ms             (-1.000, 0.148)           980.000 ms
+
+Mean timeout age: 2035.3 ms.
+Maximum configured-time error: 58 ms for TRK_TIMEOUT_MS=2000 ms.
+Maximum settle-to-park time after timeout: 1000.064 ms.
+
+Every fresh target interval entered STATE_TRACKING (1). The target bearing was
+outside the configured yaw sector, so REASON_YAW_LIMIT (6), yaw_clipped=true,
+and yaw command=-15 degrees were correct. Each expired target entered
+STATE_TIMEOUT (2), REASON_TARGET_TIMEOUT (3), cleared clipping, and slewed both
+normalized outputs to the configured park (0, 0).
+
+PX4 Events record six target-acquired events, six target-lost/parking events,
+and yaw-sector-clipped events for each acquisition.
+
+This run validates real hardware target admission, TRACKING state, bounded yaw
+sector selection, timeout timing, output slew, park output, and event emission
+through the USB bench router. It does not validate the deployed TELEM1 link or
+static pointing accuracy against an independently measured physical bearing.
+
+Gate 5 gap remains: tracker_target_position was not included in the ULog because
+the default logger configuration treats it as optional before the bridge first
+advertises the topic.

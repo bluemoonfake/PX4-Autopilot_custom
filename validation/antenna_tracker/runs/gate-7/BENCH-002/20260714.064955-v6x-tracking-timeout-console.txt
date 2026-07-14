@@ -1,0 +1,91 @@
+PX4 FMUv6X bench console excerpts, firmware 7b16eaaeefabd4116ac8002d3c27e31203195e5e.
+
+Before new target traffic:
+tracker_status:
+  target_age_ms: 51256
+  target_valid: False
+  target_system: 2
+  mode: 1
+  state: 2
+  state_reason: 3
+  yaw_output: 0.00000
+  pitch_output: 0.00000
+actuator_servos.control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+
+While HEARTBEAT + GLOBAL_POSITION_INT source 2/1 was active:
+tracker_target_position:
+  lat: 0
+  lon: 10001798
+  alt_mm: 20000
+  target_system: 2
+  source_component: 1
+  source_instance: 2
+  valid: True
+  position_valid: True
+  velocity_valid: True
+  altitude_valid: True
+  heartbeat_valid: True
+
+tracker_status:
+  target_age_ms: 142
+  bearing_rad: 1.57080
+  pitch_rad: 0.00017
+  distance_m: 111338.85938
+  yaw_output: -1.00000
+  pitch_output: 0.14822
+  yaw_command_deg: -15.00000
+  pitch_command_deg: 2.22331
+  target_valid: True
+  target_system: 2
+  mode: 1
+  state: 1
+  state_reason: 6
+  yaw_clipped: True
+  pitch_clipped: False
+actuator_servos.control: [-1.00000, 0.14822, nan, nan, nan, nan, nan, nan]
+
+After target traffic stopped:
+tracker_status:
+  target_age_ms: 21718
+  yaw_output: 0.00000
+  pitch_output: 0.00000
+  yaw_command_deg: 0.00000
+  pitch_command_deg: 0.00000
+  target_valid: False
+  target_system: 2
+  mode: 1
+  state: 2
+  state_reason: 3
+actuator_servos.control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+
+A later timeout return included an intermediate slew sample followed by park:
+actuator_servos.control: [-0.32000, 0.00000, nan, nan, nan, nan, nan, nan]
+actuator_servos.control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+tracker_status:
+  target_age_ms: 4774
+  target_valid: False
+  state: 2
+  state_reason: 3
+  yaw_output: 0.00000
+  pitch_output: 0.00000
+
+Logger:
+  file on FC: /fs/microsd/log/2026-07-14/06_49_56.ulg
+  subscriptions: 220
+  dropouts: 0
+  maximum buffer used: 40012 / 65536 bytes
+
+Downloaded ULog:
+  path: /home/ubuntu/Dev/PX4_tracker/log_5_2026-7-14-13-57-06.ulg
+  SHA-256: 1c315dc2dcc2c46c69e71128f7e78993c59498e11bda69c45ef578240228b0a1
+  duration: 00:07:09
+  dropouts: 0
+  tracker_status samples: 8582
+  actuator_servos samples: 21453
+  event samples: 56
+  tracker_target_position dataset: absent
+
+Note: listener tracker_target_position shows the last published admission sample.
+Its valid field does not age in-place after the sender stops. Runtime freshness
+and timeout authority are represented by tracker_status.target_valid,
+target_age_ms, state, and state_reason.
