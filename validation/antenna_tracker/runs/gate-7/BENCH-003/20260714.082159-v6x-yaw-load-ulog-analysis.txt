@@ -1,0 +1,79 @@
+ULog analysis: BENCH-003 V6X yaw servo load
+===========================================
+
+ULog: /home/ubuntu/Dev/PX4_tracker/log_bench003_yaw_41927b6f_2026-07-14-15-21-59.ulg
+SHA-256: af0701581adbbc5110e7ed9d1a3c11810661c20e2826ce0970fb01ed7342c3a5
+Firmware: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+Board: PX4_FMU_V6X / V6X001
+Duration: 774 s
+Dropouts: 0
+
+Recorded topics
+---------------
+- actuator_outputs instance 1: 7742 samples
+- actuator_servos: 38704 samples
+- actuator_test: 9 samples
+- event: 49 samples
+- sensor_preflight_mag: 1548 samples
+- tracker_status: 15482 samples
+- vehicle_attitude: 153030 samples
+- vehicle_magnetometer: 1548 samples
+
+Tracker safety state
+--------------------
+TRK_MODE remained STOP for the whole run. Tracker yaw and pitch normalized
+outputs remained 0.0. Actuator movement came only from explicit actuator_test
+commands.
+
+Baseline, servo supply disconnected, 35-80 s
+---------------------------------------------
+- yaw mean: -163.492 deg; range -163.526 to -163.461 deg
+- pitch mean: -2.197 deg
+- magnetic norm mean: 0.499267 gauss
+- magnetic norm range: 0.497732 to 0.501272 gauss
+- AUX1/AUX2: 1500/1500 us
+
+Servo supply connected, before command, 435-475 s
+-------------------------------------------------
+- yaw mean: -162.342 deg
+- pitch mean: -2.200 deg
+- magnetic norm mean: 0.509675 gauss
+- magnetic norm range: 0.507601 to 0.511851 gauss
+- heading delta from power-off baseline: +1.151 deg
+- magnetic norm mean delta from power-off baseline: +2.08%
+- mag inconsistency angle: 0.0 rad
+
+Small yaw sequence, 530-611 s
+-----------------------------
+- Servo 1 commands: +0.1, -0.1, 0.0
+- corresponding AUX1 values: 1510, 1490, 1500 us
+- AUX2 remained 1500 us
+- final same-pose console heading: approximately -162.4 deg
+- estimator reset counter remained 1
+
+Strong yaw sequence, 732-774 s
+--------------------------------
+- Servo 1 commands: +0.2, +0.4, -0.8, -0.3, -0.3, 0.0
+- AUX1 range: 1420 to 1540 us
+- AUX2: 1500 us throughout
+- yaw range observed during commands: approximately -169.55 to -158.71 deg
+- magnetic norm extrema during representative commands: 0.494740 to 0.521281 gauss
+- extrema relative to the power-off baseline mean: -0.91% to +4.41%
+- mag inconsistency angle remained 0.0 rad
+- estimator reset counter remained 1 throughout the bench portion
+
+The final 0.0 command started at 772.460 s. During the final recorded 2.29 s,
+AUX1 was 1500 us and yaw was -169.55 to -169.37 deg, mean -169.46 deg. This is
+about -5.97 deg from the power-off baseline and -6.98 deg from the pose before
+the strong sequence. The ULog ends before a later return can be demonstrated.
+
+Verdict
+-------
+The run supports yaw-axis compass integrity under the tested electrical and
+mechanical load: no dropout, no bench-time estimator reset, no reported mag
+inconsistency, and magnetic norm stayed inside the provisional +/-5% bound.
+
+It does not close BENCH-003 because:
+1. the strong yaw sequence did not demonstrate return to the original pose in
+   the recorded interval;
+2. the pitch servo was disconnected and received no load command.

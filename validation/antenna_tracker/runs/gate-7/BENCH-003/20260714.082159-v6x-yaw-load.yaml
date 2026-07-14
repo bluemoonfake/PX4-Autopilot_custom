@@ -1,0 +1,62 @@
+run_id: 20260714.082159-v6x-yaw-load
+test_id: BENCH-003
+timestamp_utc: '2026-07-14T08:21:59Z'
+operator: user, analyzed by Codex
+git:
+  head_commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: yaw servo powered and exercised; pitch servo disconnected
+  parameters:
+    TRK_MODE: 0
+    TRK_SERVO_TEST: 0
+    PWM_AUX_FUNC1: 201
+    PWM_AUX_FUNC2: 202
+  target_source: not applicable; direct actuator bench test
+expected:
+  yaw_compass_integrity: no estimator reset, dropout, or unacceptable magnetic-norm change under yaw servo load
+  yaw_return: yaw returns to its original pose after the test override returns to zero
+  pitch_compass_integrity: pitch servo is loaded in its production configuration without unacceptable compass disturbance
+observed:
+  ulog_duration_s: 774
+  ulog_dropouts: 0
+  tracker_mode: STOP
+  actuator_test_samples: 9
+  yaw_servo_function: 201
+  yaw_command_range: -0.8 to 0.4
+  aux1_pwm_range_us: 1420 to 1540
+  aux2_pwm_range_us: 1500 to 1500
+  baseline_yaw_mean_deg: -163.492
+  powered_idle_yaw_mean_deg: -162.342
+  power_on_heading_delta_deg: 1.151
+  baseline_mag_norm_mean_ga: 0.499267
+  powered_idle_mag_norm_mean_ga: 0.509675
+  power_on_mag_norm_delta_percent: 2.08
+  strong_sequence_mag_norm_range_ga: 0.494740 to 0.521281
+  strong_sequence_mag_norm_delta_percent: -0.91% to +4.41%
+  bench_time_estimator_reset: false
+  mag_inconsistency_angle_rad: 0.0
+  final_zero_command_yaw_mean_deg: -169.462
+  final_yaw_error_from_baseline_deg: -5.970
+  final_zero_command_recorded_duration_s: 2.29
+  yaw_compass_load_verdict: pass
+  yaw_return_to_pose_verdict: not demonstrated
+  pitch_servo_verdict: not tested
+verdict: blocked
+notes: 'Yaw compass/load integrity passes the provisional criteria, including a meaningful 1420-1540 us physical PWM range. BENCH-003 remains blocked because the final zero command did not demonstrate return to the original yaw pose before the log ended and the pitch servo was disconnected. Detailed analysis SHA-256: 1838db671e0fbecb86ef30e5ffa442ed43ad178f2a11af1903c4175ca2104430.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-003/20260714.082159-v6x-yaw-load-console.txt
+    sha256: d7a5b143039949bad215d13ce873b1bf20925983f8270a3de18c9ec13b9fe552
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_bench003_yaw_41927b6f_2026-07-14-15-21-59.ulg
+    sha256: af0701581adbbc5110e7ed9d1a3c11810661c20e2826ce0970fb01ed7342c3a5

@@ -276,9 +276,10 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 **State:** bench validation in progress; `BENCH-001` and `BENCH-002` pass.
 `BENCH-003` now has yaw-servo load evidence with stable logging and no estimator
-reset, but remains open because the pitch servo was not loaded and the yaw
-motion prevents a strict same-pose heading comparison. `HW-001` through
-`HW-004` remain.
+reset. The stronger 2026-07-14 yaw run also stayed within the provisional
+magnetic-norm bound, but its final sample did not demonstrate return to the
+original yaw pose. The gate remains open because yaw return-to-pose and pitch
+servo load have not passed. `HW-001` through `HW-004` remain.
 
 ### Work
 

@@ -1,0 +1,64 @@
+BENCH-003 V6X yaw-load console record
+=====================================
+
+Firmware: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+ULog: /fs/microsd/log/2026-07-14/08_21_59.ulg
+Logger subscriptions: 223
+Logger dropouts reported by console: 0
+
+Baseline with servo supply disconnected
+---------------------------------------
+vehicle_attitude:
+- yaw: -163.5 deg
+- pitch: -2.2 deg
+- quat_reset_counter: 1
+
+vehicle_magnetometer examples:
+- [-0.47784, 0.14518, -0.03312] gauss
+- [-0.47681, 0.14621, -0.03525] gauss
+
+sensor_preflight_mag.mag_inconsistency_angle: 0.0 rad
+actuator_servos: [0.0, 0.0, nan, nan, nan, nan, nan, nan]
+
+Servo supply connected, before yaw command
+------------------------------------------
+vehicle_attitude:
+- yaw: -162.3 deg
+- pitch: -2.2 deg
+- quat_reset_counter: 1
+
+vehicle_magnetometer: [-0.46149, 0.21909, 0.00057] gauss
+sensor_preflight_mag.mag_inconsistency_angle: 0.0 rad
+
+Small yaw sequence
+------------------
+Commands:
+- actuator_test set -s 1 -v 0.10 -t 3
+- actuator_test set -s 1 -v -0.10 -t 3
+- actuator_test set -s 1 -v 0.0 -t 3
+
+Final console snapshot after the small sequence:
+- yaw: -162.4 deg
+- pitch: -2.2 deg
+- quat_reset_counter: 1
+- magnetometer: [-0.46340, 0.21761, -0.00198] gauss
+- mag_inconsistency_angle: 0.0 rad
+
+Additional yaw commands found in the ULog
+-----------------------------------------
+- +0.2 for 3 s
+- +0.4 for 3 s
+- -0.8 for 3 s
+- -0.3 for 3 s
+- -0.3 for 9 s
+- 0.0 for 9 s
+
+The additional commands exercised AUX1 from 1420 to 1540 us. AUX2 remained at
+1500 us. The final available yaw was approximately -169.46 deg while AUX1 was
+1500 us, so the log does not prove return to the original yaw pose.
+
+Scope statement
+---------------
+- yaw compass/load integrity: supported
+- yaw return to original pose after the strong sequence: not demonstrated
+- pitch servo load and pitch return: not tested; pitch servo was disconnected
