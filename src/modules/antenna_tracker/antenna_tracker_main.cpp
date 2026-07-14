@@ -374,8 +374,7 @@ void AntennaTracker::run_tracking(float dt)
 		tracker_alt_m = global_position.alt;
 
 	} else if (_param_trk_home_en.get() != 0
-		   && _param_trk_home_lat.get() >= -900000000 && _param_trk_home_lat.get() <= 900000000
-		   && _param_trk_home_lon.get() >= -1800000000 && _param_trk_home_lon.get() <= 1800000000) {
+		   && tracker_geo::valid_home_fallback(_param_trk_home_lat.get(), _param_trk_home_lon.get())) {
 		tracker_lat_e7 = _param_trk_home_lat.get();
 		tracker_lon_e7 = _param_trk_home_lon.get();
 		tracker_alt_m = static_cast<float>(_param_trk_home_alt.get()) * 0.001f;
@@ -585,6 +584,35 @@ int AntennaTracker::task_spawn(int argc, char *argv[])
 
 int AntennaTracker::custom_command(int argc, char *argv[])
 {
+	if (argc == 2 && !strcmp(argv[0], "servo_test")) {
+		AntennaTracker *instance = get_instance();
+
+		if (instance == nullptr) {
+			PX4_ERR("not running");
+			return PX4_ERROR;
+		}
+
+		int32_t enabled = 0;
+
+		if (!strcmp(argv[1], "start")) {
+			enabled = 1;
+			instance->_servo_test_phase = 0.f;
+
+		} else if (strcmp(argv[1], "stop")) {
+			return print_usage("servo_test requires 'start' or 'stop'");
+		}
+
+		const param_t handle = param_find("TRK_SERVO_TEST");
+
+		if (handle == PARAM_INVALID || param_set(handle, &enabled) != PX4_OK) {
+			PX4_ERR("failed to set TRK_SERVO_TEST");
+			return PX4_ERROR;
+		}
+
+		PX4_INFO("servo-test override %s%s", enabled != 0 ? "enabled" : "disabled",
+			 enabled != 0 ? "; verify servo-power cutoff" : "");
+		return PX4_OK;
+	}
 
 #if defined(__PX4_POSIX)
 	if (argc == 3 && !strcmp(argv[0], "test") && !strcmp(argv[1], "gpos-loss")) {
@@ -662,6 +690,7 @@ int AntennaTracker::print_status()
 		 (double)_setpoint_planner.pitch_park_deg());
 	PX4_INFO("Reference: %s", _head_reference_valid ? "captured at park" : "not captured");
 	PX4_INFO("Position source: %s", _using_home_fallback ? "TRK_HOME fallback" : "vehicle_global_position");
+	PX4_INFO("Servo-test override: %s", _param_trk_servo_test.get() != 0 ? "ACTIVE" : "disabled");
 
 #if defined(__PX4_POSIX)
 	PX4_INFO("SITL test global-position loss: %s", _sitl_force_global_position_invalid.load() ? "enabled" : "disabled");
@@ -692,6 +721,8 @@ level-horizon calibration before configuring mechanical servo trim.
 	PRINT_MODULE_USAGE_NAME("antenna_tracker", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_COMMAND("set_home");
+	PRINT_MODULE_USAGE_COMMAND_DESCR("servo_test", "Explicit bounded bench sweep override; stop it before normal tracking.");
+	PRINT_MODULE_USAGE_ARG("start|stop", nullptr, false);
 #if defined(__PX4_POSIX)
 	PRINT_MODULE_USAGE_COMMAND_DESCR("test", "SITL-only tracker-local fault injection.");
 	PRINT_MODULE_USAGE_ARG("gpos-loss on|off", "Force only the tracker to treat global position as unavailable.", false);

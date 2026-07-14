@@ -70,4 +70,11 @@ float wrap_180_deg(float angle_deg)
 	return angle_deg;
 }
 
+bool valid_home_fallback(int32_t latitude_e7, int32_t longitude_e7)
+{
+	return latitude_e7 >= -900000000 && latitude_e7 <= 900000000
+	       && longitude_e7 >= -1800000000 && longitude_e7 <= 1800000000
+	       && (latitude_e7 != 0 || longitude_e7 != 0);
+}
+
 } // namespace tracker_geo

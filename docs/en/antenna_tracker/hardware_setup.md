@@ -73,6 +73,12 @@ to compensate for an incorrect horn, endpoint, reversal, or mechanical travel.
 9. Verify STOP and target-timeout behavior before enabling AUTO.
 10. Only then test static target tracking at low gain and limited output range.
 
+For the bounded tracker sweep, use `antenna_tracker servo_test start` and
+`antenna_tracker servo_test stop` in the MAVLink console. The command resets
+the sweep to its known start point and shows `Servo-test override: ACTIVE` in
+`antenna_tracker status`. It is a bench override of `TRK_SERVO_TEST`, not a
+tracker mode; stop it before using `TRK_MODE=AUTO`.
+
 ## Orientation versus trim
 
 | Issue | Correct adjustment |
@@ -91,8 +97,11 @@ The production airframe reserves **TELEM1** for MAVLink instance 0 in Normal mod
 A target must arrive on the normal MAVLink receiver path with a periodic `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same `(sysid, compid)`. The first production policy accepts component `MAV_COMP_ID_AUTOPILOT1`, requires a fresh non-GCS heartbeat, and then applies `TRK_SYSID_TGT` or validated auto-lock. The source system ID and heartbeat are routing/qualification mechanisms, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
 
 `TRK_HOME_EN` is disabled for production unless a verified tracker home has been
-provisioned. Coordinates `(0,0,0)` are only a SITL/bench fixture; do not enable
-home fallback with placeholder coordinates.
+provisioned. Firmware rejects the unprovisioned `(TRK_HOME_LAT,TRK_HOME_LON) =
+(0,0)` placeholder and parks if live global position is unavailable. A real
+site may be on the equator or prime meridian: only the all-zero pair is
+rejected. Use `antenna_tracker set_home` only while the tracker has a valid
+global position, then run `param save`.
 
 ## Positional servo assumption
 

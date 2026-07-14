@@ -558,7 +558,9 @@ PARAM_DEFINE_INT32(TRK_TGT_ALT, 0);
  *
  * If enabled and live vehicle_global_position is unavailable,
  * the tracker uses TRK_HOME_LAT/LON/ALT as its own position.
- * This is intended for bench testing or fixed tripod setups.
+ * This is intended for bench testing or fixed tripod setups. The default
+ * coordinate (latitude=0 and longitude=0) is an unprovisioned placeholder and
+ * is rejected; the tracker remains parked until a real home is supplied.
  *
  * 0 = disabled, 1 = enabled
  *
@@ -571,7 +573,8 @@ PARAM_DEFINE_INT32(TRK_HOME_EN, 0);
  * Tracker home latitude.
  *
  * Latitude in degrees * 1E7. Used only when TRK_HOME_EN is enabled
- * and live tracker global position is unavailable.
+ * and live tracker global position is unavailable. Together with TRK_HOME_LON,
+ * this must not be the default (0,0) placeholder.
  *
  * @group Antenna Tracker
  */
@@ -581,7 +584,8 @@ PARAM_DEFINE_INT32(TRK_HOME_LAT, 0);
  * Tracker home longitude.
  *
  * Longitude in degrees * 1E7. Used only when TRK_HOME_EN is enabled
- * and live tracker global position is unavailable.
+ * and live tracker global position is unavailable. Together with TRK_HOME_LAT,
+ * this must not be the default (0,0) placeholder.
  *
  * @group Antenna Tracker
  */

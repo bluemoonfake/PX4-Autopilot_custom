@@ -332,12 +332,14 @@ through `HW-004` remain.
 6. Improve bench operator UX: add an explicit `antenna_tracker servo_test
    start|stop` command and report the active test override in `status`. This
    must remain an explicit bench override, not a new tracking submode; normal
-   tracker operation continues to use `TRK_MODE`.
+   tracker operation continues to use `TRK_MODE`. **Implemented 2026-07-14**;
+   the command controls the existing `TRK_SERVO_TEST` override.
 7. Add a scenario runner for hardware evidence. It must timestamp target phases,
    keep HEARTBEAT and position traffic fresh throughout each dwell, record phase
-   start/end in a machine-readable log, and issue a final STOP on normal exit or
-   error. ULog is the authority for tracker response; an interactive console
-   snapshot is only supporting evidence.
+   start/end in a machine-readable log, then cease target traffic for the final
+   timeout dwell. It must not silently change `TRK_MODE`; the operator confirms
+   final STOP. ULog is the authority for tracker response; an interactive
+   console snapshot is only supporting evidence.
 8. Treat `TRK_HOME_EN` as a provisioned deployment setting. Production defaults
    to disabled unless a verified tracker home is supplied; `(0,0,0)` is a
    SITL/fixture value only. Missing global position and missing provisioned home

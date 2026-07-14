@@ -72,4 +72,14 @@ float wrap_pi(float angle_rad);
 /** Wrap an angle in degrees to [-180, 180]. */
 float wrap_180_deg(float angle_deg);
 
+/**
+ * Check whether a provisioned tracker-home coordinate is usable.
+ *
+ * The all-zero parameter default is deliberately rejected: it is a placeholder,
+ * not a safe geographic home for a deployed tracker. A real location on either
+ * the equator or prime meridian remains valid as long as both coordinates are
+ * not zero.
+ */
+bool valid_home_fallback(int32_t latitude_e7, int32_t longitude_e7);
+
 } // namespace tracker_geo

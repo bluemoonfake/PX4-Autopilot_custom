@@ -27,6 +27,15 @@ TEST(TrackerGeo, PitchAndWrap)
 	EXPECT_NEAR(tracker_geo::wrap_180_deg(-270.f), 90.f, 1e-5f);
 }
 
+TEST(TrackerGeo, HomeFallbackRejectsPlaceholderButAllowsEquatorAndPrimeMeridian)
+{
+	EXPECT_FALSE(tracker_geo::valid_home_fallback(0, 0));
+	EXPECT_FALSE(tracker_geo::valid_home_fallback(900000001, 0));
+	EXPECT_FALSE(tracker_geo::valid_home_fallback(0, 1800000001));
+	EXPECT_TRUE(tracker_geo::valid_home_fallback(0, 85455940));
+	EXPECT_TRUE(tracker_geo::valid_home_fallback(473977420, 0));
+}
+
 TEST(TrackerPID, FeedForwardUsesTargetRate)
 {
 	TrackerPID pid;
