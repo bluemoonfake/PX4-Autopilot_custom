@@ -1,0 +1,77 @@
+run_id: 20260714.130458-v6x-yaw-direction-fail
+test_id: HW-002
+timestamp_utc: '2026-07-14T13:04:58Z'
+operator: user and Codex
+git:
+  head_commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+  artifact_sha256: 52fc390a7cf35a04ff7575457125d8fdbdf1fa93f01f16861c4af0830cb81183
+environment:
+  class: hardware
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04 router host; NuttX target
+  mavlink_ingress: UDP 127.0.0.1:18570 through usb_router.py to /dev/ttyACM0 at 2000000
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: yaw servo powered; pitch mechanics unavailable and not tested
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_TIMEOUT_MS: 2000
+    TRK_HOME_EN: 1
+    TRK_HOME_LAT: 0
+    TRK_HOME_LON: 0
+    TRK_HOME_ALT: 0
+    TRK_YAW_REV: 0
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_YAW_PARK: 0
+    TRK_YAW_SLEW: 2
+    PWM_AUX_FUNC1: 201
+  target_source: static MAVLink vehicle 2/1 at 5 Hz; 103.2-degree reference followed by 108.2-degree target
+expected:
+  yaw_direction: positive yaw command increases measured yaw and reduces pointing error
+  yaw_accuracy: bounded +5-degree step converges without increasing error
+  stop_safety: operator STOP returns normalized output to park
+  pitch_accuracy: deferred until production pitch mechanics are installed
+observed:
+  auto_start_s: 844.510
+  auto_stop_s: 897.750
+  reference_bearing_deg: 103.2
+  reference_yaw_start_deg: 104.076
+  reference_yaw_end_deg: 104.603
+  step_bearing_deg: 108.2
+  step_yaw_command_deg: 4.119
+  step_yaw_output: 0.2746
+  step_yaw_start_deg: 104.335
+  step_yaw_end_deg: 102.444
+  initial_error_deg: 3.860
+  error_after_12_s_deg: 5.276
+  yaw_direction: reversed
+  stop_output_initial: 0.2346
+  stop_output_after_1_s: 0.0
+  pitch_axis: not tested
+  ulog_dropouts: 0
+metrics:
+  ulog_duration_s: 978
+  tracker_status_samples: 19574
+  tracker_target_position_samples: 273
+  actuator_servos_samples: 48934
+  yaw_change_during_positive_step_deg: -1.891
+  error_growth_after_12_s_deg: 1.416
+  stop_to_park_s: 1.0
+verdict: fail
+notes: 'The attempt was stopped before the negative step because continuing with the observed closed-loop direction would be unsafe. Set TRK_YAW_REV=1 with servo power disconnected, verify direction using a bounded output, then repeat yaw static tracking. Pitch is explicitly deferred and is not claimed as passing. HW-002 remains open in test_matrix.yaml.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/HW-002/20260714.130458-v6x-yaw-direction-console.txt
+    sha256: c97b39a902c9d8bd4d838ace71dbbece85944f9d9ce707a1975e88a1b63ab732
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_hw002_yaw_direction_41927b6f_2026-07-14-20-04-58.ulg
+    sha256: 0954654b52ee1b41ebe517c2cc8abea830a4ad3e9f0f4ab14009c11a23484c2b

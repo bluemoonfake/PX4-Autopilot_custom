@@ -1,0 +1,54 @@
+PX4 FMUv6X HW-002 yaw-only static closed-loop attempt
+Firmware: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+ULog: /home/ubuntu/Dev/PX4_tracker/log_hw002_yaw_direction_41927b6f_2026-07-14-20-04-58.ulg
+ULog SHA-256: 0954654b52ee1b41ebe517c2cc8abea830a4ad3e9f0f4ab14009c11a23484c2b
+ULog duration: 978 seconds
+ULog dropouts: 0
+
+Safety setup
+------------
+- Yaw servo powered; pitch mechanics unavailable and pitch was not evaluated.
+- Tracker HOME fallback: latitude 0, longitude 0, altitude 0.
+- Yaw sector: -15 to +15 degrees; park 0 degrees; slew time 2 seconds.
+- TRK_YAW_REV=0.
+- MAVLink source system/component 2/1 entered through UDP 18570 and usb_router.py.
+- The target elevation was selected near the measured pitch to minimize pitch demand.
+
+Reference target at bearing 103.2 degrees
+-----------------------------------------
+AUTO interval: t=844.510 to 897.750 seconds.
+Reference-target segment: t=844.510 to 865.550 seconds.
+Measured yaw at start/end: 104.076 / 104.603 degrees.
+Settled yaw command: -0.879 degrees.
+Settled normalized yaw output: -0.0586.
+
++5 degree target step at bearing 108.2 degrees
+------------------------------------------------
+Step began at t=872.710 seconds.
+Yaw command: +4.119 degrees.
+Settled normalized yaw output: +0.2746.
+Measured yaw changed from 104.335 to 102.444 degrees while the positive command was active.
+The measured yaw error increased instead of converging:
+
+  elapsed   measured yaw   measured error
+     0 s       104.335 deg      3.860 deg
+     4 s       103.741 deg      4.454 deg
+     8 s       103.251 deg      4.944 deg
+    12 s       102.920 deg      5.276 deg
+
+Safety response
+---------------
+AUTO was stopped after the direction mismatch was observed. At the first STOP
+sample the yaw output was +0.2346 because the configured slew limiter was
+returning the command to park. It reached 0.0 within one second and remained at
+the 0-degree park command. Servo power was then disconnected by the operator.
+
+Conclusion
+----------
+The yaw closed loop is reversed for the installed mechanical direction. A
+positive demanded yaw produced decreasing measured yaw and increasing error.
+HW-002 therefore fails this attempt. Do not resume closed-loop testing with
+TRK_YAW_REV=0. Set TRK_YAW_REV=1 with servo power disconnected, verify the
+bounded manual direction first, and then repeat the 0 -> +5 -> -5 -> 0 degree
+closed-loop sequence. Pitch remains deferred until its production mechanics
+are installed.
