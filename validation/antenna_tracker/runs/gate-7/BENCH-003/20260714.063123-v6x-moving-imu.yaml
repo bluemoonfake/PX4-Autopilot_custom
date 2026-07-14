@@ -1,0 +1,50 @@
+run_id: 20260714.063123-v6x-moving-imu
+test_id: BENCH-003
+timestamp_utc: '2026-07-14T06:31:23Z'
+operator: user, analyzed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: yaw servo installed on moving head; pitch servo not installed during this run
+  parameters:
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_PIT_MIND: -15
+    TRK_PIT_MAXD: 15
+  target_source: not applicable; moving-IMU and return-to-park observation
+expected:
+  moving_imu: physical yaw and pitch movement changes vehicle_attitude in the corresponding axis
+  return_to_pose: attitude returns close to baseline after the head returns to park
+  compass_under_load: fixed-pose heading remains acceptable with servo power and representative current load
+observed:
+  baseline_yaw_deg: -140.45
+  moved_yaw_deg: -128.09
+  yaw_delta_deg: 12.36
+  first_pitch_pose_deg: -23.75
+  second_pitch_pose_deg: -11.32
+  pitch_delta_deg: 12.43
+  returned_yaw_deg: -139.52
+  returned_pitch_deg: -2.09
+  yaw_return_error_deg: 0.93
+  moving_imu_verdict: pass
+  compass_fixed_pose_power_comparison: not_recorded
+  pitch_servo_under_load: not_tested
+verdict: blocked
+notes: 'The ULog and console samples prove that the FC/IMU moves with the yaw head and responds to a manual pitch change, then returns close to the original attitude. BENCH-003 remains blocked because there is no controlled fixed-pose comparison of heading with servo power/load off versus on; the pitch servo was also not installed.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/bench_test.txt
+    sha256: 7c83f911aea852d1d4d4771ec3a185f1a92bb65c2047c4932764abf7e508387e
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_3_2026-7-14-13-38-36.ulg
+    sha256: 2ccfd236c57df62c185a5368b25b8764469ba6103316e442a08e618f49a1a31b

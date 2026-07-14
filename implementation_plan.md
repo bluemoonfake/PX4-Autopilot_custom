@@ -45,7 +45,7 @@ Read [the tracker documentation](docs/en/antenna_tracker/index.md) and use [the 
 
 ## Gate 1 — Honest stock-QGC integration
 
-**State:** implemented; SITL/bench evidence remains required before verification.
+**State:** verified-bench; `SITL-001`, `SITL-002`, and `BENCH-001` pass with evidence.
 
 ### Objective
 
@@ -86,7 +86,7 @@ Make the tracker clearly usable in unmodified QGroundControl without claiming cu
 
 ## Gate 2 — Positional-servo control architecture
 
-**State:** implemented; bench validation remains required before field tracking.
+**State:** verified-bench; the required unit/SITL cases and `BENCH-002` pass with evidence.
 
 ### Problem to solve
 
@@ -143,7 +143,7 @@ target source
 
 ## Gate 3 — MAVLink target bridge hardening
 
-**State:** implemented; SITL and deployed-link evidence remains required before verification.
+**State:** verified-sitl; deployed-link `HW-001` evidence remains required before hardware verification.
 
 ### Work
 
@@ -185,7 +185,7 @@ target source
 
 ## Gate 4 — Board, airframe, and startup safety
 
-**State:** implemented; bench and hardware startup-safety evidence remains required before verification.
+**State:** implemented; output mapping and bench park/timeout are verified, while `HW-004` startup and cutoff evidence remains required.
 
 ### Work
 
@@ -223,7 +223,7 @@ target source
 
 ## Gate 5 — Status, Events, and logging
 
-**State:** planned.
+**State:** implemented with a validation gap; events and `tracker_status` are present in hardware ULog, but `tracker_target_position` was absent because it was optional and not advertised when the logger initialized. `HW-003` also remains required.
 
 ### Work
 
@@ -247,7 +247,7 @@ target source
 
 ## Gate 6 — Automated unit and canonical SITL regression
 
-**State:** planned.
+**State:** verified-sitl; `UNIT-001` through `UNIT-003` and `SITL-001` through `SITL-008` have passing manifests.
 
 ### Work
 
@@ -271,7 +271,7 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 ## Gate 7 — Bench and hardware stabilization
 
-**State:** planned.
+**State:** bench validation in progress; `BENCH-001` and `BENCH-002` pass, while compass-under-load `BENCH-003` and `HW-001` through `HW-004` remain.
 
 ### Work
 

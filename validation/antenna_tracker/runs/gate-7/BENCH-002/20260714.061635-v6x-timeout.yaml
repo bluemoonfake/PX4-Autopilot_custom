@@ -1,0 +1,59 @@
+run_id: 20260714.061635-v6x-timeout
+test_id: BENCH-002
+timestamp_utc: '2026-07-14T06:16:35Z'
+operator: user, analyzed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  mavlink_ingress: /dev/ttyACM0 through usb_router.py, UDP injection port 18570
+setup:
+  imu_mount: not_applicable
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_TIMEOUT_MS: 2000
+    TRK_TGT_LAT: 0
+    TRK_TGT_LON: 0
+    TRK_TGT_ALT: 0
+    TRK_HOME_EN: 0
+    TRK_YAW_PARK: 0
+    TRK_PIT_PARK: 0
+  target_source: static HEARTBEAT and GLOBAL_POSITION_INT from 2/1 at 5 Hz for 10 seconds
+expected:
+  source_admission: matching MAVLink source is accepted
+  timeout: target becomes invalid after the configured timeout
+  safe_action: timeout selects configured yaw and pitch park outputs
+observed:
+  source_admission: source 2/1 accepted with valid heartbeat, position, velocity, and altitude flags
+  vehicle_global_position: unavailable
+  fresh_target_state: 6
+  fresh_target_reason: 4
+  timeout_state: 2
+  timeout_reason: 3
+  timeout_ages_ms: 2042, 2029, 2052
+  timeout_park_output: '[0.00000, 0.00000, nan, nan, nan, nan, nan, nan]'
+  ulog_dropouts: 0
+metrics:
+  configured_timeout_ms: 2000
+  mean_observed_timeout_ms: 2041
+  maximum_timeout_error_ms: 52
+verdict: pass
+notes: 'Combined with the prior passing mechanical observation, this completes BENCH-002. The ULog proves three target-valid to target-timeout transitions and the configured park output. Because vehicle_global_position was unavailable, the fresh target was held in SENSOR_INVALID/park instead of TRACKING; therefore this run does not satisfy HW-002 static closed-loop tracking. Detailed analysis: validation/antenna_tracker/runs/gate-7/BENCH-002/20260714.061635-v6x-timeout-ulog-analysis.txt (SHA-256 6f77f85a52a61b56d1904145a32bf3cdbaa52e10390535e56bb42cf34882d41f).'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/bench_test.txt
+    sha256: 7c83f911aea852d1d4d4771ec3a185f1a92bb65c2047c4932764abf7e508387e
+  parameter_dump:
+    location: git:64235fe50c:param_tracker_px4_v6x_July14.params
+    sha256: 5d77f610e984d039ba6bf39c251d730e41dfcde9918ff85aa0c694762e9f7a8f
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_3_2026-7-14-13-38-36.ulg
+    sha256: 2ccfd236c57df62c185a5368b25b8764469ba6103316e442a08e618f49a1a31b

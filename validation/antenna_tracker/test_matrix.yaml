@@ -192,7 +192,7 @@ tests:
   - id: BENCH-002
     gate: 7
     title: Servo direction, range, park, and startup behavior
-    status: planned
+    status: verified-bench
     environment: bench
     prerequisites: [BENCH-001]
     acceptance:

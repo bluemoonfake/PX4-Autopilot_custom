@@ -1,0 +1,45 @@
+Source ULog: /home/ubuntu/Dev/PX4_tracker/log_3_2026-7-14-13-38-36.ulg
+SHA-256: 2ccfd236c57df62c185a5368b25b8764469ba6103316e442a08e618f49a1a31b
+Firmware: PX4_FMU_V6X, 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+Duration: 1318.76 seconds
+Dropouts: 0
+
+Relevant datasets:
+- tracker_status: 26377 samples
+- actuator_servos: 65940 samples
+- vehicle_attitude: 261554 samples
+- vehicle_magnetometer: 2637 samples
+- event: 164 samples
+- tracker_target_position: absent
+- vehicle_global_position: absent
+
+Target/timeout transitions extracted from tracker_status:
+- t=609.277 s: target valid, sysid=2, age=3 ms, STATE_SENSOR_INVALID,
+  REASON_SENSOR_INVALID, output=(0.000, 0.000).
+- t=621.137 s: target invalid, age=2042 ms, STATE_TIMEOUT,
+  REASON_TARGET_TIMEOUT, output=(0.000, 0.000).
+- t=646.137 s: target valid, sysid=2, age=5 ms, STATE_SENSOR_INVALID,
+  REASON_SENSOR_INVALID, output=(0.000, 0.000).
+- t=657.977 s: target invalid, age=2029 ms, STATE_TIMEOUT,
+  REASON_TARGET_TIMEOUT, output=(0.000, 0.000).
+- t=663.677 s: target valid, sysid=2, age=3 ms, STATE_SENSOR_INVALID,
+  REASON_SENSOR_INVALID, output=(0.000, 0.000).
+- t=674.137 s: target invalid, age=2052 ms, STATE_TIMEOUT,
+  REASON_TARGET_TIMEOUT, output=(0.000, 0.000).
+
+Mean timeout age: 2041 ms; maximum configured-time error: 52 ms for a
+TRK_TIMEOUT_MS value of 2000 ms.
+
+PX4 Events include three target-acquired, three target-lost/parking, and park
+state messages at the corresponding transitions.
+
+Interpretation:
+- The USB router and MAVLink admission path accepted source 2/1.
+- There was no valid vehicle_global_position, so AUTO could not enter TRACKING;
+  it correctly selected STATE_SENSOR_INVALID and park while the target was fresh.
+- On target expiry, the state changed to TIMEOUT/REASON_TARGET_TIMEOUT and
+  remained at the configured normalized park output (0, 0).
+- This validates timeout detection and safe park behavior but does not validate
+  static closed-loop tracking; that remains HW-002.
+- tracker_target_position was not recorded in this ULog, exposing a Gate 5
+  logging configuration gap.

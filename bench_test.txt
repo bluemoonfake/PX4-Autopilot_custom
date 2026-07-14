@@ -1,0 +1,870 @@
+BENCH RUN:
+NuttShell (NSH) NuttX-11.0.0
+nsh> ver all
+HW arch: PX4_FMU_V6X
+HW type: V6X
+HW FMUM ID: 0x001
+HW BASE ID: 0x002
+PX4 git-hash: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+PX4 version: 1.17.0 0 (17891328)
+PX4 git-branch: antenna_tracker
+OS: NuttX
+OS version: Release 11.0.0 (184549631)
+OS git-hash: fb2fadf6f599c1406f052db013efd00a2518e72c
+Build datetime: Jul 14 2026 09:20:15
+Build uri: localhost
+Build variant: antenna_tracker
+Toolchain: GNU GCC, 13.2.1 20231009
+PX4GUID: 000600000000303736303532510c002b0018
+MCU: STM32H7[4|5]xxx, rev. V
+nsh> param show SYS_AUTOSTART
+Symbols: x = used, + = saved, * = unsaved
+x + SYS_AUTOSTART [774,1181] : 4099
+
+ 950/1611 parameters used.
+nsh> param show MAV_TYPE
+Symbols: x = used, + = saved, * = unsaved
+x   MAV_TYPE [456,797] : 5
+
+ 950/1611 parameters used.
+nsh> antenna_tracker status
+INFO  [antenna_tracker] Mode: STOP (TRK_MODE)
+INFO  [antenna_tracker] Target: none sysid=0 compid=0
+INFO  [antenna_tracker] Bearing: 0.0 deg Pitch: 0.0 deg Dist: 0.0 m
+INFO  [antenna_tracker] Command: yaw=0.0 deg pitch=0.0 deg Out: yaw=0.000 pitch=-1.000
+INFO  [antenna_tracker] Limits: yaw=[-15.0, 15.0] park=0.0 pitch=[0.0, 90.0] park=0.0
+INFO  [antenna_tracker] Reference: not captured
+INFO  [antenna_tracker] Position source: vehicle_global_position
+antenna_tracker: cycle: 1109 events, 12896us elapsed, 11.63us avg, min 6us max 729us 37.387us rms
+antenna_tracker: interval: 1110 events, 19981.94us avg, min 19035us max 20813us 111.928us rms
+nsh> param show PWM_AUX_FUNC1
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_FUNC1 [516,868] : 201
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_FUNC2
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_FUNC2 [517,869] : 202
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_MIN1
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_MIN1 [534,886] : 1400
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_MIN2
+Symbols: x = used, + = saved, * = unsaved
+x   PWM_AUX_MIN2 [535,887] : 1000
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_MAX1
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_MAX1 [525,877] : 1600
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_MAX2
+Symbols: x = used, + = saved, * = unsaved
+x   PWM_AUX_MAX2 [526,878] : 2000
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_DIS1
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_DIS1 [498,850] : 1500
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_DIS2
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_DIS2 [499,851] : 1500
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_FAIL1
+Symbols: x = used, + = saved, * = unsaved
+x + PWM_AUX_FAIL1 [507,859] : 1500
+
+ 950/1611 parameters used.
+nsh> param show PWM_AUX_FAIL2
+Symbols: x = used, + = saved, * = unsaved
+x   PWM_AUX_FAIL2 [508,860] : -1
+
+ 950/1611 parameters used.
+nsh> param show TRK_YAW_MIND
+Symbols: x = used, + = saved, * = unsaved
+x + TRK_YAW_MIND [842,1493] : -15.0000
+
+ 950/1611 parameters used.
+nsh> param show TRK_YAW_MAXD
+Symbols: x = used, + = saved, * = unsaved
+x   TRK_YAW_MAXD [840,1491] : 15.0000
+
+ 950/1611 parameters used.
+nsh> param show TRK_YAW_PARK
+Symbols: x = used, + = saved, * = unsaved
+x   TRK_YAW_PARK [844,1495] : 0.0000
+
+ 950/1611 parameters used.
+nsh> param show TRK_PIT_MIND
+Symbols: x = used, + = saved, * = unsaved
+x   TRK_PIT_MIND [819,1470] : 0.0000
+
+ 950/1611 parameters used.
+nsh> param show TRK_PIT_MAXD
+Symbols: x = used, + = saved, * = unsaved
+x   TRK_PIT_MAXD [817,1468] : 90.0000
+
+ 950/1611 parameters used.
+nsh> param show TRK_PIT_PARK
+Symbols: x = used, + = saved, * = unsaved
+x   TRK_PIT_PARK [821,1472] : 0.0000
+
+ 950/1611 parameters used.
+
+
+BENCH 001:
+NuttShell (NSH) NuttX-11.0.0
+nsh> param set TRK_MODE 0
+nsh> param set TRK_SERVO_TEST 0
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 58137780 (0.002393 seconds ago)
+    timestamp_sample: 58137780 (0 us before timestamp)
+    control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+nsh> param set TRK_SERVO_TEST 1
+  TRK_SERVO_TEST: curr: 0 -> new: 1
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 78138120 (0.014926 seconds ago)
+    timestamp_sample: 78138120 (0 us before timestamp)
+    control: [-0.23016, -0.23016, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 79417782 (0.018605 seconds ago)
+    timestamp_sample: 79417782 (0 us before timestamp)
+    control: [-0.13000, -0.13000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 80038080 (0.000365 seconds ago)
+    timestamp_sample: 80038080 (0 us before timestamp)
+    control: [0.18014, 0.18014, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 84137783 (0.000461 seconds ago)
+    timestamp_sample: 84137783 (0 us before timestamp)
+    control: [0.23000, 0.23000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 84717826 (0.003583 seconds ago)
+    timestamp_sample: 84717826 (0 us before timestamp)
+    control: [0.47997, 0.47997, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 85297781 (0.006441 seconds ago)
+    timestamp_sample: 85297781 (0 us before timestamp)
+    control: [0.19000, 0.19000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 85877781 (0.012131 seconds ago)
+    timestamp_sample: 85877781 (0 us before timestamp)
+    control: [-0.09999, -0.09999, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 86457781 (0.015626 seconds ago)
+    timestamp_sample: 86457781 (0 us before timestamp)
+    control: [-0.39000, -0.39000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 87017993 (0.019773 seconds ago)
+    timestamp_sample: 87017993 (0 us before timestamp)
+    control: [-0.32989, -0.32989, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 87597783 (0.007270 seconds ago)
+    timestamp_sample: 87597783 (0 us before timestamp)
+    control: [-0.03999, -0.03999, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 88137781 (0.016707 seconds ago)
+    timestamp_sample: 88137781 (0 us before timestamp)
+    control: [0.23000, 0.23000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 89057826 (0.013378 seconds ago)
+    timestamp_sample: 89057826 (0 us before timestamp)
+    control: [0.30997, 0.30997, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 89637883 (0.000518 seconds ago)
+    timestamp_sample: 89637883 (0 us before timestamp)
+    control: [0.01994, 0.01994, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 90157781 (0.013926 seconds ago)
+    timestamp_sample: 90157781 (0 us before timestamp)
+    control: [-0.24000, -0.24000, nan, nan, nan, nan, nan, nan]
+nsh> param set TRK_SERVO_TEST 0
++ TRK_SERVO_TEST: curr: 1 -> new: 0
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 106717780 (0.018346 seconds ago)
+    timestamp_sample: 106717780 (0 us before timestamp)
+    control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+nsh> 
+
+
+BENCH-002:
+nsh> antenna_tracker status
+INFO  [antenna_tracker] Mode: STOP (TRK_MODE)
+INFO  [antenna_tracker] Target: none sysid=0 compid=0
+INFO  [antenna_tracker] Bearing: 0.0 deg Pitch: 0.0 deg Dist: 0.0 m
+INFO  [antenna_tracker] Command: yaw=0.0 deg pitch=0.0 deg Out: yaw=0.000 pitch=-1.000
+INFO  [antenna_tracker] Limits: yaw=[-15.0, 15.0] park=0.0 pitch=[0.0, 90.0] park=0.0
+INFO  [antenna_tracker] Reference: not captured
+INFO  [antenna_tracker] Position source: vehicle_global_position
+antenna_tracker: cycle: 8378 events, 82345us elapsed, 9.83us avg, min 5us max 1047us 27.270us rms
+antenna_tracker: interval: 8378 events, 19997.61us avg, min 18047us max 21987us 140.802us rms
+nsh> listener tracker_status
+
+TOPIC: tracker_status
+ tracker_status
+    timestamp: 179677782 (0.001669 seconds ago)
+    target_age_ms: 0
+    bearing_rad: 0.00000
+    pitch_rad: 0.00000
+    distance_m: 0.00000
+    yaw_error_rad: 0.00000
+    pitch_error_rad: 0.00000
+    yaw_output: 0.00000
+    pitch_output: -1.00000
+    scan_yaw_deg: 0.00000
+    scan_pitch_deg: 0.00000
+    yaw_setpoint_rad: nan
+    pitch_setpoint_rad: nan
+    yaw_measured_rad: 0.00000
+    pitch_measured_rad: 0.00000
+    yaw_command_deg: 0.00000
+    pitch_command_deg: 0.00000
+    target_valid: False
+    target_system: 0
+    mode: 0
+    state: 0
+    state_reason: 1
+    yaw_clipped: False
+    pitch_clipped: False
+
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 190417825 (0.010104 seconds ago)
+    timestamp_sample: 190417825 (0 us before timestamp)
+    control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+nsh> 
+
+
+
+BENCH 003:
+
+listener vehicle_attitude
+
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 199393690 (0.003249 seconds ago)
+    timestamp_sample: 199393379 (311 us before timestamp)
+    q: [-0.11272, 0.02906, -0.04294, 0.99227] (Roll: -5.3 deg, Pitch: -2.8 deg, Yaw: -166.9 deg)
+    delta_q_reset: [-0.10987, 0.00000, -0.00000, 0.99394]
+    quat_reset_counter: 1
+
+nsh> listener tracker_status
+
+TOPIC: tracker_status
+ tracker_status
+    timestamp: 209400777 (0.002360 seconds ago)
+    target_age_ms: 0
+    bearing_rad: 0.00000
+    pitch_rad: 0.00000
+    distance_m: 0.00000
+    yaw_error_rad: 0.00000
+    pitch_error_rad: 0.00000
+    yaw_output: 0.00000
+    pitch_output: -1.00000
+    scan_yaw_deg: 0.00000
+    scan_pitch_deg: 0.00000
+    yaw_setpoint_rad: nan
+    pitch_setpoint_rad: nan
+    yaw_measured_rad: 0.00000
+    pitch_measured_rad: 0.00000
+    yaw_command_deg: 0.00000
+    pitch_command_deg: 0.00000
+    target_valid: False
+    target_system: 0
+    mode: 0
+    state: 0
+    state_reason: 1
+    yaw_clipped: False
+    pitch_clipped: False
+
+nsh> 
+
+
+
+
+
+
+
+
+BENCH 002:
+
+
+
+NuttShell (NSH) NuttX-11.0.0
+nsh> param set TRK_MODE 1
+  TRK_MODE: curr: 0 -> new: 1
+nsh> param set TRK_SYSID_TGT 2
+  TRK_SYSID_TGT: curr: 0 -> new: 2
+nsh> param set TRK_TIMEOUT_MS 2000
+  TRK_TIMEOUT_MS: curr: 5000 -> new: 2000
+nsh> param set TRK_TGT_LAT 0
+nsh> param set TRK_TGT_LON 0
+nsh> param set TRK_TGT_ALT 0
+nsh> param show TRK_MODE
+Symbols: x = used, + = saved, * = unsaved
+x + TRK_MODE [811,1462] : 1
+
+ 950/1611 parameters used.
+nsh> param show TRK_SYSID_TGT
+Symbols: x = used, + = saved, * = unsaved
+x + TRK_SYSID_TGT [830,1481] : 2
+
+ 950/1611 parameters used.
+nsh> param show TRK_TIMEOUT_MS
+Symbols: x = used, + = saved, * = unsaved
+x + TRK_TIMEOUT_MS [834,1485] : 2000
+
+ 950/1611 parameters used.
+nsh> listener vehicle_global_position
+
+TOPIC: vehicle_global_position
+nsh> logger status
+INFO  [logger] Running in mode: all
+INFO  [logger] Number of subscriptions: 222 (7104 bytes)
+INFO  [logger] Full File Logging Running:
+INFO  [logger] Log file: /fs/microsd/log/2026-07-14/06_16_37.ulg
+INFO  [logger] Wrote 12.54 MiB (avg 57.28 KiB/s)
+INFO  [logger] Since last status: dropouts: 0 (max len: 0.000 s), max used buffer: 41490 / 65536 B
+nsh> 
+
+
+Terminal 1: 
+bytes: fc->qgc=4851964 qgc->fc=5280 inject->fc=1970
+bytes: fc->qgc=4892044 qgc->fc=5462 inject->fc=1970
+bytes: fc->qgc=4931939 qgc->fc=5556 inject->fc=1970
+bytes: fc->qgc=4971929 qgc->fc=5650 inject->fc=1970
+bytes: fc->qgc=5012021 qgc->fc=5744 inject->fc=1970
+bytes: fc->qgc=5052076 qgc->fc=5838 inject->fc=1970
+bytes: fc->qgc=5092000 qgc->fc=5932 inject->fc=1970
+bytes: fc->qgc=5131898 qgc->fc=6026 inject->fc=1970
+bytes: fc->qgc=5171909 qgc->fc=6120 inject->fc=1970
+bytes: fc->qgc=5211986 qgc->fc=6214 inject->fc=1970
+bytes: fc->qgc=5251793 qgc->fc=6352 inject->fc=1970
+bytes: fc->qgc=5291868 qgc->fc=6490 inject->fc=1970
+bytes: fc->qgc=5331909 qgc->fc=6584 inject->fc=1970
+bytes: fc->qgc=5372642 qgc->fc=6771 inject->fc=2328
+bytes: fc->qgc=5413444 qgc->fc=6958 inject->fc=2722
+bytes: fc->qgc=5454086 qgc->fc=7145 inject->fc=3116
+bytes: fc->qgc=5494327 qgc->fc=7239 inject->fc=3510
+bytes: fc->qgc=5535840 qgc->fc=7519 inject->fc=3904
+bytes: fc->qgc=5576127 qgc->fc=7613 inject->fc=3940
+bytes: fc->qgc=5616113 qgc->fc=7707 inject->fc=3940
+bytes: fc->qgc=5656009 qgc->fc=7801 inject->fc=3940
+bytes: fc->qgc=5695996 qgc->fc=7895 inject->fc=4029
+bytes: fc->qgc=5736265 qgc->fc=8082 inject->fc=4423
+bytes: fc->qgc=5777103 qgc->fc=8362 inject->fc=4817
+bytes: fc->qgc=5818610 qgc->fc=8828 inject->fc=5211
+bytes: fc->qgc=5858786 qgc->fc=9015 inject->fc=5605
+bytes: fc->qgc=5898962 qgc->fc=9109 inject->fc=5641
+bytes: fc->qgc=5939051 qgc->fc=9203 inject->fc=5641
+bytes: fc->qgc=5978989 qgc->fc=9297 inject->fc=5641
+bytes: fc->qgc=6019269 qgc->fc=9391 inject->fc=5641
+bytes: fc->qgc=6059047 qgc->fc=9485 inject->fc=5641
+bytes: fc->qgc=6098728 qgc->fc=9579 inject->fc=5641
+bytes: fc->qgc=6139059 qgc->fc=9673 inject->fc=5641
+bytes: fc->qgc=6178983 qgc->fc=9767 inject->fc=5641
+bytes: fc->qgc=6219036 qgc->fc=9861 inject->fc=5641
+bytes: fc->qgc=6258933 qgc->fc=9955 inject->fc=5641
+bytes: fc->qgc=6298821 qgc->fc=10049 inject->fc=5641
+bytes: fc->qgc=6338800 qgc->fc=10143 inject->fc=5641
+bytes: fc->qgc=6378703 qgc->fc=10237 inject->fc=5641
+bytes: fc->qgc=6418595 qgc->fc=10331 inject->fc=5641
+bytes: fc->qgc=6458738 qgc->fc=10425 inject->fc=5641
+bytes: fc->qgc=6498793 qgc->fc=10519 inject->fc=5641
+bytes: fc->qgc=6538719 qgc->fc=10613 inject->fc=5641
+bytes: fc->qgc=6578617 qgc->fc=10707 inject->fc=5641
+bytes: fc->qgc=6618517 qgc->fc=10801 inject->fc=5641
+bytes: fc->qgc=6658400 qgc->fc=10895 inject->fc=5641
+bytes: fc->qgc=6698454 qgc->fc=10989 inject->fc=5641
+bytes: fc->qgc=6738297 qgc->fc=11083 inject->fc=5641
+bytes: fc->qgc=6778271 qgc->fc=11177 inject->fc=5641
+
+
+
+Terminal 2:
+ubuntu@ubuntu:~/Dev/PX4_tracker/PX4-Autopilot$ python3 Tools/antenna_tracker/send_target.py   --port udpout:127.0.0.1:18570   --sysid 2   --compid 1   --mode static   --radius 20   --alt 0   --center-lat 1   --center-lon 1   --center-alt 20   --duration 10
+=== Antenna Tracker MAVLink Target Simulator ===
+  Connection:  udpout:127.0.0.1:18570
+  Source:      2/1
+  Mode:        static
+  Rate:        5.0 Hz
+  HEARTBEAT:   1.0 Hz, MAV_TYPE=2
+  Duration:    10.0s
+
+  Alt above:   0.0m
+  Center:      1.000000, 1.000000
+
+Sending target HEARTBEAT and GLOBAL_POSITION_INT messages... (Ctrl+C to stop)
+  [   0.8s] msg #   5 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   1.8s] msg #  10 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   2.8s] msg #  15 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   3.8s] msg #  20 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   4.8s] msg #  25 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   5.8s] msg #  30 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   6.8s] msg #  35 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+  [   7.8s] msg #  40 | lat=10000000 lon=10001798 | bearing= 90.0° dist=  20.0m | v=( +0.0,  +0.0) m/s
+
+
+
+
+Mavlink console:
+listener tracker_target_position
+
+TOPIC: tracker_target_position
+ tracker_target_position
+    timestamp: 647533226 (0.152416 seconds ago)
+    last_update_us: 647533226
+    lat: 10000000
+    lon: 10001798
+    alt_mm: 20000
+    relative_alt_mm: 0
+    vx_m_s: 0.00000
+    vy_m_s: 0.00000
+    vz_m_s: 0.00000
+    target_age_ms: 0
+    target_system: 2
+    valid: True
+    source_component: 1
+    source_instance: 2
+    position_valid: True
+    velocity_valid: True
+    altitude_valid: True
+    heartbeat_valid: True
+    source_type: 2
+
+nsh> listener tracker_target_position
+
+TOPIC: tracker_target_position
+ tracker_target_position
+    timestamp: 649136200 (0.148323 seconds ago)
+    last_update_us: 649136200
+    lat: 10000000
+    lon: 10001798
+    alt_mm: 20000
+    relative_alt_mm: 0
+    vx_m_s: 0.00000
+    vy_m_s: 0.00000
+    vz_m_s: 0.00000
+    target_age_ms: 0
+    target_system: 2
+    valid: True
+    source_component: 1
+    source_instance: 2
+    position_valid: True
+    velocity_valid: True
+    altitude_valid: True
+    heartbeat_valid: True
+    source_type: 2
+
+nsh> listener tracker_target_position
+
+TOPIC: tracker_target_position
+ tracker_target_position
+    timestamp: 649937182 (0.113856 seconds ago)
+    last_update_us: 649937182
+    lat: 10000000
+    lon: 10001798
+    alt_mm: 20000
+    relative_alt_mm: 0
+    vx_m_s: 0.00000
+    vy_m_s: 0.00000
+    vz_m_s: 0.00000
+    target_age_ms: 0
+    target_system: 2
+    valid: True
+    source_component: 1
+    source_instance: 2
+    position_valid: True
+    velocity_valid: True
+    altitude_valid: True
+    heartbeat_valid: True
+    source_type: 2
+
+nsh> listener tracker_status
+
+TOPIC: tracker_status
+ tracker_status
+    timestamp: 654376772 (0.001540 seconds ago)
+    target_age_ms: 31
+    bearing_rad: 0.00000
+    pitch_rad: 0.00000
+    distance_m: 0.00000
+    yaw_error_rad: 0.00000
+    pitch_error_rad: 0.00000
+    yaw_output: 0.00000
+    pitch_output: 0.00000
+    scan_yaw_deg: 0.00000
+    scan_pitch_deg: 0.00000
+    yaw_setpoint_rad: nan
+    pitch_setpoint_rad: nan
+    yaw_measured_rad: 0.00000
+    pitch_measured_rad: 0.00000
+    yaw_command_deg: 0.00000
+    pitch_command_deg: 0.00000
+    target_valid: True
+    target_system: 2
+    mode: 1
+    state: 6
+    state_reason: 4
+    yaw_clipped: False
+    pitch_clipped: False
+
+nsh> listener tracker_status
+
+TOPIC: tracker_status
+ tracker_status
+    timestamp: 655676855 (0.005973 seconds ago)
+    target_age_ms: 129
+    bearing_rad: 0.00000
+    pitch_rad: 0.00000
+    distance_m: 0.00000
+    yaw_error_rad: 0.00000
+    pitch_error_rad: 0.00000
+    yaw_output: 0.00000
+    pitch_output: 0.00000
+    scan_yaw_deg: 0.00000
+    scan_pitch_deg: 0.00000
+    yaw_setpoint_rad: nan
+    pitch_setpoint_rad: nan
+    yaw_measured_rad: 0.00000
+    pitch_measured_rad: 0.00000
+    yaw_command_deg: 0.00000
+    pitch_command_deg: 0.00000
+    target_valid: True
+    target_system: 2
+    mode: 1
+    state: 6
+    state_reason: 4
+    yaw_clipped: False
+    pitch_clipped: False
+
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 665656771 (0.016447 seconds ago)
+    timestamp_sample: 665656771 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 666716772 (0.015273 seconds ago)
+    timestamp_sample: 666716772 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 667396772 (0.018969 seconds ago)
+    timestamp_sample: 667396772 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 667976771 (0.006073 seconds ago)
+    timestamp_sample: 667976771 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 668496772 (0.018130 seconds ago)
+    timestamp_sample: 668496772 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 669016798 (0.016881 seconds ago)
+    timestamp_sample: 669016798 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 669517166 (0.013587 seconds ago)
+    timestamp_sample: 669517166 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+
+TOPIC: actuator_servos
+ actuator_servos
+    timestamp: 670016772 (0.016210 seconds ago)
+    timestamp_sample: 670016772 (0 us before timestamp)
+    control: [0.00000, 0.00000, nan, nan, nan, nan, nan, nan]
+nsh> 
+
+
+logger off
+nsh> logger status
+INFO  [logger] Running in mode: all
+INFO  [logger] Number of subscriptions: 222 (7104 bytes)
+INFO  [logger] Full File Logging Running:
+INFO  [logger] Log file: /fs/microsd/log/2026-07-14/06_16_37.ulg
+INFO  [logger] Wrote 45.29 MiB (avg 57.18 KiB/s)
+INFO  [logger] Since last status: dropouts: 0 (max len: 0.000 s), max used buffer: 14346 / 65536 B
+nsh> clr
+
+
+BENCH 003:
+Dung
+logger on
+nsh> listener vehicle_attitude
+
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 887811810 (0.003927 seconds ago)
+    timestamp_sample: 887811630 (180 us before timestamp)
+    q: [-0.33705, 0.03318, -0.03784, 0.94013] (Roll: -5.4 deg, Pitch: -2.1 deg, Yaw: -140.5 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+Xoay yaw 10:
+nsh> listener vehicle_attitude
+
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 923819287 (0.002766 seconds ago)
+    timestamp_sample: 923819106 (181 us before timestamp)
+    q: [-0.43637, 0.03677, -0.03384, 0.89837] (Roll: -5.3 deg, Pitch: -2.1 deg, Yaw: -128.1 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+
+nsh> listener vehicle_attitude
+
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 925980992 (0.000564 seconds ago)
+    timestamp_sample: 925980760 (232 us before timestamp)
+    q: [-0.42585, 0.03657, -0.03419, 0.90340] (Roll: -5.3 deg, Pitch: -2.1 deg, Yaw: -129.4 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+
+nsh> listener vehicle_attitude
+Dung yen:
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 946541785 (0.001420 seconds ago)
+    timestamp_sample: 946541531 (254 us before timestamp)
+    q: [-0.32138, 0.20442, 0.03909, 0.92379] (Roll: -3.7 deg, Pitch: -23.8 deg, Yaw: -140.9 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+
+nsh> listener vehicle_attitude
+Pitch 10
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 949994367 (0.002829 seconds ago)
+    timestamp_sample: 949994182 (185 us before timestamp)
+    q: [-0.33610, 0.10595, -0.00296, 0.93584] (Roll: -4.5 deg, Pitch: -11.3 deg, Yaw: -140.0 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+
+nsh> 
+
+
+Khi dat FC tracker tren mam xoay yaw, khong co lap servo pitch, khi dieu khien thi no di, ve stop thi no ve park
+nsh> listener vehicle_attitude
+
+TOPIC: vehicle_attitude
+ vehicle_attitude
+    timestamp: 1106551187 (0.003683 seconds ago)
+    timestamp_sample: 1106551006 (181 us before timestamp)
+    q: [-0.34471, 0.03303, -0.03703, 0.93739] (Roll: -5.3 deg, Pitch: -2.1 deg, Yaw: -139.5 deg)
+    delta_q_reset: [-0.26636, 0.00000, -0.00000, 0.96387]
+    quat_reset_counter: 1
+
+nsh> 
+
+
+
+gate 5: 
+
+nsh> logger off
+nsh> 
+ubuntu@ubuntu:~/Dev/PX4_tracker$ sha256sum log_3_2026-7-14-13-38-36.ulg 
+2ccfd236c57df62c185a5368b25b8764469ba6103316e442a08e618f49a1a31b  log_3_2026-7-14-13-38-36.ulg
+ubuntu@ubuntu:~/Dev/PX4_tracker$ ulog_info log_3_2026-7-14-13-38-36.ulg 
+Logging start time: 0:00:01, duration: 0:21:58
+No Dropouts
+Info Messages:
+ boot_time_utc_us: 1784009795720480
+ metadata_events_sha256: f553f9e98252b46e41ffd18b262109f22227d2690518d0cf03a24085ac15f162
+ sys_mcu: STM32H7[4|5]xxx, rev. V
+ sys_name: PX4
+ sys_os_name: NuttX
+ sys_os_ver: fb2fadf6f599c1406f052db013efd00a2518e72c
+ sys_os_ver_release: 184549631
+ sys_toolchain: GNU GCC
+ sys_toolchain_ver: 13.2.1 20231009
+ sys_uuid: 000600000000303736303532510c002b0018
+ time_ref_utc: 0
+ ver_data_format: 2
+ ver_hw: PX4_FMU_V6X
+ ver_hw_subtype: V6X001
+ ver_sw: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+ ver_sw_branch: antenna_tracker
+ ver_sw_release: 17891328
+Info Multiple Messages: [boot_console_output: 1], [excluded_optional_topics: 40], [metadata_events: 1], [perf_counter_preflight: 1], [perf_top_preflight: 1]
+
+Name (multi id, message size in bytes)    number of data points, total bytes
+ actuator_armed (0, 15)                      3015      45225
+ actuator_outputs (0, 76)                       1         76
+ actuator_outputs (1, 76)                   13189    1002364
+ actuator_servos (0, 48)                    65940    3165120
+ actuator_test (0, 19)                         34        646
+ can_interface_status (0, 33)               12923     426459
+ can_interface_status (1, 33)               12923     426459
+ config_overrides (0, 14)                    2605      36470
+ cpuload (0, 16)                             2638      42208
+ distance_sensor_mode_change_request (0, 9)       1          9
+ estimator_aid_src_baro_hgt (0, 59)          2637     155583
+ estimator_aid_src_baro_hgt (1, 59)          2637     155583
+ estimator_aid_src_baro_hgt (2, 59)          2637     155583
+ estimator_aid_src_fake_hgt (0, 59)             3        177
+ estimator_aid_src_fake_pos (0, 95)          2637     250515
+ estimator_aid_src_gravity (0, 115)          2637     303255
+ estimator_aid_src_gravity (1, 115)          2637     303255
+ estimator_aid_src_gravity (2, 115)          2637     303255
+ estimator_aid_src_mag (0, 115)              2637     303255
+ estimator_aid_src_mag (1, 115)              2637     303255
+ estimator_aid_src_mag (2, 115)              2637     303255
+ estimator_attitude (0, 49)                  2625     128625
+ estimator_attitude (1, 49)                  2624     128576
+ estimator_attitude (2, 49)                  2624     128576
+ estimator_event_flags (0, 37)               1317      48729
+ estimator_event_flags (1, 37)               1310      48470
+ estimator_event_flags (2, 37)               1308      48396
+ estimator_innovation_test_ratios (0, 140)    2637     369180
+ estimator_innovation_test_ratios (1, 140)    2638     369320
+ estimator_innovation_test_ratios (2, 140)    2638     369320
+ estimator_innovation_variances (0, 140)     2638     369320
+ estimator_innovation_variances (1, 140)     2638     369320
+ estimator_innovation_variances (2, 140)     2638     369320
+ estimator_innovations (0, 140)              2638     369320
+ estimator_innovations (1, 140)              2638     369320
+ estimator_innovations (2, 140)              2638     369320
+ estimator_local_position (0, 192)           2638     506496
+ estimator_local_position (1, 192)           2638     506496
+ estimator_local_position (2, 192)           2638     506496
+ estimator_odometry (0, 108)                 2638     284904
+ estimator_odometry (1, 108)                 2638     284904
+ estimator_odometry (2, 108)                 2638     284904
+ estimator_selector_status (0, 153)          1320     201960
+ estimator_sensor_bias (0, 118)              1318     155524
+ estimator_sensor_bias (1, 118)              1313     154934
+ estimator_sensor_bias (2, 118)              1311     154698
+ estimator_states (0, 213)                   2638     561894
+ estimator_states (1, 213)                   2638     561894
+ estimator_states (2, 213)                   2638     561894
+ estimator_status (0, 129)                   6595     850755
+ estimator_status (1, 129)                   6593     850497
+ estimator_status (2, 129)                   6593     850497
+ estimator_status_flags (0, 97)              1321     128137
+ estimator_status_flags (1, 97)              1314     127458
+ estimator_status_flags (2, 97)              1312     127264
+ event (0, 40)                                164       6560
+ failsafe_flags (0, 91)                      2414     219674
+ failure_detector_status (0, 24)             2677      64248
+ magnetometer_bias_estimate (0, 64)          6595     422080
+ manual_control_setpoint (0, 65)                1         65
+ navigator_status (0, 10)                    2595      25950
+ parameter_update (0, 34)                       6        204
+ position_setpoint_triplet (0, 248)          6595    1635560
+ px4io_status (0, 141)                       1292     182172
+ rtl_status (0, 16)                           653      10448
+ rtl_time_estimate (0, 17)                    651      11067
+ sensor_accel (0, 44)                        1319      58036
+ sensor_accel (1, 44)                        1319      58036
+ sensor_accel (2, 44)                        1319      58036
+ sensor_baro (0, 32)                         1319      42208
+ sensor_baro (1, 32)                         1319      42208
+ sensor_combined (0, 48)                   262894   12618912
+ sensor_gyro (0, 44)                         1319      58036
+ sensor_gyro (1, 44)                         1319      58036
+ sensor_gyro (2, 44)                         1319      58036
+ sensor_mag (0, 40)                          1319      52760
+ sensor_preflight_mag (0, 12)                2638      31656
+ sensor_selection (0, 16)                       1         16
+ sensors_status_imu (0, 96)                  6595     633120
+ system_power (0, 42)                        2637     110754
+ telemetry_status (0, 84)                    1318     110712
+ telemetry_status (1, 84)                    1318     110712
+ tracker_status (0, 79)                     26377    2083783
+ transponder_report (0, 78)                     1         78
+ vehicle_acceleration (0, 28)               26377     738556
+ vehicle_air_data (0, 38)                    6595     250610
+ vehicle_angular_velocity (0, 40)          376781   15071240
+ vehicle_attitude (0, 49)                  261554   12816146
+ vehicle_command (0, 55)                      433      23815
+ vehicle_command_ack (0, 22)                  477      10494
+ vehicle_control_mode (0, 23)                3015      69345
+ vehicle_imu (0, 60)                         2638     158280
+ vehicle_imu (1, 60)                         2638     158280
+ vehicle_imu (2, 60)                         2638     158280
+ vehicle_imu_status (0, 132)                 1319     174108
+ vehicle_imu_status (1, 132)                 1319     174108
+ vehicle_imu_status (2, 132)                 1319     174108
+ vehicle_local_position (0, 192)            13189    2532288
+ vehicle_magnetometer (0, 33)                2637      87021
+ vehicle_status (0, 74)                      3015     223110
+ubuntu@ubuntu:~/Dev/PX4_tracker$ 
+
