@@ -1,0 +1,37 @@
+run_id: 20260714.024000-v6x-attitude-precheck
+test_id: BENCH-003
+timestamp_utc: '2026-07-14T02:40:00Z'
+operator: user, transcribed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 0
+  target_source: not_applicable; attitude publication pre-check
+expected:
+  vehicle_attitude: fresh and finite while tracker is running
+  moving_imu_validation: head motion changes yaw and pitch in the expected direction
+  compass_validation: servo power/load does not create unacceptable heading error
+observed:
+  vehicle_attitude_timestamp_us: 199393690
+  roll_deg: -5.3
+  pitch_deg: -2.8
+  yaw_deg: -166.9
+  tracker_state: 0
+  moving_imu_observation: not_recorded
+  compass_under_servo_load: not_recorded
+verdict: blocked
+notes: 'One fresh vehicle_attitude sample is present. It does not demonstrate that the FC moves with the antenna head, nor compass integrity under servo current; both remain required for BENCH-003.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-001/20260714.024000-v6x-aux-console.txt
+    sha256: e61a90064f9433c947c3f046fb517f8580f08650ef7cfaea0a9d636d93d7b59b

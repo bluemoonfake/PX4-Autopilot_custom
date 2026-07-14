@@ -187,7 +187,7 @@ tests:
     acceptance:
       - Servo1 drives yaw and Servo2 drives pitch
       - PWM min/max/disarmed/failsafe values are recorded
-    evidence: [parameter dump, photo or video, console log]
+    evidence: [parameter dump, operator observation record, console log]
 
   - id: BENCH-002
     gate: 7
@@ -199,7 +199,7 @@ tests:
       - both axes move in intended direction
       - bounded test cannot hit mechanical stops
       - startup, STOP, and timeout reach park behavior
-    evidence: [video, parameter dump, console log]
+    evidence: [operator observation record, parameter dump, console log]
 
   - id: BENCH-003
     gate: 7
@@ -210,7 +210,7 @@ tests:
     acceptance:
       - antenna head rotation changes vehicle_attitude correctly
       - compass remains acceptable under servo power/load
-    evidence: [video, tracker status, ULog]
+    evidence: [operator observation record, tracker status, ULog]
 
   - id: HW-001
     gate: 7

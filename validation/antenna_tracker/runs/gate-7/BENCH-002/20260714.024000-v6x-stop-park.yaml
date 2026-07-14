@@ -1,0 +1,45 @@
+run_id: 20260714.024000-v6x-stop-park
+test_id: BENCH-002
+timestamp_utc: '2026-07-14T02:40:00Z'
+operator: user, transcribed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: not_applicable
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  parameters:
+    TRK_MODE: 0
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_YAW_PARK: 0
+    TRK_PIT_MIND: 0
+    TRK_PIT_MAXD: 90
+    TRK_PIT_PARK: 0
+  target_source: not_applicable; STOP-state pre-check
+expected:
+  stop_state: tracker selects documented yaw/pitch park command
+  bounded_yaw_sector: requested yaw remains within configured mechanical sector
+observed:
+  status_mode: 0
+  status_state: 0
+  status_state_reason: 1
+  yaw_command_deg: 0.0
+  pitch_command_deg: 0.0
+  output: [0.0, -1.0]
+  configured_yaw_sector_deg: [-15.0, 15.0]
+  physical_park_observation: not_recorded
+  startup_and_timeout_observation: not_recorded
+verdict: blocked
+notes: 'This demonstrates the firmware STOP output and configured narrow yaw sector only. Direction, physical stops, power-cycle no-jump, and MAVLink timeout-to-park are not yet exercised.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-001/20260714.024000-v6x-aux-console.txt
+    sha256: e61a90064f9433c947c3f046fb517f8580f08650ef7cfaea0a9d636d93d7b59b

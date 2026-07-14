@@ -1,0 +1,54 @@
+run_id: 20260714.024000-v6x-aux
+test_id: BENCH-001
+timestamp_utc: '2026-07-14T02:40:00Z'
+operator: user, transcribed by Codex
+git:
+  head_commit: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+environment:
+  class: bench
+  board: px4_fmu-v6x
+  airframe_id: 4099
+setup:
+  imu_mount: not_applicable
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  parameters:
+    PWM_AUX_FUNC1: 201
+    PWM_AUX_FUNC2: 202
+    PWM_AUX_MIN1: 1400
+    PWM_AUX_MAX1: 1600
+    PWM_AUX_DIS1: 1500
+    PWM_AUX_FAIL1: 1500
+    PWM_AUX_MIN2: 1000
+    PWM_AUX_MAX2: 2000
+    PWM_AUX_DIS2: 1500
+    PWM_AUX_FAIL2: -1
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_YAW_PARK: 0
+    TRK_PIT_MIND: 0
+    TRK_PIT_MAXD: 90
+    TRK_PIT_PARK: 0
+  target_source: not_applicable; servo-test output-path pre-check
+expected:
+  yaw_mapping: AUX1 receives Servo1 output
+  pitch_mapping: AUX2 receives Servo2 output
+  servo_test_bound: both controls remain within [-0.5, 0.5]
+observed:
+  firmware_board: PX4_FMU_V6X
+  firmware_git_hash: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+  safe_stop_output: [0.0, -1.0]
+  servo_test_sampled_min: -0.39
+  servo_test_sampled_max: 0.47997
+  yaw_and_pitch_control_equal_during_test: true
+  physical_axis_observation: not_recorded
+  pwm_measurement: not_recorded
+verdict: blocked
+notes: 'The FC-side build, airframe, AUX mapping, park command, and bounded servo-test publication are evidenced. Physical yaw/pitch response was not reported, so this does not yet prove AUX1 drives yaw and AUX2 drives pitch. AUX1 yaw park is internally consistent at 1500 us. AUX2 is not ready for a pitch servo: TRK_PIT_PARK=0 degrees maps to 1000 us, while PWM_AUX_DIS2=1500 and PWM_AUX_FAIL2=-1. Set both AUX2 disarmed and failsafe PWM to the calibrated pitch park PWM before connecting the pitch servo.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-001/20260714.024000-v6x-aux-console.txt
+    sha256: e61a90064f9433c947c3f046fb517f8580f08650ef7cfaea0a9d636d93d7b59b

@@ -1,0 +1,165 @@
+Operator-provided hardware console transcript, 2026-07-14.
+
+BENCH RUN
+
+NuttShell (NSH) NuttX-11.0.0
+nsh> ver all
+HW arch: PX4_FMU_V6X
+HW type: V6X
+HW FMUM ID: 0x001
+HW BASE ID: 0x002
+PX4 git-hash: 7b16eaaeefabd4116ac8002d3c27e31203195e5e
+PX4 version: 1.17.0 0 (17891328)
+PX4 git-branch: antenna_tracker
+OS: NuttX
+OS version: Release 11.0.0 (184549631)
+OS git-hash: fb2fadf6f599c1406f052db013efd00a2518e72c
+Build datetime: Jul 14 2026 09:20:15
+Build uri: localhost
+Build variant: antenna_tracker
+Toolchain: GNU GCC, 13.2.1 20231009
+PX4GUID: 000600000000303736303532510c002b0018
+MCU: STM32H7[4|5]xxx, rev. V
+
+nsh> param show SYS_AUTOSTART
+x + SYS_AUTOSTART : 4099
+nsh> param show MAV_TYPE
+x   MAV_TYPE : 5
+nsh> antenna_tracker status
+INFO  [antenna_tracker] Mode: STOP (TRK_MODE)
+INFO  [antenna_tracker] Target: none sysid=0 compid=0
+INFO  [antenna_tracker] Bearing: 0.0 deg Pitch: 0.0 deg Dist: 0.0 m
+INFO  [antenna_tracker] Command: yaw=0.0 deg pitch=0.0 deg Out: yaw=0.000 pitch=-1.000
+INFO  [antenna_tracker] Limits: yaw=[-15.0, 15.0] park=0.0 pitch=[0.0, 90.0] park=0.0
+INFO  [antenna_tracker] Reference: not captured
+INFO  [antenna_tracker] Position source: vehicle_global_position
+
+nsh> param show PWM_AUX_FUNC1
+x + PWM_AUX_FUNC1 : 201
+nsh> param show PWM_AUX_FUNC2
+x + PWM_AUX_FUNC2 : 202
+nsh> param show PWM_AUX_MIN1
+x + PWM_AUX_MIN1 : 1400
+nsh> param show PWM_AUX_MIN2
+x   PWM_AUX_MIN2 : 1000
+nsh> param show PWM_AUX_MAX1
+x + PWM_AUX_MAX1 : 1600
+nsh> param show PWM_AUX_MAX2
+x   PWM_AUX_MAX2 : 2000
+nsh> param show PWM_AUX_DIS1
+x + PWM_AUX_DIS1 : 1500
+nsh> param show PWM_AUX_DIS2
+x + PWM_AUX_DIS2 : 1500
+nsh> param show PWM_AUX_FAIL1
+x + PWM_AUX_FAIL1 : 1500
+nsh> param show PWM_AUX_FAIL2
+x   PWM_AUX_FAIL2 : -1
+nsh> param show TRK_YAW_MIND
+x + TRK_YAW_MIND : -15.0000
+nsh> param show TRK_YAW_MAXD
+x   TRK_YAW_MAXD : 15.0000
+nsh> param show TRK_YAW_PARK
+x   TRK_YAW_PARK : 0.0000
+nsh> param show TRK_PIT_MIND
+x   TRK_PIT_MIND : 0.0000
+nsh> param show TRK_PIT_MAXD
+x   TRK_PIT_MAXD : 90.0000
+nsh> param show TRK_PIT_PARK
+x   TRK_PIT_PARK : 0.0000
+
+BENCH-001
+
+nsh> param set TRK_MODE 0
+nsh> param set TRK_SERVO_TEST 0
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+
+nsh> param set TRK_SERVO_TEST 1
+TRK_SERVO_TEST: curr: 0 -> new: 1
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.23016, -0.23016, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.13000, -0.13000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.18014, 0.18014, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.23000, 0.23000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.47997, 0.47997, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.19000, 0.19000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.09999, -0.09999, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.39000, -0.39000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.32989, -0.32989, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.03999, -0.03999, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.23000, 0.23000, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.30997, 0.30997, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.01994, 0.01994, nan, nan, nan, nan, nan, nan]
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [-0.24000, -0.24000, nan, nan, nan, nan, nan, nan]
+nsh> param set TRK_SERVO_TEST 0
+TRK_SERVO_TEST: curr: 1 -> new: 0
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+
+BENCH-002
+
+nsh> antenna_tracker status
+INFO  [antenna_tracker] Mode: STOP (TRK_MODE)
+INFO  [antenna_tracker] Target: none sysid=0 compid=0
+INFO  [antenna_tracker] Bearing: 0.0 deg Pitch: 0.0 deg Dist: 0.0 m
+INFO  [antenna_tracker] Command: yaw=0.0 deg pitch=0.0 deg Out: yaw=0.000 pitch=-1.000
+INFO  [antenna_tracker] Limits: yaw=[-15.0, 15.0] park=0.0 pitch=[0.0, 90.0] park=0.0
+INFO  [antenna_tracker] Reference: not captured
+INFO  [antenna_tracker] Position source: vehicle_global_position
+nsh> listener tracker_status
+TOPIC: tracker_status
+ target_valid: False
+ mode: 0
+ state: 0
+ state_reason: 1
+ yaw_command_deg: 0.00000
+ pitch_command_deg: 0.00000
+ yaw_output: 0.00000
+ pitch_output: -1.00000
+nsh> listener actuator_servos
+TOPIC: actuator_servos
+ control: [0.00000, -1.00000, nan, nan, nan, nan, nan, nan]
+
+BENCH-003
+
+nsh> listener vehicle_attitude
+TOPIC: vehicle_attitude
+ timestamp: 199393690
+ q: [-0.11272, 0.02906, -0.04294, 0.99227] (Roll: -5.3 deg, Pitch: -2.8 deg, Yaw: -166.9 deg)
+nsh> listener tracker_status
+TOPIC: tracker_status
+ target_valid: False
+ mode: 0
+ state: 0
+ state_reason: 1
+ yaw_output: 0.00000
+ pitch_output: -1.00000
