@@ -354,6 +354,16 @@ void AntennaTracker::run_tracking(float dt)
 
 	vehicle_global_position_s global_position{};
 	bool position_valid = _vehicle_global_position_sub.copy(&global_position) && is_global_position_valid(global_position);
+
+#if defined(__PX4_POSIX)
+	// This is intentionally a tracker-local SITL test hook. Do not stop EKF2 or
+	// publish a competing vehicle_global_position just to exercise home fallback.
+	if (_sitl_force_global_position_invalid.load()) {
+		position_valid = false;
+	}
+#endif
+
+	_using_home_fallback = false;
 	int32_t tracker_lat_e7 = 0;
 	int32_t tracker_lon_e7 = 0;
 	float tracker_alt_m = 0.f;
@@ -370,6 +380,7 @@ void AntennaTracker::run_tracking(float dt)
 		tracker_lon_e7 = _param_trk_home_lon.get();
 		tracker_alt_m = static_cast<float>(_param_trk_home_alt.get()) * 0.001f;
 		position_valid = true;
+		_using_home_fallback = true;
 	}
 
 	const uint64_t now_us = hrt_absolute_time();
@@ -574,6 +585,32 @@ int AntennaTracker::task_spawn(int argc, char *argv[])
 
 int AntennaTracker::custom_command(int argc, char *argv[])
 {
+
+#if defined(__PX4_POSIX)
+	if (argc == 3 && !strcmp(argv[0], "test") && !strcmp(argv[1], "gpos-loss")) {
+		AntennaTracker *instance = get_instance();
+
+		if (instance == nullptr) {
+			PX4_ERR("not running");
+			return PX4_ERROR;
+		}
+
+		if (!strcmp(argv[2], "on")) {
+			instance->_sitl_force_global_position_invalid.store(true);
+			PX4_INFO("SITL test: tracker-local global-position loss enabled");
+			return PX4_OK;
+		}
+
+		if (!strcmp(argv[2], "off")) {
+			instance->_sitl_force_global_position_invalid.store(false);
+			PX4_INFO("SITL test: tracker-local global-position loss disabled");
+			return PX4_OK;
+		}
+
+		return print_usage("test gpos-loss requires 'on' or 'off'");
+	}
+#endif
+
 	if (argc > 0 && !strcmp(argv[0], "set_home")) {
 		vehicle_global_position_s global_position{};
 		const int subscription = orb_subscribe(ORB_ID(vehicle_global_position));
@@ -624,6 +661,12 @@ int AntennaTracker::print_status()
 		 (double)_setpoint_planner.pitch_min_deg(), (double)_setpoint_planner.pitch_max_deg(),
 		 (double)_setpoint_planner.pitch_park_deg());
 	PX4_INFO("Reference: %s", _head_reference_valid ? "captured at park" : "not captured");
+	PX4_INFO("Position source: %s", _using_home_fallback ? "TRK_HOME fallback" : "vehicle_global_position");
+
+#if defined(__PX4_POSIX)
+	PX4_INFO("SITL test global-position loss: %s", _sitl_force_global_position_invalid.load() ? "enabled" : "disabled");
+#endif
+
 	perf_print_counter(_loop_perf);
 	perf_print_counter(_loop_interval_perf);
 	return 0;
@@ -649,6 +692,10 @@ level-horizon calibration before configuring mechanical servo trim.
 	PRINT_MODULE_USAGE_NAME("antenna_tracker", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_COMMAND("set_home");
+#if defined(__PX4_POSIX)
+	PRINT_MODULE_USAGE_COMMAND_DESCR("test", "SITL-only tracker-local fault injection.");
+	PRINT_MODULE_USAGE_ARG("gpos-loss on|off", "Force only the tracker to treat global position as unavailable.", false);
+#endif
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 	return 0;
 }

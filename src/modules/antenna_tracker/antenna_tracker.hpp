@@ -119,6 +119,13 @@ private:
 	bool _head_reference_valid{false};
 	float _yaw_home_rad{0.f};
 	float _pitch_home_rad{0.f};
+	bool _using_home_fallback{false};
+
+#if defined(__PX4_POSIX)
+	// Deliberately local, non-persistent fault injection for the SITL evidence
+	// path. It never changes the vehicle_global_position uORB publication.
+	px4::atomic<bool> _sitl_force_global_position_invalid{false};
+#endif
 
 	float _servo_test_phase{0.f};
 	uint64_t _boot_time_us{0};
