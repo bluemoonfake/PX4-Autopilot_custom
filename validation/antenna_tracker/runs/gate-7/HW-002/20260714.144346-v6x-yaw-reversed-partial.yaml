@@ -1,0 +1,76 @@
+run_id: 20260714.144346-v6x-yaw-reversed-partial
+test_id: HW-002
+timestamp_utc: '2026-07-14T14:43:46Z'
+operator: user and Codex
+git:
+  head_commit: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+build:
+  target: px4_fmu-v6x_antenna_tracker
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot-bld-80d04b02/build/px4_fmu-v6x_antenna_tracker/px4_fmu-v6x_antenna_tracker.px4
+  artifact_sha256: 52fc390a7cf35a04ff7575457125d8fdbdf1fa93f01f16861c4af0830cb81183
+environment:
+  class: hardware
+  board: px4_fmu-v6x
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04 router host; NuttX target
+  mavlink_ingress: UDP 127.0.0.1:18570 through usb_router.py to /dev/ttyACM0 at 2000000
+setup:
+  imu_mount: moving_with_antenna
+  actuator_mapping: AUX1 Servo1 yaw; AUX2 Servo2 pitch
+  servo_hardware: yaw servo powered; pitch mechanics unavailable and not tested
+  parameters:
+    TRK_MODE: 1
+    TRK_SYSID_TGT: 2
+    TRK_HOME_EN: 1
+    TRK_HOME_LAT: 0
+    TRK_HOME_LON: 0
+    TRK_HOME_ALT: 0
+    TRK_YAW_REV: 1
+    TRK_YAW_MIND: -15
+    TRK_YAW_MAXD: 15
+    TRK_YAW_PARK: 0
+    TRK_YAW_SLEW: 2
+  target_source: static MAVLink vehicle 2/1 at 5 Hz; 154.7-degree reference then +5, -5, and return bearings
+expected:
+  yaw_direction: positive and negative static commands move the measured yaw in the matching direction
+  yaw_return: zero target returns the head near its captured reference
+  yaw_accuracy: known static target reaches an explicitly documented angular bound within an explicitly documented settle time
+  pitch_accuracy: equivalent elevation cases complete after pitch mechanics are installed
+  stop_safety: STOP commands park output
+observed:
+  yaw_reverse_enabled: true
+  yaw_direction_precheck: pass
+  plus_command_deg: 4.800
+  plus_yaw_start_deg: 154.709
+  plus_yaw_end_deg: 156.517
+  plus_final_error_deg: 3.182
+  minus_command_deg: -5.199
+  minus_yaw_start_deg: 155.455
+  minus_yaw_end_deg: 150.991
+  minus_final_error_deg: -1.292
+  return_yaw_end_deg: 154.368
+  return_final_error_deg: 0.333
+  target_valid_during_steps: true
+  tracking_state: 1
+  pitch_axis: not tested
+  final_stop_output: '[0.00000, 0.00000]'
+  ulog_dropouts: 0
+metrics:
+  plus_dwell_s: 21.80
+  minus_dwell_s: 21.74
+  return_dwell_s: 21.80
+  plus_heading_change_deg: 1.808
+  minus_heading_change_deg: -4.464
+  return_heading_change_deg: 1.774
+  ulog_duration_s: 311
+verdict: blocked
+notes: 'This supersedes the direction issue found in the earlier TRK_YAW_REV=0 attempt: the reversal is now correct. Overall HW-002 remains blocked because no static accuracy/settling criterion is documented, the +5-degree dwell had 3.182 degrees residual error, and pitch mechanics are not available. The target source and all outputs were bounded within the configured yaw sector; STOP output was recorded before ULog closure.'
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/HW-002/20260714.144346-v6x-yaw-reversed-partial-console.txt
+    sha256: 4233ac3b6d176bad5fe573a5e1096cd4dd895842ebc1556d1ba687053256de3f
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/log_hw002_yaw_reversed_pass_41927b6f_2026-07-14-21-43-46.ulg
+    sha256: 12a0b5189ca795e9e15e50d0af31286d4a8071f1c54a16109b76a85d392af988

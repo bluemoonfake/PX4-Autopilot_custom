@@ -1,0 +1,53 @@
+PX4 FMUv6X HW-002 yaw-only closed-loop retest after yaw reversal
+Firmware: 41927b6fe756dbe9d9da6d93dbe0a980f463e0d0
+ULog: /home/ubuntu/Dev/PX4_tracker/log_hw002_yaw_reversed_pass_41927b6f_2026-07-14-21-43-46.ulg
+ULog SHA-256: 12a0b5189ca795e9e15e50d0af31286d4a8071f1c54a16109b76a85d392af988
+ULog duration: 311 seconds; no dropouts.
+
+Safety and configuration
+------------------------
+- Yaw servo powered; pitch mechanics unavailable and deliberately not tested.
+- TRK_YAW_REV=1 (saved), TRK_MODE initially STOP, sector [-15, +15] degrees,
+  park=0 degrees, and slew time=2 seconds.
+- Target vehicle 2/1 was injected at 5 Hz through UDP 18570 and usb_router.py.
+- STOP and actuator_servos [0, 0] were checked before and after the test.
+
+Small direction pre-check after reversal
+---------------------------------------
+At a target bearing of 156.303 degrees, yaw command was +1.998 degrees and
+normalized yaw output was -0.1332 (negative output is expected because the
+servo mapper is reversed). Measured yaw increased from 154.257 to 155.357
+degrees. This is the opposite, and correct, direction versus the failed
+TRK_YAW_REV=0 run.
+
+Yaw static sequence
+-------------------
+The yaw head reference was captured at the zero/park target bearing 154.700
+degrees. Each segment retained a fresh target and STATE_TRACKING.
+
+ target bearing    duration    yaw command    yaw start -> end    final error
+  154.700 deg       22.14 s     -0.198 deg     154.898 -> 154.633   +0.067 deg
+  159.699 deg       21.80 s     +4.800 deg     154.709 -> 156.517   +3.182 deg
+  149.700 deg       21.74 s     -5.199 deg     155.455 -> 150.991   -1.292 deg
+  154.700 deg       21.80 s     -0.198 deg     152.594 -> 154.368   +0.333 deg
+
+The + command increased heading, the - command decreased heading, and the
+return target recovered to within 0.333 degrees of its earth-frame setpoint.
+The positive step had not yet converged after the recorded 21.8-second dwell,
+so this is not a complete pointing-accuracy acceptance result.
+
+Safety outcome
+--------------
+At the end of the sequence the operator set TRK_MODE=0. actuator_servos was
+[0.00000, 0.00000, nan, nan, nan, nan, nan, nan]. Logger status before stop:
+17.38 MiB written, zero dropouts, 13910 / 65536-byte maximum buffer use.
+
+Conclusion
+----------
+TRK_YAW_REV=1 fixes the previously reversed yaw loop. The yaw direction and
+park/return behavior pass this partial hardware test. HW-002 remains blocked:
+the project has no declared static-error/settling-time limit, the +5-degree
+step retained 3.182 degrees error after 21.8 seconds, and pitch mechanics are
+not installed. Define the yaw acceptance bound or increase/tune the allowed
+settle interval, then repeat the sequence; install pitch mechanics and run the
+equivalent pitch cases before claiming full HW-002 pass.
