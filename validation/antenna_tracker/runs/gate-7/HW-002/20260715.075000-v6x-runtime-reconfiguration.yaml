@@ -1,0 +1,53 @@
+run_id: 20260715.075000-v6x-runtime-reconfiguration
+test_id: HW-002
+timestamp_utc: '2026-07-15T07:50:00Z'
+operator: Codex
+git:
+  head_commit: fcd388b6c0
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+environment:
+  class: USB-powered V6X bench
+  board: Auterion PX4 FMU v6X.x
+  airframe_id: 4099
+  actuator_mapping: AUX1 Servo1/yaw; AUX2 Servo2/pitch
+procedure:
+  - Use bytewise MAVLink INT32 parameter encoding, as required by PX4 v1.17.
+  - Exercise a temporary PID change during AUTO with a fresh USB target.
+  - Exercise a temporary PID change during SCAN.
+  - Exercise a single SCAN configuration edge and count events from ULog.
+  - Restore STOP and all temporary parameters after every run.
+observed:
+  auto:
+    target_valid: true
+    reconfiguration_start_us: 512130432
+    reconfiguration_end_us: 514130328
+    duration_us: 1999896
+    mode: 1
+    reason: 11
+    resumed_state: 1
+  scan:
+    reconfiguration_start_us: 72236150
+    reconfiguration_end_us: 73936149
+    duration_us: 1699999
+    mode: 2
+    reason: 11
+    resumed_state: 3
+  event_edge:
+    reconfiguration_window_us: 2000000
+    events_in_window: 2
+    interpretation: one entry event and one SCAN-resume event; no 50 Hz repetition
+verdict: pass
+scope: >-
+  Completes AUTO and SCAN runtime reconfiguration evidence and event-edge
+  checking. It does not replace physical closed-loop FIELD validation.
+attachments:
+  auto_ulog:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/fcd388b6c0/HW/20260715.071522Z/HW-004-auto-reconfig-bytewise.ulg
+    sha256: 0c0ae4fb5204812e6ab98f80054c8fabaf64a58a47ea0c6aa9b0218816e4860b
+  scan_ulog:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/fcd388b6c0/HW/20260715.073315Z/HW-005-scan-reconfig.ulg
+    sha256: 1701bf37f3fc62df7ceb335a9cbb8d2f9580bf1e6095d368f2969e73ad344a28
+  event_edge_ulog:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/fcd388b6c0/HW/20260715.074500Z/HW-006-event-edge.ulg
+    sha256: c6917ed040a0038c6266878860665ed767217c6d9cff4c87048e81c75d781eb5
