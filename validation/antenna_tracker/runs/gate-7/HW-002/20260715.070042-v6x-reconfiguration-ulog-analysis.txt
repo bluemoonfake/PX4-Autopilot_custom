@@ -1,0 +1,26 @@
+ULog extraction: HW-002 reconfiguration safety exercise
+
+Source ULog:
+  /home/ubuntu/Dev/PX4_tracker/artifacts/f805b8b896/HW/20260715.065151Z/HW-002-reconfig.ulg
+  SHA-256 e32b63839ac9736c03db37be295618155364c430d7f19400eb31585a0dc69e33
+
+tracker_status transition:
+  274997216 us: state=8 (STATE_RECONFIGURING), state_reason=11
+               (REASON_CONFIGURATION_CHANGED), mode=3 (MANUAL)
+               yaw_output=0.000000, pitch_output=0.000000
+  276057154 us: state=6 (REFERENCE_NOT_READY), state_reason=4,
+               mode=3 (MANUAL)
+
+Measured reconfiguration park-and-settle interval:
+  1,059,938 us (1.059938 s)
+
+Configured TRK_REF_SETTLE: 1.0 s
+Maximum absolute normalized output while state=8:
+  yaw 0.000000
+  pitch 0.000000
+
+Interpretation:
+  The V6X implementation entered the configuration-changed safety state,
+  held park for at least TRK_REF_SETTLE, then resumed MANUAL-mode handling.
+  Target_valid was false in this window, so this is not evidence for AUTO
+  reference capture/resume and does not close the AUTO/SCAN portions of HW-002.

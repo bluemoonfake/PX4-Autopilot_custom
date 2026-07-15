@@ -1,0 +1,49 @@
+run_id: 20260715.070042-v6x-reconfiguration
+test_id: HW-002
+timestamp_utc: '2026-07-15T07:00:42Z'
+operator: Codex
+git:
+  head_commit: f805b8b896
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+environment:
+  class: powered bench
+  board: Auterion PX4 FMU v6X.x
+  airframe_id: 4099
+  actuator_mapping: AUX1 Servo1/yaw; AUX2 Servo2/pitch; PWM 400 Hz
+procedure:
+  - Keep yaw/pitch mechanical limits at +/-15 degrees with park at zero.
+  - Inject a static MAVLink GLOBAL_POSITION_INT target over USB.
+  - Exercise temporary tracker configuration changes, then restore STOP and defaults.
+  - Download the closed ULog using MAVLink FTP and extract tracker_status.
+expected:
+  - Configuration change in an active tracker mode enters STATE_RECONFIGURING.
+  - State reason is REASON_CONFIGURATION_CHANGED.
+  - Outputs park through at least TRK_REF_SETTLE, then the selected mode resumes.
+observed:
+  mode: MANUAL
+  reconfiguration_state: 8
+  reconfiguration_reason: 11
+  settle_start_us: 274997216
+  settle_end_us: 276057154
+  settle_duration_us: 1059938
+  trk_ref_settle_s: 1.0
+  max_abs_yaw_output_during_settle: 0.0
+  max_abs_pitch_output_during_settle: 0.0
+  resumed_state: 6
+  resumed_reason: 4
+  target_valid_during_window: false
+verdict: partial-pass
+scope: >-
+  Verifies the MANUAL-mode configuration-change safety transition, park output,
+  and settle timing on the wired V6X hardware. AUTO/SCAN resume with a valid
+  target remains required evidence.
+attachments:
+  ulog:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/f805b8b896/HW/20260715.065151Z/HW-002-reconfig.ulg
+    sha256: e32b63839ac9736c03db37be295618155364c430d7f19400eb31585a0dc69e33
+  target_sender_audit:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/f805b8b896/HW/20260715.065151Z/HW-002-reconfig-run.jsonl
+    sha256: e2f741e1ff05b56905798c7c09766414729074aea65b982018a5efeee0c7950a
+  analysis:
+    location: validation/antenna_tracker/runs/gate-7/HW-002/20260715.070042-v6x-reconfiguration-ulog-analysis.txt
