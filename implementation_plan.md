@@ -45,7 +45,9 @@ Read [the tracker documentation](docs/en/antenna_tracker/index.md) and use [the 
 
 ## Gate 1 — Honest stock-QGC integration
 
-**State:** verified-bench; `SITL-001`, `SITL-002`, and `BENCH-001` pass with evidence.
+**State:** implemented. Historical SITL/QGC evidence exists, but the current
+source revision needs regression evidence. V6X yaw mapping was observed; pitch
+mechanics are not currently available, so `BENCH-001` is not a two-axis pass.
 
 ### Objective
 
@@ -86,7 +88,9 @@ Make the tracker clearly usable in unmodified QGroundControl without claiming cu
 
 ## Gate 2 — Positional-servo control architecture
 
-**State:** verified-bench; the required unit/SITL cases and `BENCH-002` pass with evidence.
+**State:** implemented; historical unit/SITL and yaw timeout evidence exist.
+Current two-axis bench verification is blocked by pitch mechanics and by the
+calibration mismatch recorded in `HW-002`.
 
 ### Problem to solve
 
@@ -166,9 +170,10 @@ before changing controller gains.
 
 ## Gate 3 — MAVLink target bridge hardening
 
-**State:** verified-hardware; `HW-001` passed on the deployed bench route
-`UDP 18570 -> usb_router.py -> USB CDC MAVLink instance 2`, including fixed
-sysid and GCS rejection evidence.
+**State:** implemented. Historical `HW-001` passed on the selected V6X USB
+bench route (`UDP 18570 -> usb_router.py -> USB CDC MAVLink instance 2`),
+including fixed-sysid and GCS-rejection evidence. Re-run it from the clean
+release commit before calling the current source verified-hardware.
 
 ### Work
 
@@ -210,7 +215,9 @@ sysid and GCS rejection evidence.
 
 ## Gate 4 — Board, airframe, and startup safety
 
-**State:** implemented; output mapping and bench park/timeout are verified, while `HW-004` startup and cutoff evidence remains required.
+**State:** implemented. Historical output mapping and yaw timeout exist, but
+the current source requires a new two-axis bench record; `HW-004` startup and
+cutoff evidence also remains required.
 
 ### Work
 
@@ -262,10 +269,11 @@ output bank, calibrated PWM values, mechanism limits, and evidence link.
 
 ## Gate 5 — Status, Events, and logging
 
-**State:** implemented and verified on a clean V6X firmware build at commit
-`41927b6fe7`: the 2026-07-14 hardware ULog contains `tracker_status`,
-`tracker_target_position`, `actuator_servos`, and Events with no dropouts.
-`HW-003` remains required for dynamic tracking and loss/recovery acceptance.
+**State:** implemented. A clean V6X firmware build at commit `41927b6fe7`
+logged `tracker_status`, `tracker_target_position`, `actuator_servos`, and
+Events with no dropouts. Because `TrackerStatus` has changed, the current
+release still needs a fresh ULog; `HW-003` remains required for dynamic
+tracking and loss/recovery acceptance.
 
 ### Work
 
@@ -289,7 +297,9 @@ output bank, calibrated PWM values, mechanism limits, and evidence link.
 
 ## Gate 6 — Automated unit and canonical SITL regression
 
-**State:** verified-sitl; `UNIT-001` through `UNIT-003` and `SITL-001` through `SITL-008` have passing manifests.
+**State:** historical regression passed at prior commits. The current safety
+revision requires fresh `UNIT-001` through `UNIT-003` and `SITL-001` through
+`SITL-009` manifests before this gate is again verified-sitl.
 
 ### Work
 
@@ -313,8 +323,10 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 ## Gate 7 — Bench and hardware stabilization
 
-**State:** bench/hardware validation in progress; `BENCH-001`, `BENCH-002`,
-and `HW-001` pass.
+**State:** bench/hardware validation in progress. `HW-001` passes for the V6X
+USB-router profile. Historical BENCH-001/002 manifests conflict with later
+evidence that pitch mechanics are unavailable; both are therefore blocked until
+the two-axis calibration record is recreated.
 `BENCH-003` now has yaw-servo load evidence with stable logging and no estimator
 reset. The stronger 2026-07-14 yaw run also stayed within the provisional
 magnetic-norm bound, but its final sample did not demonstrate return to the
@@ -329,11 +341,12 @@ through `HW-004` remain.
 3. Verify deployed telemetry target ingress and source selection.
 4. Start with static low-gain tests and bounded output, then dynamic target and loss/recovery tests.
 5. Maintain an independent servo-power cutoff through the entire gate.
-6. Improve bench operator UX: add an explicit `antenna_tracker servo_test
-   start|stop` command and report the active test override in `status`. This
-   must remain an explicit bench override, not a new tracking submode; normal
-   tracker operation continues to use `TRK_MODE`. **Implemented 2026-07-14**;
-   the command controls the existing `TRK_SERVO_TEST` override.
+6. Improve bench operator UX: provide `antenna_tracker servo_test start
+   yaw|pitch` and `antenna_tracker servo_test stop`, reporting the active axis
+   in `status`. This is a volatile bench override that requires STOP and is
+   cancelled immediately if `TRK_MODE` leaves STOP; normal tracker operation
+   continues to use `TRK_MODE`. `TRK_SERVO_TEST` is legacy-only and is cleared
+   rather than allowed to move hardware after boot.
 7. Add a scenario runner for hardware evidence. It must timestamp target phases,
    keep HEARTBEAT and position traffic fresh throughout each dwell, record phase
    start/end in a machine-readable log, then cease target traffic for the final
@@ -341,13 +354,23 @@ through `HW-004` remain.
    final STOP. ULog is the authority for tracker response; an interactive
    console snapshot is only supporting evidence.
 8. Treat `TRK_HOME_EN` as a provisioned deployment setting. Production defaults
-   to disabled unless a verified tracker home is supplied; `(0,0,0)` is a
-   SITL/fixture value only. Missing global position and missing provisioned home
-   must park with a diagnostic reason.
+   to disabled unless a verified tracker home is supplied; the all-zero
+   latitude/longitude placeholder is rejected in every build. Missing global
+   position and a requested but unprovisioned home must park with a diagnostic
+   reason.
+9. Make servo test a volatile, single-axis command that requires STOP. A
+   persistent parameter must not sweep hardware after reboot.
+10. Park and settle the servo command for configurable `TRK_REF_SETTLE` before
+    capturing the moving-IMU head reference on every AUTO transition. This is
+    command-settle only until a future position-feedback design exists.
+11. Park when MANUAL input is stale; never substitute the midpoint of a
+    mechanical range for absent input.
+12. Make fake target an explicit source (`TRK_FAKE_EN`), never an automatic
+    fallback after MAVLink timeout.
 
 ### Acceptance criteria
 
-`BENCH-001` through `BENCH-003` and `HW-001` through `HW-004` are verified with evidence manifests.
+`BENCH-001` through `BENCH-003` and `HW-001` through `HW-004` are verified with evidence manifests. A V6X USB-router result does not verify the FMUv6C TELEM1 production profile.
 
 ---
 

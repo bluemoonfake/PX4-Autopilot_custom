@@ -117,6 +117,7 @@ properties:
   attachments:
     type: object
     additionalProperties: false
+    minProperties: 1
     properties:
       console_log:
         $ref: '#/$defs/attachment'
@@ -124,10 +125,41 @@ properties:
         $ref: '#/$defs/attachment'
       ulg:
         $ref: '#/$defs/attachment'
+      scenario_log:
+        $ref: '#/$defs/attachment'
+      build_log:
+        $ref: '#/$defs/attachment'
+      analysis_log:
+        $ref: '#/$defs/attachment'
       photo_or_video:
         $ref: '#/$defs/attachment'
       qgc_screenshot:
         $ref: '#/$defs/attachment'
+allOf:
+  - if:
+      properties:
+        verdict:
+          const: pass
+    then:
+      properties:
+        attachments:
+          properties:
+            console_log:
+              $ref: '#/$defs/checksummed_attachment'
+            parameter_dump:
+              $ref: '#/$defs/checksummed_attachment'
+            ulg:
+              $ref: '#/$defs/checksummed_attachment'
+            scenario_log:
+              $ref: '#/$defs/checksummed_attachment'
+            build_log:
+              $ref: '#/$defs/checksummed_attachment'
+            analysis_log:
+              $ref: '#/$defs/checksummed_attachment'
+            photo_or_video:
+              $ref: '#/$defs/checksummed_attachment'
+            qgc_screenshot:
+              $ref: '#/$defs/checksummed_attachment'
 $defs:
   attachment:
     type: object
@@ -139,3 +171,7 @@ $defs:
       sha256:
         type: string
         pattern: '^[a-fA-F0-9]{64}$'
+  checksummed_attachment:
+    allOf:
+      - $ref: '#/$defs/attachment'
+      - required: [sha256]

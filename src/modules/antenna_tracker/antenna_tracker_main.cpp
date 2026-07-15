@@ -23,6 +23,39 @@ AntennaTracker::~AntennaTracker()
 	perf_free(_loop_interval_perf);
 }
 
+bool AntennaTracker::ControlConfiguration::equals(const ControlConfiguration &other) const
+{
+	const auto same_float = [](float lhs, float rhs) { return memcmp(&lhs, &rhs, sizeof(lhs)) == 0; };
+
+	return same_float(yaw_p, other.yaw_p) && same_float(yaw_i, other.yaw_i) && same_float(yaw_d, other.yaw_d)
+	       && same_float(yaw_ff, other.yaw_ff) && same_float(yaw_imax, other.yaw_imax)
+	       && same_float(pitch_p, other.pitch_p) && same_float(pitch_i, other.pitch_i)
+	       && same_float(pitch_d, other.pitch_d) && same_float(pitch_ff, other.pitch_ff)
+	       && same_float(pitch_imax, other.pitch_imax) && same_float(yaw_trim, other.yaw_trim)
+	       && same_float(pitch_trim, other.pitch_trim) && same_float(yaw_output_min, other.yaw_output_min)
+	       && same_float(yaw_output_max, other.yaw_output_max) && same_float(pitch_output_min, other.pitch_output_min)
+	       && same_float(pitch_output_max, other.pitch_output_max) && same_float(yaw_range, other.yaw_range)
+	       && same_float(yaw_min_deg, other.yaw_min_deg) && same_float(yaw_max_deg, other.yaw_max_deg)
+	       && same_float(yaw_park_deg, other.yaw_park_deg) && yaw_reverse == other.yaw_reverse
+	       && same_float(pitch_min_deg, other.pitch_min_deg) && same_float(pitch_max_deg, other.pitch_max_deg)
+	       && same_float(pitch_park_deg, other.pitch_park_deg) && pitch_reverse == other.pitch_reverse
+	       && same_float(yaw_slew, other.yaw_slew) && same_float(pitch_slew, other.pitch_slew)
+	       && same_float(reference_settle, other.reference_settle);
+}
+
+AntennaTracker::ControlConfiguration AntennaTracker::control_configuration() const
+{
+	return {
+		_param_trk_yaw_p.get(), _param_trk_yaw_i.get(), _param_trk_yaw_d.get(), _param_trk_yaw_ff.get(),
+		_param_trk_yaw_imax.get(), _param_trk_pit_p.get(), _param_trk_pit_i.get(), _param_trk_pit_d.get(),
+		_param_trk_pit_ff.get(), _param_trk_pit_imax.get(), _param_trk_yaw_trim.get(), _param_trk_pit_trim.get(),
+		_param_trk_yaw_min.get(), _param_trk_yaw_max.get(), _param_trk_pit_min.get(), _param_trk_pit_max.get(),
+		_param_trk_yaw_range.get(), _param_trk_yaw_mind.get(), _param_trk_yaw_maxd.get(), _param_trk_yaw_park.get(),
+		_param_trk_yaw_rev.get(), _param_trk_pit_mind.get(), _param_trk_pit_maxd.get(), _param_trk_pit_park.get(),
+		_param_trk_pit_rev.get(), _param_trk_yaw_slew.get(), _param_trk_pit_slew.get(), _param_trk_ref_settle.get()
+	};
+}
+
 bool AntennaTracker::init()
 {
 	parameters_update();
@@ -49,6 +82,7 @@ void AntennaTracker::invalidate_head_reference()
 	_head_reference_valid = false;
 	_yaw_home_rad = 0.f;
 	_pitch_home_rad = 0.f;
+	_park_output_reached_us = 0;
 }
 
 bool AntennaTracker::ensure_head_reference(const vehicle_attitude_s &attitude, uint64_t now_us)
@@ -57,7 +91,9 @@ bool AntennaTracker::ensure_head_reference(const vehicle_attitude_s &attitude, u
 		return true;
 	}
 
-	if ((now_us - _boot_time_us) < 1_s) {
+	const uint64_t settle_us = static_cast<uint64_t>(math::constrain(_param_trk_ref_settle.get(), 0.1f, 10.f) * 1e6f);
+
+	if (_park_output_reached_us == 0 || now_us - _park_output_reached_us < settle_us) {
 		return false;
 	}
 
@@ -69,6 +105,22 @@ bool AntennaTracker::ensure_head_reference(const vehicle_attitude_s &attitude, u
 	return true;
 }
 
+void AntennaTracker::update_park_settle_time(uint64_t now_us, float yaw_output, float pitch_output)
+{
+	const auto park = _setpoint_planner.park();
+	const bool yaw_at_park = fabsf(yaw_output - _yaw_servo_mapper.map(park.yaw_deg)) <= 0.01f;
+	const bool pitch_at_park = fabsf(pitch_output - _pitch_servo_mapper.map(park.pitch_deg)) <= 0.01f;
+
+	if (yaw_at_park && pitch_at_park) {
+		if (_park_output_reached_us == 0) {
+			_park_output_reached_us = now_us;
+		}
+
+	} else {
+		_park_output_reached_us = 0;
+	}
+}
+
 void AntennaTracker::reset_scan_state()
 {
 	const auto park = _setpoint_planner.park();
@@ -76,6 +128,51 @@ void AntennaTracker::reset_scan_state()
 	_scan_pitch_deg = park.pitch_deg;
 	_scan_reverse_yaw = false;
 	_scan_reverse_pitch = false;
+}
+
+void AntennaTracker::stop_servo_test()
+{
+	_servo_test_axis.store(SERVO_TEST_NONE);
+	_servo_test_phase = 0.f;
+}
+
+void AntennaTracker::process_servo_test_request()
+{
+	uint8_t request = _servo_test_request.load();
+
+	if (request == SERVO_TEST_REQUEST_NONE) {
+		return;
+	}
+
+	if (!_servo_test_request.compare_exchange(&request, SERVO_TEST_REQUEST_NONE)) {
+		return;
+	}
+
+	if (request == SERVO_TEST_REQUEST_STOP) {
+		stop_servo_test();
+		invalidate_head_reference();
+		PX4_INFO("servo-test override disabled");
+		return;
+	}
+
+	const uint8_t axis = request == SERVO_TEST_REQUEST_START_YAW ? SERVO_TEST_YAW
+			     : (request == SERVO_TEST_REQUEST_START_PITCH ? SERVO_TEST_PITCH : SERVO_TEST_NONE);
+
+	if (axis == SERVO_TEST_NONE) {
+		PX4_WARN("ignored invalid servo-test request");
+		return;
+	}
+
+	if (determine_mode() != 0) {
+		PX4_WARN("servo-test request ignored because TRK_MODE is not STOP");
+		return;
+	}
+
+	_servo_test_axis.store(axis);
+	_servo_test_phase = 0.f;
+	reset_tracking_controller();
+	invalidate_head_reference();
+	PX4_INFO("servo-test override enabled for %s", axis == SERVO_TEST_YAW ? "yaw" : "pitch");
 }
 
 void AntennaTracker::handle_mode_change(int new_mode)
@@ -131,6 +228,8 @@ uint8_t AntennaTracker::safe_reason_for_state(uint8_t state) const
 		return tracker_status_s::REASON_SENSOR_INVALID;
 	case tracker_status_s::STATE_TARGET_TOO_CLOSE:
 		return tracker_status_s::REASON_TARGET_TOO_CLOSE;
+	case tracker_status_s::STATE_RECONFIGURING:
+		return tracker_status_s::REASON_CONFIGURATION_CHANGED;
 	case tracker_status_s::STATE_IDLE:
 		return _startup_delay_done ? tracker_status_s::REASON_STOP : tracker_status_s::REASON_STARTUP;
 	default:
@@ -182,11 +281,12 @@ void AntennaTracker::publish_servo_output(float yaw_output, float pitch_output, 
 	status.pitch_command_deg = _pitch_command_deg;
 	status.yaw_clipped = _yaw_clipped;
 	status.pitch_clipped = _pitch_clipped;
+	status.position_source = _position_source;
 	_tracker_status_pub.publish(status);
 	_events.update(state, state_reason, target_valid, _yaw_clipped, _pitch_clipped);
 }
 
-void AntennaTracker::publish_safe_output(int mode, uint8_t state, bool target_valid)
+void AntennaTracker::publish_safe_output(int mode, uint8_t state, bool target_valid, uint8_t state_reason)
 {
 	reset_tracking_controller();
 	const auto park = _setpoint_planner.park();
@@ -201,8 +301,10 @@ void AntennaTracker::publish_safe_output(int mode, uint8_t state, bool target_va
 
 	const float yaw_output = _yaw_axis_controller.command_without_correction(park.yaw_deg, 0.02f);
 	const float pitch_output = _pitch_axis_controller.command_without_correction(park.pitch_deg, 0.02f);
+	update_park_settle_time(hrt_absolute_time(), yaw_output, pitch_output);
 
-	publish_servo_output(yaw_output, pitch_output, mode, state, target_valid, safe_reason_for_state(state));
+	publish_servo_output(yaw_output, pitch_output, mode, state, target_valid,
+			     state_reason == tracker_status_s::REASON_NONE ? safe_reason_for_state(state) : state_reason);
 }
 
 void AntennaTracker::Run()
@@ -241,29 +343,60 @@ void AntennaTracker::Run()
 		_startup_delay_done = true;
 	}
 
-	if (_param_trk_servo_test.get() != 0) {
-		_active_mode = -1;
-		reset_tracking_controller();
-		invalidate_head_reference();
-		run_servo_test(dt);
+	const int active_mode = determine_mode();
+	process_servo_test_request();
+
+	if (_configuration_repark_pending) {
+		_position_source = tracker_status_s::POSITION_SOURCE_NONE;
+		publish_safe_output(active_mode, tracker_status_s::STATE_RECONFIGURING, _target_manager.valid(now_us),
+				    tracker_status_s::REASON_CONFIGURATION_CHANGED);
+
+		const uint64_t settle_us = static_cast<uint64_t>(math::constrain(_param_trk_ref_settle.get(), 0.1f, 10.f) * 1e6f);
+		const uint64_t settle_check_us = hrt_absolute_time();
+
+		if (_park_output_reached_us != 0 && settle_check_us >= _park_output_reached_us
+		    && settle_check_us - _park_output_reached_us >= settle_us) {
+			_configuration_repark_pending = false;
+			PX4_INFO("tracker configuration re-park complete");
+		}
+
 		perf_end(_loop_perf);
 		return;
 	}
 
-	const int active_mode = determine_mode();
+	const uint8_t servo_test_axis = _servo_test_axis.load();
+
+	if (servo_test_axis != SERVO_TEST_NONE && active_mode != 0) {
+		stop_servo_test();
+		PX4_WARN("servo-test stopped because TRK_MODE left STOP");
+	}
+
+	if (_servo_test_axis.load() != SERVO_TEST_NONE) {
+		_active_mode = -1;
+		_position_source = tracker_status_s::POSITION_SOURCE_NONE;
+		reset_tracking_controller();
+		invalidate_head_reference();
+		run_servo_test(dt, _servo_test_axis.load());
+		perf_end(_loop_perf);
+		return;
+	}
+
 	handle_mode_change(active_mode);
 
 	switch (active_mode) {
 	case 0:
+		_position_source = tracker_status_s::POSITION_SOURCE_NONE;
 		publish_safe_output(0, tracker_status_s::STATE_IDLE);
 		break;
 	case 1:
 		run_tracking(dt);
 		break;
 	case 2:
+		_position_source = tracker_status_s::POSITION_SOURCE_NONE;
 		run_scan(dt);
 		break;
 	case 3:
+		_position_source = tracker_status_s::POSITION_SOURCE_NONE;
 		run_manual(dt);
 		break;
 	default:
@@ -277,12 +410,40 @@ void AntennaTracker::Run()
 void AntennaTracker::parameters_update()
 {
 	updateParams();
+	const ControlConfiguration new_control = control_configuration();
+	const bool control_changed = _configured_control_valid && !_configured_control.equals(new_control);
+	_configured_control = new_control;
+	_configured_control_valid = true;
+
+	if (_param_trk_servo_test.get() != 0) {
+		const int32_t disabled = 0;
+		const param_t handle = param_find("TRK_SERVO_TEST");
+
+		if (handle != PARAM_INVALID && param_set(handle, &disabled) == PX4_OK) {
+			PX4_WARN("TRK_SERVO_TEST is legacy and was cleared; use 'antenna_tracker servo_test start yaw|pitch'");
+		}
+	}
 
 	if (_configured_target_sysid != _param_trk_sysid_tgt.get()
 	    || _configured_auto_lock != _param_trk_auto_lock.get()) {
 		_configured_target_sysid = _param_trk_sysid_tgt.get();
 		_configured_auto_lock = _param_trk_auto_lock.get();
 		_target_manager.reset();
+		reset_tracking_controller();
+	}
+
+	if (_configured_fake_source != _param_trk_fake_en.get()) {
+		_configured_fake_source = _param_trk_fake_en.get();
+		_target_manager.reset();
+		reset_tracking_controller();
+	}
+
+	if (_configured_fake_lat != _param_trk_tgt_lat.get()
+	    || _configured_fake_lon != _param_trk_tgt_lon.get()
+	    || _configured_fake_alt != _param_trk_tgt_alt.get()) {
+		_configured_fake_lat = _param_trk_tgt_lat.get();
+		_configured_fake_lon = _param_trk_tgt_lon.get();
+		_configured_fake_alt = _param_trk_tgt_alt.get();
 		reset_tracking_controller();
 	}
 
@@ -317,9 +478,19 @@ void AntennaTracker::parameters_update()
 		_pitch_axis_controller.initialize_at_angle(park.pitch_deg);
 		_axis_outputs_initialized = true;
 	}
+
+	if (control_changed) {
+		stop_servo_test();
+		_servo_test_request.store(SERVO_TEST_REQUEST_NONE);
+		reset_tracking_controller();
+		reset_scan_state();
+		invalidate_head_reference();
+		_configuration_repark_pending = determine_mode() != 0;
+		PX4_WARN("tracker output configuration changed; re-parking before resuming");
+	}
 }
 
-void AntennaTracker::run_servo_test(float elapsed_s)
+void AntennaTracker::run_servo_test(float elapsed_s, uint8_t axis)
 {
 	_servo_test_phase += elapsed_s;
 	if (_servo_test_phase > 4.f) {
@@ -338,8 +509,9 @@ void AntennaTracker::run_servo_test(float elapsed_s)
 	}
 
 	value = math::constrain(value, -0.5f, 0.5f);
-	const float yaw_angle = _yaw_servo_mapper.angle_for_output(value);
-	const float pitch_angle = _pitch_servo_mapper.angle_for_output(value);
+	const auto park = _setpoint_planner.park();
+	const float yaw_angle = axis == SERVO_TEST_YAW ? _yaw_servo_mapper.angle_for_output(value) : park.yaw_deg;
+	const float pitch_angle = axis == SERVO_TEST_PITCH ? _pitch_servo_mapper.angle_for_output(value) : park.pitch_deg;
 	_yaw_command_deg = yaw_angle;
 	_pitch_command_deg = pitch_angle;
 	publish_servo_output(_yaw_axis_controller.command_without_correction(yaw_angle, elapsed_s),
@@ -363,7 +535,7 @@ void AntennaTracker::run_tracking(float dt)
 	}
 #endif
 
-	_using_home_fallback = false;
+	_position_source = tracker_status_s::POSITION_SOURCE_NONE;
 	int32_t tracker_lat_e7 = 0;
 	int32_t tracker_lon_e7 = 0;
 	float tracker_alt_m = 0.f;
@@ -372,6 +544,7 @@ void AntennaTracker::run_tracking(float dt)
 		tracker_lat_e7 = static_cast<int32_t>(global_position.lat * 1e7);
 		tracker_lon_e7 = static_cast<int32_t>(global_position.lon * 1e7);
 		tracker_alt_m = global_position.alt;
+		_position_source = tracker_status_s::POSITION_SOURCE_GLOBAL;
 
 	} else if (_param_trk_home_en.get() != 0
 		   && tracker_geo::valid_home_fallback(_param_trk_home_lat.get(), _param_trk_home_lon.get())) {
@@ -379,23 +552,55 @@ void AntennaTracker::run_tracking(float dt)
 		tracker_lon_e7 = _param_trk_home_lon.get();
 		tracker_alt_m = static_cast<float>(_param_trk_home_alt.get()) * 0.001f;
 		position_valid = true;
-		_using_home_fallback = true;
+		_position_source = tracker_status_s::POSITION_SOURCE_HOME;
 	}
 
 	const uint64_t now_us = hrt_absolute_time();
 
-	if (_tracker_target_sub.updated()) {
-		tracker_target_position_s target{};
-		_tracker_target_sub.copy(&target);
-		_target_manager.update_from_mavlink(target, now_us);
-	}
+	const bool fake_configured = _param_trk_tgt_lat.get() != 0 || _param_trk_tgt_lon.get() != 0 || _param_trk_tgt_alt.get() != 0;
 
-	if ((_target_manager.target().fake || !_target_manager.valid(now_us))
-	    && (_param_trk_tgt_lat.get() != 0 || _param_trk_tgt_lon.get() != 0 || _param_trk_tgt_alt.get() != 0)) {
-		_target_manager.set_fake_target(_param_trk_tgt_lat.get(), _param_trk_tgt_lon.get(), _param_trk_tgt_alt.get(), now_us);
+	if (_param_trk_fake_en.get() != 0) {
+		if (fake_configured) {
+			_target_manager.set_fake_target(_param_trk_tgt_lat.get(), _param_trk_tgt_lon.get(), _param_trk_tgt_alt.get(), now_us);
+
+		} else {
+			_target_manager.reset();
+		}
+
+	} else {
+		if (_target_manager.target().fake) {
+			_target_manager.reset();
+		}
+
+		if (_tracker_target_sub.updated()) {
+			tracker_target_position_s target{};
+			_tracker_target_sub.copy(&target);
+			_target_manager.update_from_mavlink(target, now_us);
+		}
 	}
 
 	const bool have_target = _target_manager.valid(now_us);
+	const bool home_requested_unprovisioned = !position_valid && _param_trk_home_en.get() != 0
+					 && !tracker_geo::valid_home_fallback(_param_trk_home_lat.get(), _param_trk_home_lon.get());
+
+	if (_param_trk_alt_src.get() != 0) {
+		_bearing_rad = 0.f;
+		_pitch_rad = 0.f;
+		_distance_m = 0.f;
+		publish_safe_output(1, tracker_status_s::STATE_SENSOR_INVALID, have_target,
+				    tracker_status_s::REASON_SOURCE_REJECTED);
+		return;
+	}
+
+	if (!position_valid || !attitude_valid) {
+		_bearing_rad = 0.f;
+		_pitch_rad = 0.f;
+		_distance_m = 0.f;
+		const uint8_t reason = attitude_valid && home_requested_unprovisioned
+				       ? tracker_status_s::REASON_HOME_UNPROVISIONED : tracker_status_s::REASON_SENSOR_INVALID;
+		publish_safe_output(1, tracker_status_s::STATE_SENSOR_INVALID, have_target, reason);
+		return;
+	}
 
 	if (!have_target && _param_trk_auto_scan.get() != 0) {
 		if (!_auto_scan_active) {
@@ -412,18 +617,17 @@ void AntennaTracker::run_tracking(float dt)
 		_auto_scan_active = false;
 	}
 
-	if (!have_target || !position_valid || !attitude_valid) {
-		reset_tracking_controller();
+	if (!have_target) {
 		_bearing_rad = 0.f;
 		_pitch_rad = 0.f;
 		_distance_m = 0.f;
-		publish_safe_output(1, have_target ? tracker_status_s::STATE_SENSOR_INVALID : tracker_status_s::STATE_TIMEOUT,
-				    have_target);
+		publish_safe_output(1, tracker_status_s::STATE_TIMEOUT, false);
 		return;
 	}
 
 	if (!ensure_head_reference(attitude, hrt_absolute_time())) {
-		publish_safe_output(1, tracker_status_s::STATE_SENSOR_INVALID, true);
+		publish_safe_output(1, tracker_status_s::STATE_SENSOR_INVALID, true,
+				    tracker_status_s::REASON_REFERENCE_NOT_READY);
 		return;
 	}
 
@@ -539,15 +743,17 @@ void AntennaTracker::run_scan(float dt)
 void AntennaTracker::run_manual(float dt)
 {
 	manual_control_setpoint_s manual{};
-	float yaw_input = 0.f;
-	float pitch_input = 0.f;
+	const bool manual_valid = _manual_control_sub.copy(&manual) && manual.valid && manual.timestamp > 0
+				  && hrt_elapsed_time(&manual.timestamp) < 500_ms
+				  && PX4_ISFINITE(manual.yaw) && PX4_ISFINITE(manual.pitch);
 
-	if (_manual_control_sub.copy(&manual) && manual.valid && manual.timestamp > 0
-	    && hrt_elapsed_time(&manual.timestamp) < 500_ms
-	    && PX4_ISFINITE(manual.yaw) && PX4_ISFINITE(manual.pitch)) {
-		yaw_input = math::constrain(manual.yaw, -1.f, 1.f);
-		pitch_input = math::constrain(manual.pitch, -1.f, 1.f);
+	if (!manual_valid) {
+		publish_safe_output(3, tracker_status_s::STATE_SENSOR_INVALID, false);
+		return;
 	}
+
+	const float yaw_input = math::constrain(manual.yaw, -1.f, 1.f);
+	const float pitch_input = math::constrain(manual.pitch, -1.f, 1.f);
 
 	const float yaw_angle = _setpoint_planner.yaw_min_deg()
 				+ (yaw_input + 1.f) * 0.5f * (_setpoint_planner.yaw_max_deg() - _setpoint_planner.yaw_min_deg());
@@ -584,7 +790,7 @@ int AntennaTracker::task_spawn(int argc, char *argv[])
 
 int AntennaTracker::custom_command(int argc, char *argv[])
 {
-	if (argc == 2 && !strcmp(argv[0], "servo_test")) {
+	if (argc >= 2 && !strcmp(argv[0], "servo_test")) {
 		AntennaTracker *instance = get_instance();
 
 		if (instance == nullptr) {
@@ -592,25 +798,44 @@ int AntennaTracker::custom_command(int argc, char *argv[])
 			return PX4_ERROR;
 		}
 
-		int32_t enabled = 0;
-
-		if (!strcmp(argv[1], "start")) {
-			enabled = 1;
-			instance->_servo_test_phase = 0.f;
-
-		} else if (strcmp(argv[1], "stop")) {
-			return print_usage("servo_test requires 'start' or 'stop'");
+		if (!strcmp(argv[1], "stop") && argc == 2) {
+			instance->_servo_test_request.store(SERVO_TEST_REQUEST_STOP);
+			PX4_INFO("servo-test stop requested");
+			return PX4_OK;
 		}
 
-		const param_t handle = param_find("TRK_SERVO_TEST");
+		if (strcmp(argv[1], "start") || argc != 3) {
+			return print_usage("servo_test requires 'start yaw|pitch' or 'stop'");
+		}
 
-		if (handle == PARAM_INVALID || param_set(handle, &enabled) != PX4_OK) {
-			PX4_ERR("failed to set TRK_SERVO_TEST");
+		int32_t configured_mode = 0;
+		const param_t mode_handle = param_find("TRK_MODE");
+
+		if (mode_handle == PARAM_INVALID || param_get(mode_handle, &configured_mode) != PX4_OK) {
+			PX4_ERR("failed to read TRK_MODE");
 			return PX4_ERROR;
 		}
 
-		PX4_INFO("servo-test override %s%s", enabled != 0 ? "enabled" : "disabled",
-			 enabled != 0 ? "; verify servo-power cutoff" : "");
+		if (configured_mode != 0) {
+			PX4_ERR("set TRK_MODE=STOP before servo test");
+			return PX4_ERROR;
+		}
+
+		uint8_t axis = SERVO_TEST_NONE;
+
+		if (!strcmp(argv[2], "yaw")) {
+			axis = SERVO_TEST_YAW;
+
+		} else if (!strcmp(argv[2], "pitch")) {
+			axis = SERVO_TEST_PITCH;
+
+		} else {
+			return print_usage("servo_test axis must be yaw or pitch");
+		}
+
+		const uint8_t request = axis == SERVO_TEST_YAW ? SERVO_TEST_REQUEST_START_YAW : SERVO_TEST_REQUEST_START_PITCH;
+		instance->_servo_test_request.store(request);
+		PX4_INFO("servo-test request queued for %s; verify servo-power cutoff", argv[2]);
 		return PX4_OK;
 	}
 
@@ -689,8 +914,13 @@ int AntennaTracker::print_status()
 		 (double)_setpoint_planner.pitch_min_deg(), (double)_setpoint_planner.pitch_max_deg(),
 		 (double)_setpoint_planner.pitch_park_deg());
 	PX4_INFO("Reference: %s", _head_reference_valid ? "captured at park" : "not captured");
-	PX4_INFO("Position source: %s", _using_home_fallback ? "TRK_HOME fallback" : "vehicle_global_position");
-	PX4_INFO("Servo-test override: %s", _param_trk_servo_test.get() != 0 ? "ACTIVE" : "disabled");
+	const char *position_source = _position_source == tracker_status_s::POSITION_SOURCE_GLOBAL ? "vehicle_global_position"
+				      : (_position_source == tracker_status_s::POSITION_SOURCE_HOME ? "TRK_HOME fallback" : "none");
+	const uint8_t servo_test_axis_value = _servo_test_axis.load();
+	const char *servo_test_axis = servo_test_axis_value == SERVO_TEST_YAW ? "yaw"
+				      : (servo_test_axis_value == SERVO_TEST_PITCH ? "pitch" : "disabled");
+	PX4_INFO("Position source: %s", position_source);
+	PX4_INFO("Servo-test override: %s", servo_test_axis);
 
 #if defined(__PX4_POSIX)
 	PX4_INFO("SITL test global-position loss: %s", _sitl_force_global_position_invalid.load() ? "enabled" : "disabled");
@@ -721,8 +951,8 @@ level-horizon calibration before configuring mechanical servo trim.
 	PRINT_MODULE_USAGE_NAME("antenna_tracker", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_COMMAND("set_home");
-	PRINT_MODULE_USAGE_COMMAND_DESCR("servo_test", "Explicit bounded bench sweep override; stop it before normal tracking.");
-	PRINT_MODULE_USAGE_ARG("start|stop", nullptr, false);
+	PRINT_MODULE_USAGE_COMMAND_DESCR("servo_test", "Volatile bounded one-axis bench sweep; TRK_MODE must be STOP.");
+	PRINT_MODULE_USAGE_ARG("start yaw|pitch|stop", nullptr, false);
 #if defined(__PX4_POSIX)
 	PRINT_MODULE_USAGE_COMMAND_DESCR("test", "SITL-only tracker-local fault injection.");
 	PRINT_MODULE_USAGE_ARG("gpos-loss on|off", "Force only the tracker to treat global position as unavailable.", false);

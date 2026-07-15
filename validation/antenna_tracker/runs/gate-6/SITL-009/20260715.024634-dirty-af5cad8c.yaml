@@ -1,0 +1,58 @@
+run_id: 20260715.024634-dirty-af5cad8c
+test_id: SITL-009
+timestamp_utc: '2026-07-15T02:46:34Z'
+operator: Codex
+git:
+  head_commit: af5cad8c3bea22636ba6c1a92e8c95b1aeae4735
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: dirty before test; no release provenance claimed
+build:
+  target: px4_sitl_default
+  command: make px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/build/px4_sitl_default/bin/px4
+  artifact_sha256: 51e0571f05f881537db2a50831e63890d3e8819b8343ae2d8a6ee4d82fba62f7
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_FAKE_EN: 1
+    TRK_REF_SETTLE: 1
+    TRK_YAW_PARK: 30
+    TRK_HOME_EN: 1
+    TRK_HOME_LAT: 473977420
+    TRK_HOME_LON: 85455940
+    TRK_HOME_ALT: 488000
+  target_source: deterministic fake target
+expected:
+  auto_reference: AUTO waits at park before reference capture.
+  configuration_change: A changed yaw park command reports reconfiguration, then parks and resumes.
+observed:
+  servo_test_cancelled_on_mode_change: true
+  configuration_repark_state: 8
+  configuration_repark_reason: 11
+  resumed_auto_state: 1
+  reference_capture_log: tracker head reference captured at park
+  reference_pending_reason_observed: false
+verdict: blocked
+notes: >-
+  This is a diagnostic pre-clean run, not formal evidence. It confirmed the
+  servo-test cancellation and configuration re-park/resume paths, but AUTO
+  initially reported REASON_SENSOR_INVALID while the SIH attitude source was
+  still unavailable, so it did not demonstrate REASON_REFERENCE_NOT_READY.
+  The source tree and submodule were dirty at run start, and the raw artifacts
+  are temporary local paths rather than immutable release artifacts. Re-run
+  SITL-009 after the clean release commit with an initialized attitude source,
+  immutable artifacts, and a fresh ULog.
+attachments:
+  console_log:
+    location: /tmp/px4_tracker_sitl_009/SITL-009-console.log
+    sha256: 0916c93cef2f78edc959574ca046c3f90246974fa87efc57f8816206b965b858
+  ulg:
+    location: /tmp/px4_tracker_sitl_009/log/2026-07-15/02_46_34.ulg
+    sha256: ae3810d4873ffc3d59290c89174d79b47021ca86865e86fa05bd50071b5120f8

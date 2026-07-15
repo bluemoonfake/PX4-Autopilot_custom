@@ -32,7 +32,7 @@ tests:
   - id: BLD-003
     gate: 0
     title: Build FMUv6X tracker firmware with provenance
-    status: verified-hardware
+    status: implemented
     environment: hardware
     prerequisites: [BLD-001]
     acceptance:
@@ -90,7 +90,7 @@ tests:
   - id: SITL-001
     gate: 6
     title: Boot airframe 4099
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [BLD-001]
     acceptance:
@@ -102,29 +102,33 @@ tests:
   - id: SITL-002
     gate: 6
     title: STOP and servo test behavior
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:
       - STOP selects documented safe output
-      - servo test is bounded and explicitly enabled
+      - servo test is volatile, bounded, and explicitly enabled one axis at a time
+      - persistent TRK_SERVO_TEST cannot start a sweep after boot
+      - changing TRK_MODE away from STOP stops an active servo test before AUTO, SCAN, or MANUAL logic runs
     evidence: [console log, tracker status, actuator servos]
 
   - id: SITL-003
     gate: 6
     title: Fake target and home fallback geometry
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:
       - cardinal target cases produce expected bearing and pitch
       - home fallback behavior is explicit when global position is unavailable
+      - unprovisioned Home (0,0) parks with a diagnostic reason
+      - reserved altitude-source selection parks with REASON_SOURCE_REJECTED
     evidence: [console log, tracker status]
 
   - id: SITL-004
     gate: 6
     title: MAVLink static target acquisition
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-001]
     acceptance:
@@ -135,7 +139,7 @@ tests:
   - id: SITL-005
     gate: 6
     title: Dynamic MAVLink target path
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -146,19 +150,20 @@ tests:
   - id: SITL-006
     gate: 6
     title: Target timeout and recovery
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
       - timeout latency is within configured tolerance
       - configured safe action occurs
       - tracking recovers when a valid source returns
+      - configured fake target cannot mask MAVLink timeout unless TRK_FAKE_EN is enabled
     evidence: [console log, tracker status, actuator servos]
 
   - id: SITL-007
     gate: 6
     title: Specific system-ID source selection
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -169,7 +174,7 @@ tests:
   - id: SITL-008
     gate: 6
     title: Auto-lock and competing source behavior
-    status: verified-sitl
+    status: implemented
     environment: sitl
     prerequisites: [SITL-004]
     acceptance:
@@ -180,10 +185,10 @@ tests:
 
   - id: BENCH-001
     gate: 7
-    title: Configured output bank Servo1 yaw and Servo2 pitch mapping
-    status: verified-bench
+    title: V6X bench output bank Servo1 yaw and Servo2 pitch mapping
+    status: blocked
     environment: bench
-    prerequisites: [BLD-002]
+    prerequisites: [BLD-003]
     acceptance:
       - Servo1 drives yaw and Servo2 drives pitch
       - PWM min/max/disarmed/failsafe values are recorded
@@ -192,7 +197,7 @@ tests:
   - id: BENCH-002
     gate: 7
     title: Servo direction, range, park, and startup behavior
-    status: verified-bench
+    status: blocked
     environment: bench
     prerequisites: [BENCH-001]
     acceptance:
@@ -204,7 +209,7 @@ tests:
   - id: BENCH-003
     gate: 7
     title: Moving-IMU feedback and compass integrity
-    status: planned
+    status: blocked
     environment: bench
     prerequisites: [BENCH-002]
     acceptance:
@@ -214,18 +219,18 @@ tests:
 
   - id: HW-001
     gate: 7
-    title: Target ingress over deployed telemetry link
-    status: verified-hardware
+    title: Target ingress over selected V6X USB-router profile
+    status: implemented
     environment: hardware
-    prerequisites: [BENCH-003]
+    prerequisites: [BLD-003]
     acceptance:
-      - deployed baud, port, MAVLink instance, and source filter work
+      - selected USB-router baud, port, MAVLink instance, and source filter work
     evidence: [link configuration, console log, tracker target position]
 
   - id: HW-002
     gate: 7
     title: Static closed-loop tracking
-    status: planned
+    status: blocked
     environment: hardware
     prerequisites: [HW-001]
     acceptance:
@@ -254,6 +259,18 @@ tests:
       - invalid sensor produces safe state
       - independent servo cutoff works
     evidence: [video, test record]
+
+  - id: SITL-009
+    gate: 6
+    title: Park-settle reference capture
+    status: implemented
+    environment: sitl
+    prerequisites: [SITL-002]
+    acceptance:
+      - AUTO parks before capturing its head reference after a mode transition
+      - tracker status reports REASON_REFERENCE_NOT_READY while waiting
+      - reference capture occurs only after configured TRK_REF_SETTLE command-settle interval
+    evidence: [console log, tracker status, actuator servos]
 
   - id: FIELD-001
     gate: 8

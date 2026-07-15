@@ -45,7 +45,7 @@ PARAM_DEFINE_INT32(TRK_QGC_MODE, 0);
 /**
  * Startup delay before servo movement.
  *
- * Servos held at trim for this duration after boot.
+ * Servos are commanded to the configured park pose for this duration after boot.
  * Useful for some servo types that need settling time.
  *
  * @unit s
@@ -549,6 +549,20 @@ PARAM_DEFINE_INT32(TRK_TGT_LON, 0);
  */
 PARAM_DEFINE_INT32(TRK_TGT_ALT, 0);
 
+/**
+ * Enable deterministic fake-target source.
+ *
+ * When enabled, TRK_TGT_LAT/LON/ALT is the only tracker target source. It is
+ * intended for SITL and a controlled bench only. It never takes over after a
+ * MAVLink target timeout unless explicitly enabled.
+ *
+ * 0 = use qualified MAVLink target only, 1 = use fake target only
+ *
+ * @boolean
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_INT32(TRK_FAKE_EN, 0);
+
 /*==========================================================================
  * Tracker home fallback
  *==========================================================================*/
@@ -647,11 +661,12 @@ PARAM_DEFINE_INT32(TRK_AUTO_LOCK, 1);
 PARAM_DEFINE_INT32(TRK_TIMEOUT_MS, 5000);
 
 /**
- * Enable servo test sweep.
+ * Legacy servo-test parameter.
  *
- * When enabled, the tracker runs a slow servo sweep
- * instead of tracking. Useful for verifying servo direction.
- * Can also use QGC Actuator Test panel instead.
+ * Kept for compatibility with existing parameter files. Production firmware
+ * does not run a servo sweep from a persistent parameter because that can move
+ * hardware unexpectedly after a reboot. Use the volatile console command
+ * `antenna_tracker servo_test start yaw|pitch` instead.
  *
  * 0 = disabled, 1 = enabled
  *
@@ -659,3 +674,20 @@ PARAM_DEFINE_INT32(TRK_TIMEOUT_MS, 5000);
  * @group Antenna Tracker
  */
 PARAM_DEFINE_INT32(TRK_SERVO_TEST, 0);
+
+/**
+ * Park-command settle time before head-reference capture.
+ *
+ * On each transition to AUTO, the tracker first commands both axes to their
+ * configured park angles. It waits this long after the normalized outputs
+ * reach park before sampling the moving-IMU reference. This is a command
+ * settle time, not proof of physical servo feedback; increase it for a slow
+ * mechanism.
+ *
+ * @unit s
+ * @min 0.1
+ * @max 10.0
+ * @decimal 1
+ * @group Antenna Tracker
+ */
+PARAM_DEFINE_FLOAT(TRK_REF_SETTLE, 1.0f);

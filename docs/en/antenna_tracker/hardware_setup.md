@@ -73,11 +73,27 @@ to compensate for an incorrect horn, endpoint, reversal, or mechanical travel.
 9. Verify STOP and target-timeout behavior before enabling AUTO.
 10. Only then test static target tracking at low gain and limited output range.
 
-For the bounded tracker sweep, use `antenna_tracker servo_test start` and
-`antenna_tracker servo_test stop` in the MAVLink console. The command resets
-the sweep to its known start point and shows `Servo-test override: ACTIVE` in
-`antenna_tracker status`. It is a bench override of `TRK_SERVO_TEST`, not a
-tracker mode; stop it before using `TRK_MODE=AUTO`.
+For the bounded tracker sweep, first set `TRK_MODE=STOP`, then use
+`antenna_tracker servo_test start yaw` (or `pitch`) and
+`antenna_tracker servo_test stop` in the MAVLink console. The command is a
+volatile one-axis bench override: it is cleared by reboot and the other axis
+holds park. `antenna_tracker status` reports the selected axis. The legacy
+`TRK_SERVO_TEST` parameter is automatically cleared and cannot start a sweep
+after boot.
+
+`TRK_REF_SETTLE` is the minimum time the *commanded* yaw and pitch outputs
+must remain at park before AUTO captures its moving-IMU reference. Start with
+the conservative default of 1.0 s and increase it for a slow or heavily loaded
+mechanism. The firmware has no servo-position feedback, so this is not a
+substitute for verifying physical park on the bench.
+
+`TRK_FAKE_EN` defaults to `0`. Set it to `1` only for SITL or a controlled
+bench; while it is enabled, fake target parameters are the sole target source.
+Disable it before any MAVLink ingress, timeout, or hardware tracking test.
+
+`TRK_ALT_SRC` must remain `0` (GPS MSL). Any reserved/unverified value is
+rejected and parks the tracker with `REASON_SOURCE_REJECTED`; it is never
+silently interpreted as relative altitude.
 
 ## Orientation versus trim
 

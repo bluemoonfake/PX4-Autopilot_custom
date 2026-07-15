@@ -50,6 +50,8 @@ param set-default TRK_AUTO_SCAN 0
 param set-default TRK_ALT_SRC 0
 param set-default TRK_DIST_MIN 5.0
 param set-default TRK_SERVO_TEST 0
+param set-default TRK_FAKE_EN 0
+param set-default TRK_REF_SETTLE 1.0
 
 # Antenna tracker servo output mapping
 param set-default PWM_MAIN_FUNC1 201

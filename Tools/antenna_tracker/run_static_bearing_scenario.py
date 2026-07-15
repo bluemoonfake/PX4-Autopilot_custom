@@ -141,7 +141,7 @@ def main():
     parser.add_argument("--log", type=Path, required=True, help="required JSONL audit-log path")
     args = parser.parse_args()
 
-    if not -90.0 <= args.center_lat <= 90.0 or not -180.0 <= args.center_lon <= 180.0:
+    if not -89.9 <= args.center_lat <= 89.9 or not -180.0 <= args.center_lon <= 180.0:
         parser.error("center latitude/longitude out of range")
     if args.center_lat == 0.0 and args.center_lon == 0.0:
         parser.error("center (0,0) is a placeholder, not a provisioned tracker home")
@@ -190,12 +190,12 @@ def main():
                     send_heartbeat(mav)
                     sent_heartbeats += 1
                     audit.write("heartbeat", phase=phase["name"], run_elapsed_s=round(elapsed, 3))
-                    next_heartbeat += heartbeat_period
+                    next_heartbeat = now + heartbeat_period
                 if now >= next_position:
                     send_position(mav, target, elapsed)
                     sent_positions += 1
                     audit.write("position", phase=phase["name"], run_elapsed_s=round(elapsed, 3), target=target)
-                    next_position += position_period
+                    next_position = now + position_period
                 time.sleep(min(0.01, max(0.0, min(next_heartbeat, next_position) - time.monotonic())))
 
             audit.write("phase_end", phase=phase["name"], run_elapsed_s=round(time.monotonic() - started, 3))

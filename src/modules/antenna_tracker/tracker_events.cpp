@@ -29,9 +29,53 @@ void TrackerEvents::update(uint8_t state, uint8_t reason, bool target_valid, boo
 			events::send(events::ID("tracker_scan_active"), events::Log::Info, "Tracker scan active");
 			break;
 
+		case tracker_status_s::STATE_RECONFIGURING:
+			/* EVENT
+			 * @description Output mapping, mechanics, or controller tuning changed. The tracker parks before resuming.
+			 */
+			events::send(events::ID("tracker_reconfiguring"), events::Log::Warning,
+				     "Tracker configuration changed, parking before resume");
+			break;
+
+		case tracker_status_s::STATE_SENSOR_INVALID:
+			switch (reason) {
+			case tracker_status_s::REASON_SOURCE_REJECTED:
+				/* EVENT
+				 * @description The selected tracker position or altitude source is not supported by this firmware.
+				 */
+				events::send(events::ID("tracker_source_rejected"), events::Log::Warning,
+					     "Tracker source rejected, parking");
+				break;
+
+			case tracker_status_s::REASON_HOME_UNPROVISIONED:
+				/* EVENT
+				 * @description Home fallback was requested but its coordinates are still the unprovisioned placeholder.
+				 */
+				events::send(events::ID("tracker_home_unprovisioned"), events::Log::Warning,
+					     "Tracker home fallback is not provisioned, parking");
+				break;
+
+			case tracker_status_s::REASON_REFERENCE_NOT_READY:
+				/* EVENT
+				 * @description The tracker is waiting for its commanded park pose to settle before capturing the moving-IMU reference.
+				 */
+				events::send(events::ID("tracker_reference_pending"), events::Log::Info,
+					     "Tracker waiting at park before reference capture");
+				break;
+
+			default:
+				/* EVENT
+				 * @description Required own-position or attitude input is unavailable or invalid, so the tracker selects park.
+				 */
+				events::send(events::ID("tracker_sensor_invalid"), events::Log::Warning,
+					     "Tracker sensor input invalid, parking");
+				break;
+			}
+
+			break;
+
 		case tracker_status_s::STATE_IDLE:
 		case tracker_status_s::STATE_TIMEOUT:
-		case tracker_status_s::STATE_SENSOR_INVALID:
 		case tracker_status_s::STATE_TARGET_TOO_CLOSE:
 			/* EVENT
 			 * @description The tracker selected its configured physical park pose.

@@ -131,6 +131,23 @@ TEST(TrackerAxisController, ParkAndZeroErrorKeepTheMappedPhysicalCommand)
 	EXPECT_NEAR(axis.output(), -0.5f, 1e-6f);
 }
 
+TEST(TrackerAxisController, ReconfigurationResetDiscardsPriorIntegralCorrection)
+{
+	TrackerServoMapper mapper;
+	mapper.configure(-90.f, 90.f, -1.f, 1.f, 0.f, false);
+
+	TrackerAxisController axis;
+	axis.configure(mapper, 0.f, 1.f, 0.f, 0.f, 0.25f, 0.f);
+	axis.initialize_at_angle(0.f);
+	EXPECT_NEAR(axis.command(45.f, 0.5f, 0.f, 0.2f), 0.6f, 1e-6f);
+
+	// The module resets each axis before it accepts a changed physical/output
+	// configuration. A new park command must not retain the old I-term.
+	axis.configure(mapper, 0.f, 1.f, 0.f, 0.f, 0.25f, 0.f);
+	axis.reset();
+	EXPECT_NEAR(axis.command(30.f, 0.f, 0.f, 0.02f), 1.f / 3.f, 1e-6f);
+}
+
 TEST(TrackerTargetManager, MavlinkTimeoutParksWhileFakeTargetIsDeterministic)
 {
 	TrackerTargetManager manager;

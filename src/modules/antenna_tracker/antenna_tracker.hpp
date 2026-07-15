@@ -49,7 +49,9 @@ private:
 	void handle_mode_change(int new_mode);
 	void reset_tracking_controller();
 	void reset_scan_state();
-	void run_servo_test(float elapsed_s);
+	void process_servo_test_request();
+	void stop_servo_test();
+	void run_servo_test(float elapsed_s, uint8_t axis);
 	void run_tracking(float dt);
 	void run_scan(float dt);
 	void run_manual(float dt);
@@ -57,12 +59,49 @@ private:
 	static bool is_global_position_valid(const vehicle_global_position_s &gpos);
 	static bool is_attitude_valid(const vehicle_attitude_s &attitude);
 
-	void publish_safe_output(int mode, uint8_t state, bool target_valid = false);
+	void publish_safe_output(int mode, uint8_t state, bool target_valid = false,
+				 uint8_t state_reason = tracker_status_s::REASON_NONE);
 	void publish_servo_output(float yaw_output, float pitch_output, int mode, uint8_t state,
 				 bool target_valid, uint8_t state_reason = tracker_status_s::REASON_NONE);
 	bool ensure_head_reference(const vehicle_attitude_s &attitude, uint64_t now_us);
 	void invalidate_head_reference();
+	void update_park_settle_time(uint64_t now_us, float yaw_output, float pitch_output);
 	uint8_t safe_reason_for_state(uint8_t state) const;
+
+	struct ControlConfiguration {
+		float yaw_p;
+		float yaw_i;
+		float yaw_d;
+		float yaw_ff;
+		float yaw_imax;
+		float pitch_p;
+		float pitch_i;
+		float pitch_d;
+		float pitch_ff;
+		float pitch_imax;
+		float yaw_trim;
+		float pitch_trim;
+		float yaw_output_min;
+		float yaw_output_max;
+		float pitch_output_min;
+		float pitch_output_max;
+		float yaw_range;
+		float yaw_min_deg;
+		float yaw_max_deg;
+		float yaw_park_deg;
+		int32_t yaw_reverse;
+		float pitch_min_deg;
+		float pitch_max_deg;
+		float pitch_park_deg;
+		int32_t pitch_reverse;
+		float yaw_slew;
+		float pitch_slew;
+		float reference_settle;
+
+		bool equals(const ControlConfiguration &other) const;
+	};
+
+	ControlConfiguration control_configuration() const;
 
 	// Subscriptions
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
@@ -119,7 +158,26 @@ private:
 	bool _head_reference_valid{false};
 	float _yaw_home_rad{0.f};
 	float _pitch_home_rad{0.f};
-	bool _using_home_fallback{false};
+	uint8_t _position_source{tracker_status_s::POSITION_SOURCE_NONE};
+	uint64_t _park_output_reached_us{0};
+	bool _configuration_repark_pending{false};
+	ControlConfiguration _configured_control{};
+	bool _configured_control_valid{false};
+
+	// Volatile and explicitly commanded: it is cleared on every reboot.
+	static constexpr uint8_t SERVO_TEST_NONE{0};
+	static constexpr uint8_t SERVO_TEST_YAW{1};
+	static constexpr uint8_t SERVO_TEST_PITCH{2};
+	static constexpr uint8_t SERVO_TEST_REQUEST_NONE{0};
+	static constexpr uint8_t SERVO_TEST_REQUEST_STOP{1};
+	static constexpr uint8_t SERVO_TEST_REQUEST_START_YAW{2};
+	static constexpr uint8_t SERVO_TEST_REQUEST_START_PITCH{3};
+	px4::atomic<uint8_t> _servo_test_axis{SERVO_TEST_NONE};
+	px4::atomic<uint8_t> _servo_test_request{SERVO_TEST_REQUEST_NONE};
+	int32_t _configured_fake_source{-1};
+	int32_t _configured_fake_lat{INT32_MIN};
+	int32_t _configured_fake_lon{INT32_MIN};
+	int32_t _configured_fake_alt{INT32_MIN};
 
 #if defined(__PX4_POSIX)
 	// Deliberately local, non-persistent fault injection for the SITL evidence
@@ -144,6 +202,7 @@ private:
 		(ParamInt<px4::params::TRK_MODE>)       _param_trk_mode,
 		(ParamFloat<px4::params::TRK_STRT_DLY>) _param_trk_strt_dly,
 		(ParamInt<px4::params::TRK_SERVO_TEST>) _param_trk_servo_test,
+		(ParamFloat<px4::params::TRK_REF_SETTLE>) _param_trk_ref_settle,
 
 		// Bounded trim correction gains
 		(ParamFloat<px4::params::TRK_YAW_P>)    _param_trk_yaw_p,
@@ -192,6 +251,7 @@ private:
 		(ParamInt<px4::params::TRK_TGT_LAT>)  _param_trk_tgt_lat,
 		(ParamInt<px4::params::TRK_TGT_LON>)  _param_trk_tgt_lon,
 		(ParamInt<px4::params::TRK_TGT_ALT>)  _param_trk_tgt_alt,
+		(ParamInt<px4::params::TRK_FAKE_EN>)  _param_trk_fake_en,
 		(ParamInt<px4::params::TRK_HOME_EN>)  _param_trk_home_en,
 		(ParamInt<px4::params::TRK_HOME_LAT>) _param_trk_home_lat,
 		(ParamInt<px4::params::TRK_HOME_LON>) _param_trk_home_lon,
