@@ -252,10 +252,12 @@ def main():
     except serial.serialutil.SerialException as e:
         print(e)
 
-    except KeyboardInterrupt:
+    finally:
+        # Every SERIAL_CONTROL request uses EXCLUSIVE. Release it on ordinary
+        # stdin EOF too, otherwise a short non-interactive shell invocation
+        # can leave the PX4 shell channel locked for later tools.
         mav_serialport.close()
 
-    finally:
         if old_attr:
             termios.tcsetattr(fd_in, termios.TCSADRAIN, old_attr)
 
