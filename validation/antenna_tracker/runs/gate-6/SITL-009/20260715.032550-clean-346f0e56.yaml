@@ -1,0 +1,62 @@
+run_id: 20260715.032550-clean-346f0e56
+test_id: SITL-009
+timestamp_utc: '2026-07-15T03:25:50Z'
+operator: Codex
+git:
+  head_commit: 346f0e569c
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: clean; all initialized gitlinks matched their recorded commits
+build:
+  target: px4_sitl_default
+  command: make px4_sitl_default
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/artifacts/346f0e569c/SITL-009/20260715.032550-clean-346f0e56/px4
+  artifact_sha256: 09da5cd48a6c500cf3daaa069bb91580be0ba35b90fc95cda1d5101acad90f2c
+environment:
+  class: sitl
+  board: posix-sih
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: not_applicable
+  parameters:
+    TRK_MODE: 1
+    TRK_FAKE_EN: 1
+    TRK_REF_SETTLE: 1.0
+    TRK_HOME_EN: 1
+    TRK_HOME_LAT: 473977420
+    TRK_HOME_LON: 85455940
+    TRK_HOME_ALT: 488000
+    TRK_TGT_LAT: 473986413
+    TRK_TGT_LON: 85455940
+    TRK_TGT_ALT: 588000
+  target_source: deterministic fake target
+expected:
+  reference_pending_state: STATE_SENSOR_INVALID with REASON_REFERENCE_NOT_READY after AUTO transition
+  reference_capture: head reference is captured only after commanded park has settled for TRK_REF_SETTLE
+observed:
+  pending_status_timestamp_us: 10280000
+  pending_state: 6
+  pending_reason: 9
+  pending_yaw_output: 0.0
+  pending_pitch_output: -1.0
+  tracking_status_timestamp_us: 11500000
+  tracking_state: 1
+  elapsed_pending_to_tracking_s: 1.22
+  reference_capture_log: tracker head reference captured at park
+  reconfiguration_state: 8
+  reconfiguration_reason: 11
+verdict: pass
+notes: >-
+  The transition from STATE_SENSOR_INVALID/REASON_REFERENCE_NOT_READY to
+  STATE_TRACKING took 1.22 s, exceeding TRK_REF_SETTLE=1.0 s. The same run
+  additionally exercised a changed TRK_YAW_PARK and observed the required
+  reconfiguration state/reason. Artifact files are content-checksummed and
+  read-only in the local project artifact store.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/346f0e569c/SITL-009/20260715.032550-clean-346f0e56/SITL-009-console.log
+    sha256: 7989289323a0d103dcad16c9178fdbd8de7c20da2c4dbf52be609d4400fe99d0
+  ulg:
+    location: /home/ubuntu/Dev/PX4_tracker/artifacts/346f0e569c/SITL-009/20260715.032550-clean-346f0e56/SITL-009.ulg
+    sha256: 3efb251a3502613db989f02468e343d65a23ff8779672a9aae47dd819bd62dcf

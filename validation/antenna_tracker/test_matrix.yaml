@@ -263,7 +263,7 @@ tests:
   - id: SITL-009
     gate: 6
     title: Park-settle reference capture
-    status: implemented
+    status: verified-sitl
     environment: sitl
     prerequisites: [SITL-002]
     acceptance:
