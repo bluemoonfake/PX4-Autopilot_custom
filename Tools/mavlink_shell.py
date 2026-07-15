@@ -24,6 +24,25 @@ except ImportError as e:
     print("")
     sys.exit(1)
 
+
+# Some current pymavlink releases can retain a message with ``_instances``
+# set to None, then raise TypeError when a subsequent instance arrives. The
+# shell only needs the latest message, so replace that stale cache entry.
+_mavutil_add_message = mavutil.add_message
+
+
+def _safe_add_message(messages, mtype, message):
+    existing = messages.get(mtype)
+
+    if existing is not None and getattr(existing, '_instances', object()) is None:
+        messages[mtype] = message
+        return
+
+    _mavutil_add_message(messages, mtype, message)
+
+
+mavutil.add_message = _safe_add_message
+
 try:
     import serial
 except ImportError as e:
