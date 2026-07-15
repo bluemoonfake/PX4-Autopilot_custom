@@ -186,7 +186,7 @@ tests:
   - id: BENCH-001
     gate: 7
     title: V6X bench output bank Servo1 yaw and Servo2 pitch mapping
-    status: blocked
+    status: verified-bench
     environment: bench
     prerequisites: [BLD-003]
     acceptance:

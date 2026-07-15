@@ -1,0 +1,36 @@
+BENCH-001 — V6X AUX servo mapping and bounded sweep observation
+UTC: 2026-07-15T04:21:26Z
+Firmware source: b8dd27cc6e9ba8320ff0bbeb6eecf5f83cb8dd25
+Board: Auterion PX4 FMU v6X.x (board id 53, STM32H7)
+
+Wiring and actuator configuration observed in QGroundControl before the run:
+- AUX1: Servo 1 (tracker yaw), PWM 400 Hz, disarmed 1500 us, min 800 us, max 2200 us.
+- AUX2: Servo 2 (tracker pitch), PWM 400 Hz, disarmed 1500 us, min 1000 us, max 2000 us.
+
+Firmware-side checks and configuration:
+- PWM_AUX_FUNC1=201 (Servo 1) and PWM_AUX_FUNC2=202 (Servo 2) were read through MAVLink shell.
+- Duplicate PWM_MAIN_FUNC1=201 and PWM_MAIN_FUNC2=202 were changed to 0 and saved.
+- TRK_MODE was STOP throughout the test.
+- The configured mechanical range for each axis was [-15, +15] deg with a 0 deg park.
+- The volatile CLI test therefore swept only the selected axis through the bounded normalized
+  interval [-0.5, +0.5], corresponding to approximately [-7.5, +7.5] deg. The other axis held park.
+
+Commands accepted by the FC:
+- antenna_tracker servo_test start yaw
+- antenna_tracker servo_test stop
+- antenna_tracker servo_test start pitch
+- antenna_tracker servo_test stop
+
+Operator observations reported during the live test:
+- Yaw: moved; correct yaw axis; intended direction; no mechanical-stop contact or abnormal vibration.
+- Pitch: moved; correct pitch axis; intended direction; no mechanical-stop contact or abnormal vibration.
+
+Post-test FC status:
+- Mode: STOP (TRK_MODE)
+- Command: yaw=0.0 deg, pitch=0.0 deg; normalized outputs yaw=0.000, pitch=0.000.
+- Servo-test override: disabled.
+
+Limitations:
+- This observation validates AUX output-bank mapping and bounded one-axis direction/range only.
+- It does not validate automatic tracking accuracy, target-loss timeout, moving-IMU feedback,
+  compass integrity under load, or the independent servo-power cutoff.

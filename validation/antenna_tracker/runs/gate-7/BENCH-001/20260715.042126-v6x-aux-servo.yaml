@@ -1,0 +1,60 @@
+run_id: 20260715.042126-v6x-aux-servo
+test_id: BENCH-001
+timestamp_utc: '2026-07-15T04:21:26Z'
+operator: Codex with operator mechanical observation
+git:
+  head_commit: b8dd27cc6e9ba8320ff0bbeb6eecf5f83cb8dd25
+  branch: antenna_tracker
+  base_px4_tag: v1.17.0
+  submodule_status: Build-required submodules initialized; optional FlightGear and Gazebo-classic submodules were not initialized.
+build:
+  target: px4_fmu-v6x_antenna_tracker
+  command: make px4_fmu-v6x_antenna_tracker upload
+  artifact_path: /home/ubuntu/Dev/PX4_tracker/artifacts/b8dd27cc6e/HW/20260715.034313Z/px4_fmu-v6x_antenna_tracker-uploaded.px4
+  artifact_sha256: d2048ba04dc1e9134c9ac8c70c96e62c07f6a8aa6e86cdb9d4d9673732362e13
+  flash_usage_percent: 84.55
+environment:
+  class: bench
+  board: Auterion PX4 FMU v6X.x
+  airframe_id: 4099
+  operating_system: Ubuntu 24.04
+setup:
+  imu_mount: fixed_open_loop
+  actuator_mapping: AUX1 Servo1/yaw; AUX2 Servo2/pitch; PWM 400 Hz
+  servo_hardware: 'Yaw AUX1: 800-2200 us, disarmed 1500 us. Pitch AUX2: 1000-2000 us, disarmed 1500 us.'
+  parameters:
+    TRK_MODE: 0
+    TRK_SERVO_TEST: 0
+    TRK_YAW_MIND: -15.0
+    TRK_YAW_MAXD: 15.0
+    TRK_YAW_PARK: 0.0
+    TRK_PIT_MIND: -15.0
+    TRK_PIT_MAXD: 15.0
+    TRK_PIT_PARK: 0.0
+    PWM_AUX_FUNC1: 201
+    PWM_AUX_FUNC2: 202
+    PWM_MAIN_FUNC1: 0
+    PWM_MAIN_FUNC2: 0
+  target_source: none; bounded STOP-mode servo-test only
+expected:
+  yaw_output: AUX1/Servo1 only, intended direction, no contact with mechanical stops
+  pitch_output: AUX2/Servo2 only, intended direction, no contact with mechanical stops
+  post_test_state: STOP with both commands at park and no servo-test override
+observed:
+  yaw: Moved on AUX1, correct axis and intended direction, with no stop contact or abnormal vibration.
+  pitch: Moved on AUX2, correct axis and intended direction, with no stop contact or abnormal vibration.
+  post_test: STOP; yaw=0.0 deg, pitch=0.0 deg; normalized outputs yaw=0.000 and pitch=0.000; servo-test disabled.
+metrics:
+  bounded_test_normalized_range: 0.5
+  yaw_bounded_mechanical_range_deg: 7.5
+  pitch_bounded_mechanical_range_deg: 7.5
+verdict: pass
+notes: >-
+  This fresh V6X run supersedes prior BENCH-001 pass claims. It verifies the
+  physically wired AUX output bank and both one-axis bounded sweeps. It does
+  not supersede the blocked timeout, moving-IMU, compass-load, or closed-loop
+  hardware validations.
+attachments:
+  console_log:
+    location: /home/ubuntu/Dev/PX4_tracker/PX4-Autopilot/validation/antenna_tracker/runs/gate-7/BENCH-001/20260715.042126-v6x-aux-servo-observation.txt
+    sha256: a40ef4d39d4c866f9d252a5a4049e0e3da74994e26934ad02bf763a164d69dc4
