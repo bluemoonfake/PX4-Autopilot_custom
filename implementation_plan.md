@@ -14,6 +14,7 @@ Read [the tracker documentation](docs/en/antenna_tracker/index.md) and use [the 
 |---|---|
 | planned | Work is scoped but not implemented. |
 | implemented | Source is present; behavior is not yet verified. |
+| blocked | The test cannot currently complete because a prerequisite, setup, or required evidence is unavailable. |
 | verified-sitl | Passed canonical tracker SITL with evidence. |
 | verified-bench | Passed controlled bench testing on intended hardware. |
 | verified-hardware | Passed deployed sensor/telemetry/mechanical testing. |
@@ -45,9 +46,9 @@ Read [the tracker documentation](docs/en/antenna_tracker/index.md) and use [the 
 
 ## Gate 1 — Honest stock-QGC integration
 
-**State:** implemented. Historical SITL/QGC evidence exists, but the current
-source revision needs regression evidence. V6X yaw mapping was observed; pitch
-mechanics are not currently available, so `BENCH-001` is not a two-axis pass.
+**State:** implemented. The 2026-07-19 MicoAir H743 run verifies the two-axis
+MAIN1/MAIN2 mapping and standard MAVLink ARM/DISARM path. Stock-QGC GUI Events
+capture and the remaining hardware safety gates are still required.
 
 ### Objective
 
@@ -86,11 +87,97 @@ Make the tracker clearly usable in unmodified QGroundControl without claiming cu
 
 ---
 
+## Gate 1A — Commander readiness and ARM-gated tracker execution
+
+**State:** implemented. Targeted unit checks, local tracker SITL observations,
+and a MicoAir H743 standard MAVLink ARM/DISARM run exist, but `SITL-010` and
+`SITL-011` remain `implemented`, not `verified-sitl`. Complete manifests, the
+untested transition branches, and stock-QGC Events capture remain required.
+
+### Objective
+
+Allow stock QGC to arm a healthy `MAV_TYPE=5` tracker without depending on
+irrelevant Position/Altitude/Manual flight-mode requirements, while ensuring a
+requested `TRK_MODE` cannot run until PX4 is armed.
+
+### Work
+
+1. Capture the current arming rejection through Commander Events,
+   `actuator_armed`, `vehicle_status`, and `health_report` before changing
+   readiness logic.
+2. Treat `TRK_MODE` as requested state and derive an effective tracker mode:
+   - disarmed, kill, lockdown, or termination: effective STOP/PARK;
+   - armed: requested STOP/AUTO/SCAN/MANUAL, subject to existing runtime safety
+     checks.
+3. Subscribe to `actuator_armed`, reset controller history on arm/disarm edges,
+   and cancel servo test if the system arms.
+4. Add a tracker-only Commander readiness policy for `MAV_TYPE=5` based on the
+   recorded rejection:
+   - retain calibrated IMU/attitude, power, safety, output, hard-fault, kill,
+     lockdown, and termination failures;
+   - do not require unrelated navigation modes, RC, mission, or local
+     position/altitude merely to arm the tracker;
+   - keep missing target/global-position data as explicit runtime park states.
+5. Append armed/requested/effective fields and a waiting-for-arm reason to
+   `TrackerStatus`; expose transitions through status, Events, and ULog.
+6. Keep stock QGC and normal Commander ARM/DISARM. Do not add an external
+   tracker flight mode, force-arm path, Gimbal v2 dependency, or global arming
+   bypass.
+
+### Critical files
+
+- `src/modules/antenna_tracker/antenna_tracker_main.cpp`
+- `src/modules/antenna_tracker/antenna_tracker.hpp`
+- `msg/TrackerStatus.msg`
+- the smallest applicable Commander health/arming requirement files identified
+  by baseline evidence
+- `docs/en/antenna_tracker/arming_and_modes.md`
+- `validation/antenna_tracker/test_matrix.yaml`
+
+### Acceptance criteria
+
+- Booting with `TRK_MODE=AUTO`, SCAN, or MANUAL cannot move beyond park while
+  disarmed.
+- A standard successful ARM makes the requested tracker mode effective without
+  rewriting `TRK_MODE`.
+- AUTO still waits at park for reference settle and valid runtime inputs.
+- DISARM, kill, lockdown, or termination parks and resets control state within
+  one 50 Hz cycle.
+- QGC Ready/Not Ready reflects tracker-relevant failures and no longer depends
+  on unsupported tracker mappings to Position/Altitude/Manual navigation modes.
+- Existing STOP, timeout, sensor-invalid, reference-settle, and volatile servo
+  test safety behavior does not regress.
+
+### Required evidence
+
+- `BLD-001`, `SITL-001`, `SITL-002`, `SITL-006`, `SITL-009`, `SITL-010`,
+  `SITL-011`, and `HW-004` before hardware completion is claimed.
+
+### Current evidence snapshot
+
+| Item | Current result | Remaining work |
+|---|---|---|
+| Build | `px4_sitl_default` built locally | Record `BLD-001` manifest and build log for the final revision |
+| Commander requirements | Tracker-only attitude/rate requirement unit test passed locally | Retain the test log in a run manifest |
+| ARM/DISARM path | H743 standard command ARM and DISARM each returned ACK result 0 and matching HEARTBEAT armed state | Capture the same flow in stock QGC with PX4 Events |
+| Runtime ARM gate | H743 disarmed AUTO reported requested 1/effective 0 at 1500/1500 us; ARM made effective 1; missing position parked with reason 4; DISARM restored effective STOP | Exercise SCAN, MANUAL, kill, and lockdown; record a conforming `SITL-010` manifest |
+| STOP diagnostics | Fixed: disarmed requested STOP reports IDLE/STOP; only a non-STOP request reports waiting-for-ARM | Add this hardware observation to the final SITL/QGC regression evidence |
+| QGC readiness | H743 reported `ready_to_arm=true`, all health/arming warning/error flags zero, and accepted standard GCS ARM/DISARM | Retain stock-QGC Events capture and verify all retained hardware blockers |
+| Hardware safety | `HW-004` passed: operator cut the independent servo rail while FC stayed live; termination and reboot produced 49/49 and 94/94 neutral samples | Keep the cutoff available for every later powered test |
+
+---
+
 ## Gate 2 — Positional-servo control architecture
 
-**State:** implemented; historical unit/SITL and yaw timeout evidence exist.
-Current two-axis bench verification is blocked by pitch mechanics and by the
-calibration mismatch recorded in `HW-002`.
+**State:** implemented; current unit tests cover positional mapping and the
+continuous-rate neutral/reverse/safe-stop path. The airframe-4099 SITL smoke
+test also verifies independent per-axis reporting, continuous neutral in STOP,
+and rejection of the positional sweep on a continuous axis. MicoAir H743 now
+selects its 50 Hz Timer 0 default in the board profile only for airframe 4099;
+generic SITL no longer depends on a board timer parameter. The 50 Hz H743
+retest passed physical yaw/pitch return. The follow-up selected-magnetometer
+test found a 4.58x field increase under yaw movement, so compass installation
+interference—not missing IMU motion—is the remaining control blocker.
 
 ### Problem to solve
 
@@ -116,11 +203,16 @@ target source
    - `tracker_axis_controller.*`: stateful servo command and bounded correction;
    - `tracker_events.*`: transition events.
 2. Move AUTO, SCAN, MANUAL, STOP, startup, and timeout through a single angle-domain output pipeline.
-3. Replace the hard-coded normalized-zero safe command with configurable per-axis park angles.
-4. Replace symmetric-only yaw range handling with explicit yaw min/max/park angles and a reachable-sector policy.
-5. Define pitch min/max/park angles in the same physical domain.
-6. Use PX4 geo, matrix-wrap, and slew-rate helpers where applicable.
-7. Keep fake target and home fallback as bench/development aids; preserve deterministic behavior.
+3. Keep servo motion semantics separate from PX4 electrical output setup:
+   - `TRK_YAW_SRV_T` / `TRK_PIT_SRV_T`: POSITION or CONTINUOUS;
+   - `PWM_MAIN_TIMx` / `PWM_AUX_TIMx`: PWM protocol/rate for a shared timer group;
+   - continuous safe states command neutral immediately and positional
+     `servo_test` is rejected.
+4. Replace the hard-coded normalized-zero safe command with configurable per-axis park angles.
+5. Replace symmetric-only yaw range handling with explicit yaw min/max/park angles and a reachable-sector policy.
+6. Define pitch min/max/park angles in the same physical domain.
+7. Use PX4 geo, matrix-wrap, and slew-rate helpers where applicable.
+8. Keep fake target and home fallback as bench/development aids; preserve deterministic behavior.
 
 ### Critical files
 
@@ -138,6 +230,10 @@ target source
 - Target headings outside the mechanical sector do not command through a stop or cable-wrap limit.
 - SCAN only visits validated reachable angles.
 - Manual mode emits angle/rate setpoints through the same safety mapping, not raw servo passthrough.
+- Analog/digital positional servos use the same POSITION semantics; changing
+  PWM rate does not change tracker control type.
+- Continuous axes use moving-IMU feedback and output neutral immediately on
+  STOP, timeout, disarm, or invalid attitude.
 
 ### Required evidence
 
@@ -259,7 +355,7 @@ Keep firmware build support separate from a verified wiring profile:
 |---|---|---|
 | FMUv6C production candidate | TELEM1 at 57600, MAIN Servo1/Servo2 | build only; hardware route pending |
 | FMUv6X bench | USB CDC router and AUX Servo1/Servo2 | ingress verified; mechanics/calibration in progress |
-| MicoAir H743 | board build artifact | hardware pending |
+| MicoAir H743 | direct USB, MAIN Servo1/Servo2 | build/flash, BENCH-001, USB HW-001, and HW-004 verified; BENCH-003 blocked by 4.58x selected-compass disturbance under servo load |
 
 Never copy a bench AUX parameter export into a production MAIN airframe
 default. A deployment profile must include board, port, baud, MAVLink instance,
@@ -299,7 +395,7 @@ tracking and loss/recovery acceptance.
 
 **State:** historical regression passed at prior commits. The current safety
 revision requires fresh `UNIT-001` through `UNIT-003` and `SITL-001` through
-`SITL-009` manifests before this gate is again verified-sitl.
+`SITL-011` manifests before this gate is again verified-sitl.
 
 ### Work
 
@@ -309,7 +405,7 @@ revision requires fresh `UNIT-001` through `UNIT-003` and `SITL-001` through
 ```bash
 make px4_sitl_default
 cd build/px4_sitl_default
-PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4
+PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none PX4_PARAM_SIH_VEHICLE_TYPE=5 ./bin/px4
 ```
 
 3. Capture manifests and raw logs for each SITL case.
@@ -323,16 +419,148 @@ All `UNIT-*` and `SITL-*` cases in [test_matrix.yaml](validation/antenna_tracker
 
 ## Gate 7 — Bench and hardware stabilization
 
-**State:** bench/hardware validation in progress. `HW-001` passes for the V6X
-USB-router profile. Historical BENCH-001/002 manifests conflict with later
-evidence that pitch mechanics are unavailable; both are therefore blocked until
-the two-axis calibration record is recreated.
-`BENCH-003` now has yaw-servo load evidence with stable logging and no estimator
-reset. The stronger 2026-07-14 yaw run also stayed within the provisional
-magnetic-norm bound, but its final sample did not demonstrate return to the
-original yaw pose. The gate remains open because yaw return-to-pose and pitch
-servo load have not passed. Pitch mechanics are explicitly deferred; `HW-002`
-through `HW-004` remain.
+**State:** bench/hardware validation in progress. The 2026-07-19 MicoAir H743
+run passed `BENCH-001` and direct-USB `HW-001`. Setting Timer 0 to 50 Hz
+resolved the pitch park failure (0.020-degree residual), but `BENCH-002` still
+remains blocked because yaw attitude stopped 25.740 degrees from baseline after
+its output returned to 1500 us. The operator confirmed the positional yaw head
+physically returned to its initial mark, so this is now a heading/compass
+measurement blocker rather than a mechanical-return failure. `BENCH-003` now
+has direct selected-compass evidence: device 527625 increased from 0.412 G to
+1.887 G under yaw movement and EKF raised its disturbed-field preflight flag.
+A later limited 1486..1514 us retest passed with a -2.52% field change and no
+EKF fault, but covered only 1.736 degrees and therefore does not clear the
+broader-range blocker. A staged follow-up localized the failure: 8.039 degrees
+at 1452..1548 us passed with -1.08% field change, while 17.009 degrees at
+1400..1600 us crossed the 10% stop limit at -16.61% and reproduced a
+25.03-degree post-neutral yaw residual. No larger stage was run after the
+safety threshold was crossed.
+After operator-reported compass recalibration, the bounded Stage 1 was repeated
+at 1452..1548 us. Selected field fell from 0.30380 G to 0.18921 G (-37.72%)
+and remained 0.19241 G (-36.66%) after STOP, with a 55.70-degree reported-yaw
+residual at neutral output. Stage 2 was deliberately skipped. This confirms
+that recalibration alone does not clear the physical magnetic-installation
+blocker.
+An internal-compass comparison then selected IST8310 device 396817 and disabled
+external device 527625. The same Stage 1 reduced selected field from 0.31948 G
+to 0.26669 G (-16.52%); it remained -16.66% after neutral with a 32.97-degree
+reported-yaw residual. Internal selection improves on the external -37.72%
+result but still fails the 10% limit, so no Stage 2 was run. The internal
+priority remains persisted pending the next installation diagnostic.
+A repeat with the subsequently observed priorities MAG0=75/MAG1=50 still
+selected internal device 396817. Eighty selected samples were clean during the
+early/mid active window (+0.23%), but the selected field was -25.62% after STOP
+and remained -25.16% after a 15-second neutral dwell, with a 38.71-degree yaw
+residual. This confirms a later-travel/return-dependent failure and does not
+clear BENCH-003.
+An explicit external-compass repeat then persisted MAG0=0/MAG1=100 and verified
+device 527625 after reboot. After a stable 80-sample 0.31016 G baseline, the
+early active window remained clean (+0.12%), but a late batch rose +17.73% and
+triggered the stop threshold plus an EKF heading-innovation failure. Field was
+still +15.49% after 15 seconds at neutral, although yaw returned within 0.30
+degrees. External selection improves returned heading but does not clear field
+integrity.
+A subsequent operator manual rotation exposed an external-compass data-path
+failure: device 527625 stopped publishing for more than 40 seconds, the sensor
+validator reported `best=-1`/TOUT with two failsafe events, and QMC5883L showed
+112 resets plus register/transfer errors. Internal IST8310 remained live with
+zero driver errors. This run is not a valid field comparison; external I2C
+cable, connector, power, ground, and strain relief now take priority before any
+additional sweep.
+The next bounded diagnostic preserved the current MAG0=75/MAG1=0 and
+800..2200 us endpoint parameters. A volatile +/-0.07 function-201 override
+reached 1549 us and released to 1500 us without writing parameters, but
+reported yaw moved only 0.027 degrees. The operator subsequently confirmed
+normal physical servo/mechanism motion, so the remaining discrepancy is that
+`vehicle_attitude` did not represent the observed movement. Selected internal
+field ended -12.65% from baseline after a 15-second neutral dwell, with a
+3.32-degree yaw residual; the external compass remained timed out. This is
+blocked evidence, not a BENCH-003 pass, and no larger stage was run.
+After USB reconnection, a full-transition capture of the same bounded envelope
+passed. The 1451..1500 and 1500..1549 us transitions produced 4.541 and 4.264
+degrees of measured yaw, while selected internal-field changes were -0.62%
+and -1.84%. Final field residual was -2.21%, output returned to 1500/1500 us,
+all recorded heartbeats were disarmed, and no parameter was written. This
+clears BENCH-003 only for the bounded 1451..1549 us envelope; the previous
+1400..1600 us failure range, full endpoints, and external-compass selection
+remain unqualified.
+The following HW-002 static-yaw attempt used a temporary home fallback, target
+system 3, `TRK_YAW_REV=1`, a +/-5-degree sector, and 1451..1549 us MAIN1
+limits. Direction and magnetic safety passed, but accuracy did not: +2/-2/-5/
+return errors were 0.689/0.928/1.990/0.709 degrees against 0.5/0.5/1.0/0.5
+degree limits. Only +5 passed at 0.535 degrees. This is a yaw calibration,
+asymmetric travel, backlash, or park/endpoint blocker; pitch remains untested.
+All temporary parameters were restored after verified STOP/DISARM.
+Repeating the same HW-002 sequence with every yaw/pitch PID and feed-forward
+term set to zero did not clear accuracy. +2/-2/+5/return errors became
+1.200/0.643/3.486/1.725 degrees; -5 steady error was 0.126 degrees but its
+1.441-degree overshoot failed. Field remained within -4.33..+2.49%. The
+direction- and history-dependent response rules out PID as the sole cause and
+strengthens the mechanical/mapping, backlash, park, or asymmetric-travel
+diagnosis. PID/FF remains zero by operator request; temporary setup parameters
+were restored.
+Code review found that positional feed-forward mapping applied the axis reverse
+flag while its PID/FF correction did not. The correction path now applies the
+same direction before summation. A normal/reversed regression test brings
+`unit-TrackerMath` to 15/15 passing tests, and the MicoAir H743 build passes at
+81.91% flash use with artifact SHA-256
+`54a588aa1cb123d552b21b1a60469c244e2022a4d6b702dc1062279ff5d0af37`.
+The artifact was then flashed to the MicoAir H743 with erase/program/verify at
+100% and airframe 4099 verified after reboot. A bounded yaw retest used
+`TRK_YAW_P=0.05`, zero I/D/FF, `TRK_YAW_REV=1`, a +/-5-degree sector and MAIN1
+1451..1549 us. Both command signs moved measured yaw in the correct direction,
+showing no overall direction regression. At P=0.05 the correction is below one
+PWM microsecond, so its sign is directly covered by the 15/15 unit regression
+rather than independently isolated by this hardware run. Static accuracy still failed:
++2/-2/+5 errors were 0.649/2.158/5.815 degrees, and the -5 phase stopped when
+measured relative yaw crossed -7.53 degrees. HW-002 therefore remains blocked
+on mechanical angle/PWM calibration and history-dependent travel, not the
+correction sign. Increasing gain is not authorized. The test ended STOP,
+disarmed and neutral with temporary parameters restored and PID/FF zero.
+The operator then corrected the mechanical yaw definition to -90..+90 degrees.
+HW-002 was repeated without narrowing the native 800..2200 us PWM endpoints,
+using reverse 1, P=0.05 and a temporary four-second slew. All four static
+target dwells completed: +2 degrees passed at 0.371-degree error, while -2,
++5 and -5 failed at 0.943, 1.424 and 1.494 degrees. The return phase stopped on
+the unchanged yaw-rate guard at 0.871 rad/s. Output and selected field remained
+safe at 1459..1541 us and -2.33..+1.75%. HW-002 remains blocked, but the
+corrected mapping materially improves symmetry and replaces the invalid
+-180..180 deployment setting. The board retains -90..90 and reverse 1; PID/FF
+is zero and slew is restored to two seconds.
+The servo's supplied full calibration is 500..2500 us for 180 degrees, making
+the restricted 800..2200 us deployment window equivalent to -63..+63 degrees.
+HW-002 was repeated with that paired mapping, P=0.05, an eight-second temporary
+slew and one-degree ramps between static dwells. The full scenario completed
+without a safety abort. +2, -2 and return passed at 0.243/0.208/0.182 degrees;
++5 and -5 failed at 1.383/1.305 degrees. Maximum yaw rate was 0.580 rad/s,
+output was 1443..1556 us and selected-field change was -1.14..+1.86%. The board
+retains -63..63 and reverse 1, while PID/FF is zero and slew is two seconds.
+HW-002 remains blocked by five-degree accuracy and missing pitch validation.
+Yaw P was then raised to 0.8 with I/D/FF zero. Under the same -63..63 mapping,
+an eight-second temporary slew and one-degree inter-dwell ramps, every static
+yaw case passed: +2/-2/+5/-5/return errors were
+0.050/0.180/0.750/0.578/0.145 degrees. Maximum yaw rate was 0.662 rad/s, PWM
+remained 1435..1563 us, selected-field change remained -1.79..+1.94%, and no
+safety guard fired. This qualifies ramped yaw static accuracy, not a direct
+zero-to-five-degree step or pitch. HW-002 therefore remains blocked rather than
+passing. The board retains P=0.8, -63..63 and reverse 1; I/D/FF are zero and
+slew is restored to two seconds.
+The overall direct-step follow-up used a 12-second temporary slew without
+relaxing the 0.8 rad/s guard. Yaw +2/-2/+5 passed at 0.403/0.366/0.592 degrees
+maximum final error, but -5 and return failed at 1.155/0.747 degrees. Isolated
+positive pitch +2/+5 also failed at 1.714/1.926 degrees, while park return
+passed at 0.497 degrees. Negative pitch remains unqualified because the
+installed range is 0..90 degrees. Primary runs completed without a guard;
+maximum yaw/pitch rates were 0.758/0.452 rad/s and field stayed within
+-2.49..+3.77%. `HW-002` is now failed overall, not merely untested. The board
+ended STOP/disarmed and neutral; yaw P=0.8 is retained while pitch PID/FF is
+zero.
+`HW-002` remains failed until yaw calibration/park and pitch calibration pass;
+`HW-003` remains blocked on HW-002.
+`HW-004` passed after the operator physically cut the independent servo rail;
+termination and reboot returned all recorded outputs to neutral. The current
+checksummed handoff is in
+`validation/antenna_tracker/runs/hardware/bench003-hw004-20260719T025023Z/`.
 
 ### Work
 
@@ -390,8 +618,8 @@ through `HW-004` remain.
 
 ## Deferred until after field stability
 
-- continuous-rotation, relay, stepper, or encoder-specific actuator backends;
-- yaw reversal/multi-turn strategies;
+- continuous multi-turn/encoder feedback, relay, or stepper actuator backends;
+- yaw turn counting and automatic cable-wrap strategies;
 - advanced PID notch/filter work;
 - custom output-function enums for tracker axes;
 - QGC plugin/custom tracker UI;

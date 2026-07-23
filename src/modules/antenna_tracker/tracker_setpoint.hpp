@@ -10,7 +10,7 @@
  * at its configured park angle. This lets a positional servo retain a physical
  * command after the earth-frame tracking error reaches zero.
  */
-class TrackerSetpointPlanner
+class TrackerSetpoint
 {
 public:
 	struct Setpoint {

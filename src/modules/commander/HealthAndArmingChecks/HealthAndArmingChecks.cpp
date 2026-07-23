@@ -58,7 +58,9 @@ bool HealthAndArmingChecks::update(bool force_reporting, bool is_arming_request)
 	// treat VTOLs in transition mode as fixed-wing - this is not in line with what's published as vehicle_status_s::vehicle_type
 	const uint8_t vehicle_type = _context.status().in_transition_mode ? vehicle_status_s::VEHICLE_TYPE_FIXED_WING :
 				     _context.status().vehicle_type;
-	_reporter.prepare(vehicle_type);
+	static constexpr uint8_t mav_type_antenna_tracker = 5;
+	const bool is_antenna_tracker = _context.status().system_type == mav_type_antenna_tracker;
+	_reporter.prepare(vehicle_type, is_antenna_tracker);
 
 	_context.setIsArmingRequest(is_arming_request);
 
@@ -82,7 +84,7 @@ bool HealthAndArmingChecks::update(bool force_reporting, bool is_arming_request)
 		_reporter._mavlink_log_pub = &_mavlink_log_pub;
 		_reporter.reset();
 
-		_reporter.prepare(vehicle_type);
+		_reporter.prepare(vehicle_type, is_antenna_tracker);
 
 		for (unsigned i = 0; i < sizeof(_checks) / sizeof(_checks[0]); ++i) {
 			if (!_checks[i]) {

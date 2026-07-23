@@ -319,7 +319,7 @@ Nhận vị trí UAV thật từ MAVLink.
   - [x] Convert velocity cm/s -> m/s
   - [x] Publish `tracker_target_position`
 - [x] Tạo parameter:
-  - [x] `TRK_SYSID_TGT`
+  - [x] `TRK_SYSID_TARGET`
   - [x] `TRK_AUTO_LOCK`
   - [x] `TRK_TIMEOUT_MS`
 - [x] antenna_tracker subscribe topic mới

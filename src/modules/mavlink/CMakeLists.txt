@@ -120,7 +120,6 @@ px4_add_module(
 		mavlink_timesync.cpp
 		mavlink_ulog.cpp
 		MavlinkStatustextHandler.cpp
-		MavlinkTrackerTargetBridge.cpp
 		open_drone_id_translations.cpp
 		tune_publisher.cpp
 	MODULE_CONFIG
@@ -154,20 +153,6 @@ px4_add_unit_gtest(SRC MavlinkStatustextHandlerTest.cpp
 		-Wno-cast-align # TODO: fix
 	LINKLIBS
 		modules__mavlink
-	)
-
-px4_add_unit_gtest(SRC MavlinkTrackerTargetBridgeTest.cpp
-	EXTRA_SRCS
-		MavlinkTrackerTargetBridge.cpp
-	INCLUDES
-		${MAVLINK_LIBRARY_DIR}
-		${MAVLINK_LIBRARY_DIR}/${CONFIG_MAVLINK_DIALECT}
-		${MAVLINK_LIBRARY_DIR}/${MAVLINK_DIALECT_UAVIONIX}
-	COMPILE_FLAGS
-		-Wno-address-of-packed-member # TODO: fix in c_library_v2
-		-Wno-cast-align # TODO: fix
-	LINKLIBS
-		mavlink_c
 	)
 
 if(CONFIG_NET AND "${PX4_PLATFORM}" MATCHES "nuttx")

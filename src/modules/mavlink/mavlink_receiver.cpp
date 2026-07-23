@@ -116,9 +116,7 @@ MavlinkReceiver::MavlinkReceiver(Mavlink &parent) :
 	_parameters_manager(parent),
 	_mavlink_timesync(parent)
 {
-	_param_trk_sysid_tgt_handle = param_find("TRK_SYSID_TGT");
-	_param_trk_auto_lock_handle = param_find("TRK_AUTO_LOCK");
-	_param_trk_timeout_ms_handle = param_find("TRK_TIMEOUT_MS");
+	_param_trk_sysid_tgt_handle = param_find("TRK_SYSID_TARGET");
 	update_tracker_params();
 }
 
@@ -2153,10 +2151,6 @@ MavlinkReceiver::handle_message_heartbeat(mavlink_message_t *msg)
 	mavlink_heartbeat_t hb;
 	mavlink_msg_heartbeat_decode(msg, &hb);
 
-	if (_mavlink.get_system_type() == MAV_TYPE_ANTENNA_TRACKER) {
-		_tracker_target_bridge.observe_heartbeat(msg->sysid, msg->compid, hb.type, now);
-	}
-
 	/* telemetry status supported only on first TELEMETRY_STATUS_ORB_ID_NUM mavlink channels */
 	if (_mavlink.get_channel() < (mavlink_channel_t)ORB_MULTI_MAX_INSTANCES) {
 		const bool same_system = (msg->sysid == mavlink_system.sysid);
@@ -2515,44 +2509,13 @@ MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_
 	mavlink_global_position_int_t gpos{};
 	mavlink_msg_global_position_int_decode(msg, &gpos);
 
-	const hrt_abstime now = hrt_absolute_time();
-	MavlinkTrackerTargetBridge::PositionInput input{};
-	input.system_id = msg->sysid;
-	input.component_id = msg->compid;
-	input.lat = gpos.lat;
-	input.lon = gpos.lon;
-	input.alt_mm = gpos.alt;
-	input.time_boot_ms = gpos.time_boot_ms;
-	input.vx_cm_s = gpos.vx;
-	input.vy_cm_s = gpos.vy;
-	input.vz_cm_s = gpos.vz;
-
-	const auto evaluation = _tracker_target_bridge.evaluate(input, mavlink_system.sysid,
-				_mavlink.get_system_type() == MAV_TYPE_ANTENNA_TRACKER, now);
-
-	if (!evaluation.accepted) {
-		if (_tracker_last_rejection_reason != static_cast<uint8_t>(evaluation.reason)) {
-			/* EVENT
-			 * @description A MAVLink GLOBAL_POSITION_INT source was rejected by the tracker source-admission policy.
-			 */
-			events::send<uint8_t>(events::ID("tracker_target_source_rejected"), events::Log::Warning,
-						      "Tracker target source rejected ({1})", static_cast<uint8_t>(evaluation.reason));
-			_tracker_last_rejection_reason = static_cast<uint8_t>(evaluation.reason);
-		}
-
+	if (_mavlink.get_system_type() != MAV_TYPE_ANTENNA_TRACKER
+	    || _tracker_target_sysid_param <= 0
+	    || msg->sysid != static_cast<uint8_t>(_tracker_target_sysid_param)) {
 		return;
 	}
 
-	_tracker_last_rejection_reason = UINT8_MAX;
-
-	if (evaluation.lock_released) {
-		PX4_INFO("Tracker released timed-out target %u/%u", evaluation.released_system_id,
-			 evaluation.released_component_id);
-	}
-
-	if (evaluation.lock_acquired) {
-		PX4_INFO("Tracker auto-locked to target %u/%u", msg->sysid, msg->compid);
-	}
+	const hrt_abstime now = hrt_absolute_time();
 
 	tracker_target_position_s target{};
 	target.timestamp = now;
@@ -2562,18 +2525,10 @@ MavlinkReceiver::handle_message_global_position_int_for_tracker(mavlink_message_
 	target.lon = gpos.lon;
 	target.alt_mm = gpos.alt;
 	target.relative_alt_mm = gpos.relative_alt;
-	target.vx_m_s = evaluation.velocity_valid ? static_cast<float>(gpos.vx) * 0.01f : 0.f;
-	target.vy_m_s = evaluation.velocity_valid ? static_cast<float>(gpos.vy) * 0.01f : 0.f;
-	target.vz_m_s = evaluation.velocity_valid ? static_cast<float>(gpos.vz) * 0.01f : 0.f;
+	target.vx_m_s = static_cast<float>(gpos.vx) * 0.01f;
+	target.vy_m_s = static_cast<float>(gpos.vy) * 0.01f;
+	target.vz_m_s = static_cast<float>(gpos.vz) * 0.01f;
 	target.last_update_us = now;
-	target.source_component = msg->compid;
-	target.source_instance = static_cast<uint8_t>(_mavlink.get_instance_id());
-	target.target_age_ms = 0;
-	target.position_valid = evaluation.position_valid;
-	target.velocity_valid = evaluation.velocity_valid;
-	target.altitude_valid = evaluation.altitude_valid;
-	target.heartbeat_valid = evaluation.heartbeat_valid;
-	target.source_type = evaluation.source_type;
 
 	_tracker_target_position_pub.publish(target);
 }
@@ -3604,27 +3559,17 @@ MavlinkReceiver::updateParams()
 void
 MavlinkReceiver::update_tracker_params()
 {
-	if (_param_trk_sysid_tgt_handle == PARAM_INVALID
-	    || _param_trk_auto_lock_handle == PARAM_INVALID
-	    || _param_trk_timeout_ms_handle == PARAM_INVALID) {
+	if (_param_trk_sysid_tgt_handle == PARAM_INVALID) {
 		return;
 	}
 
 	int32_t target_sysid = 0;
-	int32_t auto_lock = 0;
-	int32_t timeout_ms = 0;
 
-	if (param_get(_param_trk_sysid_tgt_handle, &target_sysid) != PX4_OK
-	    || param_get(_param_trk_auto_lock_handle, &auto_lock) != PX4_OK
-	    || param_get(_param_trk_timeout_ms_handle, &timeout_ms) != PX4_OK) {
+	if (param_get(_param_trk_sysid_tgt_handle, &target_sysid) != PX4_OK) {
 		return;
 	}
 
 	_tracker_target_sysid_param = target_sysid;
-	_tracker_auto_lock_param = auto_lock;
-	_tracker_timeout_ms_param = timeout_ms;
-	_tracker_target_bridge.configure(target_sysid, auto_lock != 0,
-			timeout_ms > 0 ? static_cast<uint64_t>(timeout_ms) * 1000ULL : 0);
 }
 
 void *MavlinkReceiver::start_trampoline(void *context)

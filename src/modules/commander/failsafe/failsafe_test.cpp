@@ -41,6 +41,26 @@
 
 using namespace time_literals;
 
+TEST(ModeRequirements, AntennaTrackerKeepsOnlyAttitudeAndRateRequirements)
+{
+	failsafe_flags_s failsafe_flags{};
+	mode_util::getModeRequirements(vehicle_status_s::VEHICLE_TYPE_UNSPECIFIED, failsafe_flags, true);
+
+	EXPECT_EQ(failsafe_flags.mode_req_angular_velocity, UINT32_MAX);
+	EXPECT_EQ(failsafe_flags.mode_req_attitude, UINT32_MAX);
+	EXPECT_EQ(failsafe_flags.mode_req_local_alt, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_local_position, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_local_position_relaxed, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_global_position, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_global_position_relaxed, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_mission, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_offboard_signal, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_home_position, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_wind_and_flight_time_compliance, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_prevent_arming, 0u);
+	EXPECT_EQ(failsafe_flags.mode_req_manual_control, 0u);
+}
+
 class FailsafeTester : public FailsafeBase
 {
 public:

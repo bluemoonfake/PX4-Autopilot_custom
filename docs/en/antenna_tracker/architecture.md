@@ -15,7 +15,25 @@ flowchart LR
     OUTPUT --> PWM[MAIN1 yaw / MAIN2 pitch]
 ```
 
-The current module runs at 50 Hz. It consumes tracker attitude, tracker global position, parameter updates, target position, vehicle status, and manual-control input. It publishes `tracker_status` and `actuator_servos`.
+The current module runs at 50 Hz. It consumes tracker attitude, tracker global position, parameter updates, target position, manual-control input, and `actuator_armed` as the runtime permission source. The module publishes `tracker_status` and `actuator_servos`.
+
+## Arming boundary
+
+`TRK_MODE` is the requested application submode; it is not permission to move.
+Before AUTO, SCAN, or MANUAL dispatch, the module must require:
+
+```text
+actuator_armed.armed
+&& !actuator_armed.kill
+&& !actuator_armed.lockdown
+&& !actuator_armed.termination
+```
+
+While disarmed, target ingress and status reporting may continue, but the
+effective mode is STOP and the output remains at the calibrated park pose. An
+arm edge resets controller history before activating the requested mode. A
+disarm edge stops active mode dispatch, resets both controllers, and selects
+park within one 50 Hz cycle. See [Arming, Readiness, and Tracker Modes](arming_and_modes.md).
 
 ## Output ownership
 
@@ -38,7 +56,26 @@ The hardware airframe assigns:
 
 The tracking module must not produce raw PWM microseconds. The PWM driver remains responsible for PWM conversion, reversal, and output constraints.
 
-## Positional-servo architecture
+## Servo motion type and electrical output
+
+Tracker servo semantics are configured independently per axis:
+
+| Parameter value | Meaning | Safe output |
+|---|---|---|
+| `TRK_YAW_SRV_T=0` / `TRK_PIT_SRV_T=0` | positional servo; physical angle maps to normalized position | configured physical park angle |
+| `TRK_YAW_SRV_T=1` / `TRK_PIT_SRV_T=1` | continuous-rotation servo; attitude error maps to normalized rotation rate | neutral/stop (`TRK_*_TRIM`) |
+
+These parameters do not select analog/digital pulse rate or output protocol.
+That remains owned by the PX4 output driver through `PWM_MAIN_TIMx` or
+`PWM_AUX_TIMx`, because one timer setting applies to every channel in that
+hardware timer group and requires reboot. The generic tracker airframe leaves
+the board's native output configuration in place. The MicoAir H743 board
+profile uses PWM 50 Hz when airframe 4099 is selected, replacing its normal
+motor/DShot default. A higher-rate digital positional servo still uses servo
+type `POSITION`; only change the timer rate when its data sheet explicitly
+permits it.
+
+## Position/rate servo architecture
 
 The intended runtime structure is:
 
@@ -47,7 +84,8 @@ Target source
   -> target validity, source filtering, timeout, optional prediction
   -> geometry: desired world yaw/pitch
   -> mechanical planner: reachable sector, cable-wrap policy, pitch limits, park policy
-  -> servo mapper: desired physical angle -> normalized Servo1/Servo2 position
+  -> servo mapper: desired physical angle -> normalized position,
+     or attitude error -> normalized continuous rotation rate
   -> small closed-loop correction and slew limiter
   -> actuator_servos
 ```
@@ -77,8 +115,8 @@ Production altitude computation uses the absolute MSL altitude. `relative_alt` b
 | `antenna_tracker_main.cpp/.hpp` | PX4 module lifecycle, subscriptions, publications, state transitions |
 | `tracker_target_manager.*` | target source selection, validity, timeout, filtering, prediction |
 | `tracker_setpoint_planner.*` | geometry, park/scan/manual setpoints, yaw sector handling |
-| `tracker_axis_controller.*` | stateful positional-servo command and bounded correction |
-| `tracker_servo_mapper.*` | mechanical angles, output range, trim, reverse, mapping |
+| `tracker_axis_controller.*` | stateful positional command or continuous-rate command and bounded correction |
+| `tracker_servo_mapper.*` | mechanical angles, output range, neutral/trim, reverse, position/rate mapping |
 | `tracker_events.*` | edge-triggered PX4 Events for operator-visible state changes |
 
 Where available, use PX4 utilities rather than duplicate them:
@@ -90,13 +128,20 @@ Where available, use PX4 utilities rather than duplicate them:
 
 ## Mechanical model
 
-This project targets **positional yaw and pitch servos with moving IMU feedback**. The future parameter model must describe real mechanics, not only normalized output:
+The default target remains **positional yaw and pitch servos with moving IMU feedback**. The parameter model describes real mechanics, not only normalized output:
 
 - yaw minimum, maximum, and park angle;
 - pitch minimum, maximum, and park angle;
 - servo direction/reversal;
 - calibrated angle-to-normalized mapping;
 - yaw reachable sector and cable-wrap restrictions.
+
+A continuous-rotation axis has no commanded physical park position. It needs
+valid moving-IMU attitude feedback whenever it moves; STOP, timeout, disarm,
+kill, lockdown, termination, or invalid attitude commands neutral immediately.
+The bounded positional `servo_test` command is rejected for continuous axes.
+Because wrapped attitude does not count turns, continuous yaw is not a
+cable-wrap solution: use a limited sector or add external turn/angle sensing.
 
 A symmetric `TRK_YAW_RANGE` alone is not enough to express an offset sector or cable-management limit. No target angle should be commanded through a mechanical stop merely because it is the shortest wrapped heading.
 

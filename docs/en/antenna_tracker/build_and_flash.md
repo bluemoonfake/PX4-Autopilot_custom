@@ -16,10 +16,34 @@ Boot the tracker airframe directly:
 
 ```bash
 cd build/px4_sitl_default
-PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none ./bin/px4
+PX4_SYS_AUTOSTART=4099 PX4_SIM_MODEL=none PX4_PARAM_SIH_VEHICLE_TYPE=5 ./bin/px4
 ```
 
 This is the canonical tracker firmware boot path. Do **not** use `make px4_sitl gz_x500` as the pass criterion for airframe 4099: the Gazebo x500 model applies its own multicopter autostart and does not validate the tracker airframe.
+
+The airframe defaults `SIH_VEHICLE_TYPE=5` so SIH behaves as a
+ground-supported pedestal. The explicit override also handles an existing SITL
+parameter file that retained the old quadrotor model; that model tumbles without
+flight controllers and causes a false roll/pitch failure-detector disarm.
+
+For runtime changes, build `px4_sitl_default` after each major patch and run
+only the relevant unit/SITL cases before moving to the next patch. A successful
+compile is `implemented` evidence; it is not a SITL pass until airframe 4099 is
+booted and the required test manifest is recorded.
+
+For the arming increment, capture this baseline before and after the change:
+
+```sh
+commander check
+listener actuator_armed
+listener vehicle_status
+listener health_report
+listener tracker_status
+listener actuator_servos
+```
+
+Use the standard MAVLink/QGC ARM and DISARM commands. Do not force arm during
+acceptance testing.
 
 In the PX4 shell, confirm:
 

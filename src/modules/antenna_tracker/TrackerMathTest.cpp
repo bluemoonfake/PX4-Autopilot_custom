@@ -2,10 +2,10 @@
 
 #include "tracker_controller.hpp"
 #include "tracker_axis_controller.hpp"
-#include "tracker_geo.hpp"
-#include "tracker_servo_mapper.hpp"
-#include "tracker_setpoint_planner.hpp"
-#include "tracker_target_manager.hpp"
+#include "lib/geo.hpp"
+#include "lib/servo_mapping.hpp"
+#include "tracker_setpoint.hpp"
+#include "target_manager.hpp"
 
 TEST(TrackerGeo, CardinalBearings)
 {
@@ -70,10 +70,10 @@ TEST(TrackerPID, IntegratorAccumulatesInsideLimits)
 	EXPECT_NEAR(pid.get_integrator(), 0.05f, 1e-6f);
 }
 
-TEST(TrackerServoMapper, NonNeutralAngleRetainsNonNeutralCommandAtZeroError)
+TEST(ServoMapping, NonNeutralAngleRetainsNonNeutralCommandAtZeroError)
 {
-	TrackerServoMapper mapper;
-	mapper.configure(-90.f, 90.f, -1.f, 1.f, 0.f, false);
+	ServoMapping mapper;
+	mapper.configure(-90.f, 90.f);
 
 	// Positional mapping must not collapse to neutral just because a feedback
 	// correction happens to be zero at the desired head angle.
@@ -81,26 +81,23 @@ TEST(TrackerServoMapper, NonNeutralAngleRetainsNonNeutralCommandAtZeroError)
 	EXPECT_NE(mapper.map(45.f), mapper.map(0.f));
 }
 
-TEST(TrackerServoMapper, ParkAndReverseMappingAreDeterministic)
+TEST(ServoMapping, ParkMappingIsDeterministic)
 {
-	TrackerServoMapper mapper;
-	mapper.configure(-180.f, 180.f, -0.8f, 0.8f, 0.f, false);
-	EXPECT_NEAR(mapper.map(90.f), 0.4f, 1e-6f);
+	ServoMapping mapper;
+	mapper.configure(-180.f, 180.f);
+	EXPECT_NEAR(mapper.map(90.f), 0.5f, 1e-6f);
 
-	mapper.configure(-180.f, 180.f, -0.8f, 0.8f, 0.f, true);
-	EXPECT_NEAR(mapper.map(90.f), -0.4f, 1e-6f);
-
-	TrackerSetpointPlanner planner;
+	TrackerSetpoint planner;
 	planner.configure(-150.f, 120.f, 30.f, -10.f, 80.f, 20.f);
 	const auto park = planner.park();
 	EXPECT_FLOAT_EQ(park.yaw_deg, 30.f);
 	EXPECT_FLOAT_EQ(park.pitch_deg, 20.f);
-	EXPECT_NEAR(mapper.map(park.yaw_deg), -0.13333333f, 1e-6f);
+	EXPECT_NEAR(mapper.map(park.yaw_deg), 1.f / 6.f, 1e-6f);
 }
 
-TEST(TrackerSetpointPlanner, AutoAndScanCommandsStayInsideMechanicalSector)
+TEST(TrackerSetpoint, AutoCommandsStayInsideMechanicalSector)
 {
-	TrackerSetpointPlanner planner;
+	TrackerSetpoint planner;
 	planner.configure(-90.f, 90.f, 0.f, 0.f, 70.f, 10.f);
 
 	const auto auto_command = planner.from_auto(math::radians(170.f), math::radians(100.f), 0.f, 0.f);
@@ -109,17 +106,12 @@ TEST(TrackerSetpointPlanner, AutoAndScanCommandsStayInsideMechanicalSector)
 	EXPECT_TRUE(auto_command.yaw_clipped);
 	EXPECT_TRUE(auto_command.pitch_clipped);
 
-	const auto scan_command = planner.constrain(-120.f, -5.f);
-	EXPECT_FLOAT_EQ(scan_command.yaw_deg, -90.f);
-	EXPECT_FLOAT_EQ(scan_command.pitch_deg, 0.f);
-	EXPECT_TRUE(scan_command.yaw_clipped);
-	EXPECT_TRUE(scan_command.pitch_clipped);
 }
 
 TEST(TrackerAxisController, ParkAndZeroErrorKeepTheMappedPhysicalCommand)
 {
-	TrackerServoMapper mapper;
-	mapper.configure(-90.f, 90.f, -1.f, 1.f, 0.f, false);
+	ServoMapping mapper;
+	mapper.configure(-90.f, 90.f);
 
 	TrackerAxisController axis;
 	axis.configure(mapper, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f);
@@ -131,10 +123,22 @@ TEST(TrackerAxisController, ParkAndZeroErrorKeepTheMappedPhysicalCommand)
 	EXPECT_NEAR(axis.output(), -0.5f, 1e-6f);
 }
 
+TEST(TrackerAxisController, PositionCorrectionUsesNormalizedOutput)
+{
+	ServoMapping mapper;
+	mapper.configure(-90.f, 90.f);
+
+	TrackerAxisController axis;
+	axis.configure(mapper, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f);
+	EXPECT_NEAR(axis.command(45.f, 0.1f, 0.f, 0.02f), 0.6f, 1e-6f);
+	EXPECT_NEAR(axis.command(45.f, -0.1f, 0.f, 0.02f), 0.4f, 1e-6f);
+
+}
+
 TEST(TrackerAxisController, ReconfigurationResetDiscardsPriorIntegralCorrection)
 {
-	TrackerServoMapper mapper;
-	mapper.configure(-90.f, 90.f, -1.f, 1.f, 0.f, false);
+	ServoMapping mapper;
+	mapper.configure(-90.f, 90.f);
 
 	TrackerAxisController axis;
 	axis.configure(mapper, 0.f, 1.f, 0.f, 0.f, 0.25f, 0.f);
@@ -148,16 +152,13 @@ TEST(TrackerAxisController, ReconfigurationResetDiscardsPriorIntegralCorrection)
 	EXPECT_NEAR(axis.command(30.f, 0.f, 0.f, 0.02f), 1.f / 3.f, 1e-6f);
 }
 
-TEST(TrackerTargetManager, MavlinkTimeoutParksWhileFakeTargetIsDeterministic)
+TEST(TargetManager, MavlinkTimeoutInvalidatesTarget)
 {
-	TrackerTargetManager manager;
+	TargetManager manager;
 	manager.configure(2, 1000);
 
 	tracker_target_position_s message{};
 	message.valid = true;
-	message.position_valid = true;
-	message.altitude_valid = true;
-	message.heartbeat_valid = true;
 	message.target_system = 2;
 	message.lat = 473977420;
 	message.lon = 85455940;
@@ -167,8 +168,4 @@ TEST(TrackerTargetManager, MavlinkTimeoutParksWhileFakeTargetIsDeterministic)
 	EXPECT_TRUE(manager.valid(1999999));
 	EXPECT_FALSE(manager.valid(2000001));
 
-	manager.set_fake_target(1, 2, 3, 2000001);
-	EXPECT_TRUE(manager.valid(9000000));
-	EXPECT_TRUE(manager.target().fake);
-	EXPECT_EQ(manager.target().lat_e7, 1);
 }

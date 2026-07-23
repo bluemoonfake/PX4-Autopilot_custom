@@ -350,8 +350,8 @@ BENCH 002:
 NuttShell (NSH) NuttX-11.0.0
 nsh> param set TRK_MODE 1
   TRK_MODE: curr: 0 -> new: 1
-nsh> param set TRK_SYSID_TGT 2
-  TRK_SYSID_TGT: curr: 0 -> new: 2
+nsh> param set TRK_SYSID_TARGET 2
+  TRK_SYSID_TARGET: curr: 0 -> new: 2
 nsh> param set TRK_TIMEOUT_MS 2000
   TRK_TIMEOUT_MS: curr: 5000 -> new: 2000
 nsh> param set TRK_TGT_LAT 0
@@ -362,9 +362,9 @@ Symbols: x = used, + = saved, * = unsaved
 x + TRK_MODE [811,1462] : 1
 
  950/1611 parameters used.
-nsh> param show TRK_SYSID_TGT
+nsh> param show TRK_SYSID_TARGET
 Symbols: x = used, + = saved, * = unsaved
-x + TRK_SYSID_TGT [830,1481] : 2
+x + TRK_SYSID_TARGET [830,1481] : 2
 
  950/1611 parameters used.
 nsh> param show TRK_TIMEOUT_MS

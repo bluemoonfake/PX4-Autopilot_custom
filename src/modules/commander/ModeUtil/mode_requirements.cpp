@@ -43,7 +43,7 @@ static inline void setRequirement(uint8_t nav_state, uint32_t &mode_requirement)
 }
 
 
-void getModeRequirements(uint8_t vehicle_type, failsafe_flags_s &flags)
+void getModeRequirements(uint8_t vehicle_type, failsafe_flags_s &flags, bool is_antenna_tracker)
 {
 	flags.mode_req_angular_velocity = 0;
 	flags.mode_req_attitude = 0;
@@ -59,6 +59,17 @@ void getModeRequirements(uint8_t vehicle_type, failsafe_flags_s &flags)
 	flags.mode_req_prevent_arming = 0;
 	flags.mode_req_manual_control = 0;
 	flags.mode_req_other = 0;
+
+	if (is_antenna_tracker) {
+		// Tracker operating modes are owned by TRK_MODE, not PX4 navigation modes.
+		// Keep attitude/rate validity relevant in every Commander mode, but do not
+		// make arming depend on flight-only position, altitude, mission, or RC
+		// requirements. Runtime target and tracker-position loss is handled by the
+		// antenna_tracker module by parking its outputs.
+		flags.mode_req_angular_velocity = UINT32_MAX;
+		flags.mode_req_attitude = UINT32_MAX;
+		return;
+	}
 
 	// NAVIGATION_STATE_MANUAL
 	setRequirement(vehicle_status_s::NAVIGATION_STATE_MANUAL, flags.mode_req_manual_control);

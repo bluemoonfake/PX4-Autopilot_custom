@@ -22,19 +22,28 @@ void TrackerEvents::update(uint8_t state, uint8_t reason, bool target_valid, boo
 
 	if (state != _previous_state || reason != _previous_reason) {
 		switch (state) {
-		case tracker_status_s::STATE_SCANNING:
-			/* EVENT
-			 * @description SCAN mode is active inside the configured mechanical limits.
-			 */
-			events::send(events::ID("tracker_scan_active"), events::Log::Info, "Tracker scan active");
-			break;
-
 		case tracker_status_s::STATE_RECONFIGURING:
 			/* EVENT
 			 * @description Output mapping, mechanics, or controller tuning changed. The tracker parks before resuming.
 			 */
 			events::send(events::ID("tracker_reconfiguring"), events::Log::Warning,
 				     "Tracker configuration changed, parking before resume");
+			break;
+
+		case tracker_status_s::STATE_WAITING_FOR_ARM:
+			/* EVENT
+			 * @description A non-STOP tracker mode is requested, but PX4 is disarmed. The tracker remains parked.
+			 */
+			events::send(events::ID("tracker_waiting_for_arm"), events::Log::Info,
+				     "Tracker waiting for arm, parking");
+			break;
+
+		case tracker_status_s::STATE_SAFETY_INHIBITED:
+			/* EVENT
+			 * @description Kill, lockdown, or termination prevents tracker operation and selects the configured park output.
+			 */
+			events::send(events::ID("tracker_safety_inhibited"), events::Log::Warning,
+				     "Tracker safety state active, parking");
 			break;
 
 		case tracker_status_s::STATE_SENSOR_INVALID:

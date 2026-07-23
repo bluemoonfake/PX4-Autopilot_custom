@@ -1,27 +1,25 @@
 #pragma once
 
+#include <cstdint>
+
 #include <mathlib/mathlib.h>
 
 #include "tracker_controller.hpp"
-#include "tracker_servo_mapper.hpp"
+#include "lib/servo_mapping.hpp"
 
 /**
- * Stateful position-command path for one positional servo axis.
- *
- * The mapper always provides the physical angle command. PID is deliberately
- * limited to a small correction around that command, so a zero tracking error
- * cannot return a non-neutral servo to neutral.
+ * Stateful command path for one positional servo axis.
  */
 class TrackerAxisController
 {
 public:
-	void configure(const TrackerServoMapper &mapper, float p, float i, float d, float ff,
+	void configure(const ServoMapping &mapper, float p, float i, float d, float ff,
 		       float integrator_limit, float slew_time)
 	{
 		_mapper = mapper;
 		_pid.set_gains(p, i, d, ff);
-		_pid.set_output_limits(-CORRECTION_LIMIT, CORRECTION_LIMIT);
-		_pid.set_integrator_limit(math::constrain(integrator_limit, 0.f, CORRECTION_LIMIT));
+		_pid.set_output_limits(-POSITION_CORRECTION_LIMIT, POSITION_CORRECTION_LIMIT);
+		_pid.set_integrator_limit(math::constrain(integrator_limit, 0.f, POSITION_CORRECTION_LIMIT));
 		_slew_time = math::max(slew_time, 0.f);
 	}
 
@@ -32,7 +30,8 @@ public:
 
 	float command(float angle_deg, float error_rad, float target_rate_rad_s, float dt)
 	{
-		const float desired = _mapper.map(angle_deg) + _pid.update(error_rad, dt, target_rate_rad_s);
+		const float controller_output = _pid.update(error_rad, dt, target_rate_rad_s);
+		const float desired = _mapper.map(angle_deg) + controller_output;
 		return apply_slew(desired, dt);
 	}
 
@@ -48,10 +47,15 @@ public:
 		_output = _mapper.map(angle_deg);
 	}
 
+	float safe_output(float park_angle_deg) const
+	{
+		return _mapper.map(park_angle_deg);
+	}
+
 	float output() const { return _output; }
 
 private:
-	static constexpr float CORRECTION_LIMIT = 0.25f;
+	static constexpr float POSITION_CORRECTION_LIMIT = 0.25f;
 
 	float apply_slew(float desired, float dt)
 	{
@@ -67,7 +71,7 @@ private:
 		return _output;
 	}
 
-	TrackerServoMapper _mapper{};
+	ServoMapping _mapper{};
 	TrackerPID _pid{};
 	float _slew_time{0.f};
 	float _output{0.f};

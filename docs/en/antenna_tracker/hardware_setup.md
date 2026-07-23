@@ -87,6 +87,29 @@ the conservative default of 1.0 s and increase it for a slow or heavily loaded
 mechanism. The firmware has no servo-position feedback, so this is not a
 substitute for verifying physical park on the bench.
 
+## Servo type and PWM rate
+
+Use `TRK_YAW_SRV_T` and `TRK_PIT_SRV_T` for motion semantics:
+
+- `0` (`POSITION`, default): output represents a physical servo position.
+- `1` (`CONTINUOUS`): output represents rotation rate; `TRK_*_TRIM` is neutral/stop.
+
+Use QGC Actuators `PWM_MAIN_TIMx`/`PWM_AUX_TIMx` for the electrical protocol and
+rate. MAIN1 and MAIN2 use Timer 0 on the MicoAir H743 profile, so they cannot
+have different PWM rates while they remain in that timer group. The tracker
+board profile defaults `PWM_MAIN_TIM0=50` when MicoAir H743 boots airframe
+4099; the generic airframe does not assume a timer layout. Changing the timer
+setting requires reboot. Analog and digital positional servos both remain
+`POSITION`. Select 100/200/400 Hz only when every active servo on the timer
+group explicitly supports that rate.
+
+For a continuous axis, set the corresponding PWM disarmed and failsafe values
+to the measured neutral pulse (normally near 1500 us) before applying servo
+power. It requires valid moving-IMU feedback for AUTO/SCAN/MANUAL, stops
+immediately on a safe-state transition, and cannot use the bounded positional
+`servo_test` sweep. Wrapped yaw does not provide turn counting or cable-wrap
+protection.
+
 `TRK_FAKE_EN` defaults to `0`. Set it to `1` only for SITL or a controlled
 bench; while it is enabled, fake target parameters are the sole target source.
 Disable it before any MAVLink ingress, timeout, or hardware tracking test.
@@ -102,7 +125,7 @@ silently interpreted as relative altitude.
 | FC mounted in a different cardinal orientation | `SENS_BOARD_ROT` |
 | Small horizon offset | level-horizon calibration / board offsets |
 | Small servo horn neutral error | tracker servo trim after orientation is correct |
-| Servo moves opposite direction | output reversal or future tracker axis reversal parameter |
+| Servo moves opposite direction | `TRK_YAW_REV` / `TRK_PIT_REV` or PX4 output reversal, but not both |
 
 Do not compensate for a 90°/180° board orientation error by adding large tracker trim.
 
@@ -110,7 +133,7 @@ Do not compensate for a 90°/180° board orientation error by adding large track
 
 The production airframe reserves **TELEM1** for MAVLink instance 0 in Normal mode at **57600 baud** (`MAV_0_CONFIG=101`, `MAV_0_MODE=0`, `SER_TEL1_BAUD=57600`). This maps to `/dev/ttyS5` on FMUv6C, `/dev/ttyS6` on FMUv6X, and `/dev/ttyS0` on MicoAir H743; verify the board label before wiring. QGC and the target UAV may share this routed telemetry link. For USB bench testing, use `Tools/antenna_tracker/usb_router.py`; it owns the USB device and injects test target traffic on UDP port 18570.
 
-A target must arrive on the normal MAVLink receiver path with a periodic `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same `(sysid, compid)`. The first production policy accepts component `MAV_COMP_ID_AUTOPILOT1`, requires a fresh non-GCS heartbeat, and then applies `TRK_SYSID_TGT` or validated auto-lock. The source system ID and heartbeat are routing/qualification mechanisms, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
+A target arrives on the normal MAVLink receiver path as `GLOBAL_POSITION_INT`. The initial policy accepts only messages whose source system ID equals `TRK_SYSID_TARGET`; a value of zero disables MAVLink target acceptance. System ID filtering is routing, not authentication. If the link must resist spoofing, plan MAVLink signing and transport security separately.
 
 `TRK_HOME_EN` is disabled for production unless a verified tracker home has been
 provisioned. Firmware rejects the unprovisioned `(TRK_HOME_LAT,TRK_HOME_LON) =
@@ -119,6 +142,10 @@ site may be on the equator or prime meridian: only the all-zero pair is
 rejected. Use `antenna_tracker set_home` only while the tracker has a valid
 global position, then run `param save`.
 
-## Positional servo assumption
+## Supported actuator semantics
 
-The controller commands calibrated physical positions, respects mechanical sectors, and parks safely. Continuous-rotation, relay, stepper, or encoder-based axes require their own actuator/feedback design and are outside the first stable milestone.
+Positional servos are the production default and command calibrated physical
+positions. Continuous-rotation PWM servos are available per axis as an
+explicit, feedback-dependent mode; they stop at neutral instead of returning
+to a physical park pose. Relay, stepper, and encoder-bus actuators still require
+separate drivers/feedback designs and are outside this firmware interface.

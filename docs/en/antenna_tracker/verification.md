@@ -12,7 +12,9 @@ The machine-readable contract lives in `validation/antenna_tracker/`:
 
 | Level | Meaning |
 |---|---|
+| planned | Work is scoped but no implementation claim is made. |
 | implemented | Code exists and is reviewed; no runtime claim yet. |
+| blocked | A required prerequisite, setup, or evidence source prevents completion. |
 | verified-sitl | Canonical tracker SITL test passed with a manifest and raw console/log attachments. |
 | verified-bench | Intended flight controller and actuator mechanics passed a controlled bench test. |
 | verified-hardware | Real telemetry, sensors, and closed-loop mechanics passed the required hardware case. |
@@ -44,6 +46,23 @@ The machine-readable contract lives in `validation/antenna_tracker/`:
 - `SITL-006`: Target timeout, safe state, and recovery.
 - `SITL-007`: Specific system-ID filter.
 - `SITL-008`: Auto-lock, competing source rejection, and lock release.
+- `SITL-009`: AUTO park-settle reference capture.
+- `SITL-010`: Requested/effective tracker mode and ARM/DISARM transitions.
+- `SITL-011`: Tracker-specific Commander readiness and standard QGC arming semantics.
+
+### Current ARM-gate verification status
+
+The ARM-gate source has been built and exercised locally, including standard
+MAVLink ARM/DISARM acknowledgement, HEARTBEAT arming state, disarmed AUTO park,
+armed AUTO activation, target-missing park, servo-test cancellation on ARM, and
+immediate park selection on the first logged tracker sample after DISARM.
+
+These observations do not yet satisfy the formal evidence contract. Both
+`SITL-010` and `SITL-011` remain `implemented` until their manifests include
+raw console/ULog attachments and the stock-QGC Events view. SCAN, MANUAL, kill,
+lockdown, termination, and retained hardware/safety arm blockers also require
+explicit coverage. `SITL-009` must be rerun because the ARM transition now
+invalidates and recaptures the AUTO head reference.
 
 ### Bench and hardware tests
 

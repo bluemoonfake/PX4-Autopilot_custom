@@ -1,12 +1,16 @@
-#include "tracker_geo.hpp"
+#include "geo.hpp"
 #include <math.h>
-
+/*
+ Convert GPS position to variable:Distance, bearing, pitch.
+ distance = sqrt(delta_lat² + (delta_lon × cos(latitude))²) × scale
+ bearing = atan2(east_offset, north_offset)
+*/
 namespace tracker_geo {
 
 float horizontal_distance_m(int32_t tracker_lat_e7, int32_t tracker_lon_e7,
 			     int32_t target_lat_e7, int32_t target_lon_e7)
 {
-	const double tracker_lat_rad = static_cast<double>(tracker_lat_e7) * 1.0e-7 * M_PI / 180.0;
+	const double tracker_lat_rad = static_cast<double>(tracker_lat_e7) * 1.0e-7 * M_PI / 180.0;  //degE7(m) -> rad
 
 	const double dlat = static_cast<double>(target_lat_e7 - tracker_lat_e7);
 	const double dlon = static_cast<double>(target_lon_e7 - tracker_lon_e7);

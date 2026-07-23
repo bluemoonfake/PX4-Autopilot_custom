@@ -9,7 +9,15 @@ param set-default BAT1_V_DIV 21.2
 param set-default BAT1_V_EMPTY 3.2
 
 param set-default SYS_HAS_MAG 1
-param set-default PWM_MAIN_TIM0 -4
+if param compare SYS_AUTOSTART 4099
+then
+	# MAIN1/2 drive tracker servos: replace the board's motor/DShot default
+	# with the conservative analog-servo rate. Higher-rate digital servos can
+	# override this through the native PX4 PWM_MAIN_TIM0 parameter.
+	param set-default PWM_MAIN_TIM0 50
+else
+	param set-default PWM_MAIN_TIM0 -4
+fi
 param set-default RC_INPUT_PROTO -1
 
 param set-default IMU_GYRO_CUTOFF 80

@@ -42,8 +42,9 @@ namespace mode_util
  * Get per-mode requirements
  * @param vehicle_type one of vehicle_status_s::VEHICLE_TYPE_*
  * @param flags output flags, all mode_req_* entries are set
+ * @param is_antenna_tracker true when MAV_TYPE is MAV_TYPE_ANTENNA_TRACKER
  */
-void getModeRequirements(uint8_t vehicle_type, failsafe_flags_s &flags);
+void getModeRequirements(uint8_t vehicle_type, failsafe_flags_s &flags, bool is_antenna_tracker = false);
 
 
 } // namespace mode_util

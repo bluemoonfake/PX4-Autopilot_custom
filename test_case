@@ -214,13 +214,13 @@ TEST 2:
 TEST 4:
 Kịch bản A: Specific sysid
 bash
-param set TRK_SYSID_TGT 2   # Only accept sysid 2
+param set TRK_SYSID_TARGET 2   # Only accept sysid 2
 param set TRK_AUTO_LOCK 0
 Gửi GLOBAL_POSITION_INT từ sysid=1 → bỏ qua
 Gửi GLOBAL_POSITION_INT từ sysid=2 → accept
 Keets qua:
-pxh> param set TRK_SYSID_TGT 2  
-  TRK_SYSID_TGT: curr: 0 -> new: 2
+pxh> param set TRK_SYSID_TARGET 2
+  TRK_SYSID_TARGET: curr: 0 -> new: 2
 pxh> param set TRK_AUTO_LOCK 0
   TRK_AUTO_LOCK: curr: 1 -> new: 0
 pxh> listener tracker_status
@@ -266,13 +266,13 @@ pxh>
 
 Kịch bản B: Auto-lock
 bash
-param set TRK_SYSID_TGT 0
+param set TRK_SYSID_TARGET 0
 param set TRK_AUTO_LOCK 1
 Gửi từ sysid=3 → auto-lock, tracking
 Gửi từ sysid=4 → bỏ qua (đã lock sysid=3)
 Ket qua:
-pxh> param set TRK_SYSID_TGT 0
-+ TRK_SYSID_TGT: curr: 2 -> new: 0
+pxh> param set TRK_SYSID_TARGET 0
++ TRK_SYSID_TARGET: curr: 2 -> new: 0
 pxh> param set TRK_AUTO_LOCK 1
 + TRK_AUTO_LOCK: curr: 0 -> new: 1
 pxh> listener actuator_servos
@@ -448,7 +448,7 @@ param set TRK_SERVO_TEST 0
 param set TRK_TGT_LAT 0
 param set TRK_TGT_LON 0
 param set TRK_TGT_ALT 0
-param set TRK_SYSID_TGT 0
+param set TRK_SYSID_TARGET 0
 param set TRK_AUTO_LOCK 1
 
 antenna_tracker start
@@ -548,7 +548,7 @@ antenna_tracker status      # Expect: Target Valid: YES, tracking resumed
 #### Test 4A: Specific sysid
 ```bash
 # PX4 shell:
-param set TRK_SYSID_TGT 5
+param set TRK_SYSID_TARGET 5
 param set TRK_AUTO_LOCK 0
 param set TRK_TGT_LAT 0
 param set TRK_TGT_LON 0
@@ -579,7 +579,7 @@ antenna_tracker status      # Expect: Target Valid: YES, Target SysID: 5
 #### Test 4B: Auto-lock
 ```bash
 # PX4 shell:
-param set TRK_SYSID_TGT 0
+param set TRK_SYSID_TARGET 0
 param set TRK_AUTO_LOCK 1
 ```
 
@@ -628,7 +628,6 @@ WEST:   bearing=270.00° distance=75.35m   pitch=33.57°  ✅
 1. **Test 2** (MAVLink circular) → quan trọng nhất, verify toàn pipeline
 2. **Test 3** (Timeout) → chạy ngay sau Test 2 (cùng session)
 3. **Test 4** (Sysid filter) → verify security/isolation
-
 
 
 

@@ -63,7 +63,7 @@ pxh> param set TRK_SERVO_TEST 0
 pxh> param set TRK_TGT_LAT 0
 pxh> param set TRK_TGT_LON 0
 pxh> param set TRK_TGT_ALT 0
-pxh> param set TRK_SYSID_TGT 0
+pxh> param set TRK_SYSID_TARGET 0
 pxh> param set TRK_AUTO_LOCK 1
 pxh> 
 pxh> antenna_tracker start
@@ -324,8 +324,8 @@ Duration reached (10.0s). Stopping.
 TEST 4:
 4a:
 pxh> # PX4 shell:
-pxh> param set TRK_SYSID_TGT 5
-  TRK_SYSID_TGT: curr: 0 -> new: 5
+pxh> param set TRK_SYSID_TARGET 5
+  TRK_SYSID_TARGET: curr: 0 -> new: 5
 pxh> param set TRK_AUTO_LOCK 0
   TRK_AUTO_LOCK: curr: 1 -> new: 0
 pxh> param set TRK_TGT_LAT 0
@@ -384,8 +384,8 @@ INFO  [antenna_tracker]   Pitch Output:   0.000
 antenna_tracker: cycle: 16466 events, 0us elapsed, 0.00us avg, min 0us max 0us 0.000us rms
 antenna_tracker: interval: 16466 events, 19998.54us avg, min 12000us max 28000us 204.414us rms
 pxh> # PX4 shell:
-pxh> param set TRK_SYSID_TGT 0
-+ TRK_SYSID_TGT: curr: 5 -> new: 0
+pxh> param set TRK_SYSID_TARGET 0
++ TRK_SYSID_TARGET: curr: 5 -> new: 0
 pxh> param set TRK_AUTO_LOCK 1
 + TRK_AUTO_LOCK: curr: 0 -> new: 1
 pxh> 

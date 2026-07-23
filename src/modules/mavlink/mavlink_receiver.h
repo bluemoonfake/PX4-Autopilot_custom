@@ -48,7 +48,6 @@
 #include "mavlink_mission.h"
 #include "mavlink_parameters.h"
 #include "MavlinkStatustextHandler.hpp"
-#include "MavlinkTrackerTargetBridge.hpp"
 #include "mavlink_timesync.h"
 #include "tune_publisher.h"
 
@@ -407,14 +406,8 @@ private:
 	hrt_abstime _heartbeat_component_udp_bridge{0};
 	hrt_abstime _heartbeat_component_uart_bridge{0};
 
-	MavlinkTrackerTargetBridge _tracker_target_bridge{};
 	param_t _param_trk_sysid_tgt_handle{PARAM_INVALID};
-	param_t _param_trk_auto_lock_handle{PARAM_INVALID};
-	param_t _param_trk_timeout_ms_handle{PARAM_INVALID};
 	int32_t _tracker_target_sysid_param{0};
-	int32_t _tracker_auto_lock_param{0};
-	int32_t _tracker_timeout_ms_param{0};
-	uint8_t _tracker_last_rejection_reason{UINT8_MAX};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::BAT_CRIT_THR>)     _param_bat_crit_thr,

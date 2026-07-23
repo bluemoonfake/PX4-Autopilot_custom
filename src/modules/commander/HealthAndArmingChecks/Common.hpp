@@ -345,7 +345,7 @@ private:
 	 * - report() (which can be called independently as well)
 	 */
 	void reset();
-	void prepare(uint8_t vehicle_type);
+	void prepare(uint8_t vehicle_type, bool is_antenna_tracker = false);
 	/**
 	 * Called after all checks are run. Returns true if the results changed
 	 */

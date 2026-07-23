@@ -17,17 +17,17 @@ float32 pitch_error_rad		# [rad] Desired head pitch minus measured tracker pitch
 float32 yaw_output		# [-1,1] Normalized yaw servo output
 float32 pitch_output		# [-1,1] Normalized pitch servo output
 
-uint8 mode			# 0=STOP, 1=AUTO, 2=SCAN, 3=MANUAL
+uint8 mode			# 0=STOP, 1=AUTO, 2=MANUAL
 
 uint8 STATE_IDLE = 0
 uint8 STATE_TRACKING = 1
 uint8 STATE_TIMEOUT = 2
-uint8 STATE_SCANNING = 3
 uint8 STATE_MANUAL = 4
-uint8 STATE_SERVO_TEST = 5
 uint8 STATE_SENSOR_INVALID = 6
 uint8 STATE_TARGET_TOO_CLOSE = 7
 uint8 STATE_RECONFIGURING = 8
+uint8 STATE_WAITING_FOR_ARM = 9
+uint8 STATE_SAFETY_INHIBITED = 10
 uint8 state			# Current tracker state
 
 uint8 REASON_NONE = 0
@@ -42,10 +42,9 @@ uint8 REASON_SOURCE_REJECTED = 8
 uint8 REASON_REFERENCE_NOT_READY = 9
 uint8 REASON_HOME_UNPROVISIONED = 10
 uint8 REASON_CONFIGURATION_CHANGED = 11
+uint8 REASON_DISARMED = 12
+uint8 REASON_SAFETY_INHIBITED = 13
 uint8 state_reason		# Reason for safe/clipped state
-
-float32 scan_yaw_deg		# [deg] Current scan yaw physical angle
-float32 scan_pitch_deg		# [deg] Current scan pitch physical angle
 
 # Appended fields: preserve the original field order for existing consumers.
 float32 yaw_setpoint_rad	# [rad] Desired world yaw after mechanical sector planning
@@ -61,3 +60,9 @@ uint8 POSITION_SOURCE_NONE = 0
 uint8 POSITION_SOURCE_GLOBAL = 1
 uint8 POSITION_SOURCE_HOME = 2
 uint8 position_source		# Own-position source used by tracker geometry
+
+# Arming-gated mode diagnostics. TRK_MODE remains the requested mode; the
+# effective mode is STOP until PX4 actuator arming permits active operation.
+bool armed
+uint8 requested_mode
+uint8 effective_mode

@@ -38,6 +38,28 @@ Tracker `STOP`, `AUTO`, `SCAN`, and `MANUAL` are application submodes, not PX4 v
 
 For stock QGC, use `TRK_MODE` and the tracker status/event surface. This is more honest and safer than advertising unsupported custom flight-mode semantics.
 
+## Arming and Ready state
+
+QGC ARM/DISARM continues to use PX4 Commander and the standard MAVLink command;
+it does not select `TRK_MODE`. `TRK_MODE` may be configured before arming, but
+AUTO, SCAN, or MANUAL becomes effective only after Commander reports the system
+armed. Disarming returns the tracker to park without overwriting the requested
+mode.
+
+The tracker must not register a custom/external navigation mode merely to avoid
+Position, Altitude, Manual, or RC requirements. Instead, Commander readiness
+for `MAV_TYPE=5` must retain tracker-relevant sensor, power, safety, and output
+checks while treating missing target/position data as a reported runtime park
+state. Broad circuit breakers and force-arm are not an acceptable production
+solution.
+
+For formal acceptance, record `commander check`, `actuator_armed`,
+`vehicle_status`, `health_report`, command acknowledgement, HEARTBEAT armed
+state, and the QGC PX4 Events before and after each ARM/DISARM transition. Local
+MAVLink/SITL observations exist, but the stock-QGC capture is still pending.
+The development contract is documented in [Arming, Readiness, and Tracker
+Modes](arming_and_modes.md).
+
 ## Actuator presentation
 
 The initial output contract deliberately uses the existing PX4 generic functions:
@@ -57,9 +79,15 @@ All tracker parameters use the `TRK_` prefix and the **Antenna Tracker** paramet
 - target source/filter policy;
 - timeout and loss policy;
 - output calibration/reversal;
+- per-axis motion semantics through `TRK_YAW_SRV_T` and `TRK_PIT_SRV_T`;
 - only validated prediction or scan behavior.
 
 Do not use servo trim to compensate for incorrect FC orientation. Set `SENS_BOARD_ROT` and perform level-horizon calibration before setting mechanical trim.
+
+`TRK_*_SRV_T` selects `POSITION` versus `CONTINUOUS`; it does not select an
+analog/digital servo rate. Configure PWM50/100/200/400 with the native QGC
+Actuators output-protocol field (`PWM_MAIN_TIMx`/`PWM_AUX_TIMx`). All channels
+in one hardware timer group share that setting, and changing it requires reboot.
 
 ## Events and logs
 

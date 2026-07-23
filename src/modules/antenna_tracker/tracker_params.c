@@ -6,6 +6,8 @@
  * @author PX4 Antenna Tracker
  */
 
+#include <parameters/param.h>
+
 /*==========================================================================
  * Mode & General
  *==========================================================================*/
@@ -15,32 +17,19 @@
  *
  * 0 = STOP (servos move to configured park position)
  * 1 = AUTO (track target)
- * 2 = SCAN (sweep only within configured mechanical limits)
- * 3 = MANUAL (map manual input to physical axis angles)
+ * 2 = MANUAL (map manual input to physical axis angles)
  *
  * This is a tracker submode. It is independent of PX4 vehicle navigation
- * modes so estimator or Commander mode fallbacks cannot start scanning.
+ * modes so estimator or Commander mode fallbacks cannot start manual control.
  *
  * @min 0
- * @max 3
+ * @max 2
  * @value 0 STOP
  * @value 1 AUTO
- * @value 2 SCAN
- * @value 3 MANUAL
+ * @value 2 MANUAL
  * @group Antenna Tracker
  */
 PARAM_DEFINE_INT32(TRK_MODE, 0);
-
-/**
- * Deprecated QGroundControl navigation-mode mapping option.
- *
- * Retained only so existing parameter files can be loaded. The tracker always
- * uses TRK_MODE because PX4 navigation modes are not tracker submodes.
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_QGC_MODE, 0);
 
 /**
  * Startup delay before servo movement.
@@ -183,121 +172,13 @@ PARAM_DEFINE_FLOAT(TRK_PIT_FF, 0.0f);
 PARAM_DEFINE_FLOAT(TRK_PIT_IMAX, 0.5f);
 
 /*==========================================================================
- * Servo trim / output limits
- *==========================================================================*/
-
-/**
- * Yaw servo trim offset (mechanical).
- *
- * Added to yaw servo output AFTER PID control to compensate for
- * servo horn misalignment or mechanical neutral offset.
- *
- * NOTE: This is NOT for flight controller orientation correction.
- * If the FC is mounted rotated/backwards/upside-down, use
- * SENS_BOARD_ROT and SENS_BOARD_Z_OFF in QGC Sensors page instead.
- * Only adjust this parameter after SENS_BOARD_ROT is correctly set
- * and attitude readings are verified correct via 'antenna_tracker status'.
- *
- * @min -1.0
- * @max 1.0
- * @decimal 2
- * @increment 0.01
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_YAW_TRIM, 0.0f);
-
-/**
- * Pitch servo trim offset (mechanical).
- *
- * Added to pitch servo output AFTER PID control to compensate for
- * servo horn misalignment or mechanical neutral offset.
- *
- * NOTE: This is NOT for flight controller orientation correction.
- * If the FC is mounted with a pitch offset, use SENS_BOARD_ROT and
- * SENS_BOARD_Y_OFF (level horizon calibration) in QGC instead.
- * Only adjust this parameter after attitude readings are verified
- * correct via 'antenna_tracker status'.
- *
- * @min -1.0
- * @max 1.0
- * @decimal 2
- * @increment 0.01
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_PIT_TRIM, 0.0f);
-
-/**
- * Yaw output minimum limit.
- *
- * Normalized servo output lower bound for yaw.
- *
- * @min -1.0
- * @max 0.0
- * @decimal 2
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_YAW_MIN, -1.0f);
-
-/**
- * Yaw output maximum limit.
- *
- * Normalized servo output upper bound for yaw.
- *
- * @min 0.0
- * @max 1.0
- * @decimal 2
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_YAW_MAX, 1.0f);
-
-/**
- * Pitch output minimum limit.
- *
- * Normalized servo output lower bound for pitch.
- *
- * @min -1.0
- * @max 0.0
- * @decimal 2
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_PIT_MIN, -1.0f);
-
-/**
- * Pitch output maximum limit.
- *
- * Normalized servo output upper bound for pitch.
- *
- * @min 0.0
- * @max 1.0
- * @decimal 2
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_PIT_MAX, 1.0f);
-
-/*==========================================================================
  * Mechanical limits (degrees)
  *==========================================================================*/
-
-/**
- * Yaw range in degrees.
- *
- * Total mechanical range the yaw axis can sweep.
- * The tracker operates from -range/2 to +range/2 relative to center.
- *
- * @unit deg
- * @min 0
- * @max 360
- * @decimal 0
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_YAW_RANGE, 360.0f);
 
 /**
  * Physical yaw minimum angle.
  *
  * This defines the reachable yaw sector relative to the park position.
- * It supersedes the symmetric TRK_YAW_RANGE assumption when TRK_YAW_MIND is
- * less than TRK_YAW_MAXD.
  *
  * @unit deg
  * @min -360
@@ -330,14 +211,6 @@ PARAM_DEFINE_FLOAT(TRK_YAW_MAXD, 180.0f);
  * @group Antenna Tracker
  */
 PARAM_DEFINE_FLOAT(TRK_YAW_PARK, 0.0f);
-
-/**
- * Reverse yaw servo angle-to-output mapping.
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_YAW_REV, 0);
 
 /**
  * Pitch minimum angle.
@@ -377,14 +250,6 @@ PARAM_DEFINE_FLOAT(TRK_PIT_MAXD, 90.0f);
  * @group Antenna Tracker
  */
 PARAM_DEFINE_FLOAT(TRK_PIT_PARK, 0.0f);
-
-/**
- * Reverse pitch servo angle-to-output mapping.
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_PIT_REV, 0);
 
 /*==========================================================================
  * Slew rate limiting
@@ -458,112 +323,6 @@ PARAM_DEFINE_FLOAT(TRK_DIST_MIN, 5.0f);
 PARAM_DEFINE_INT32(TRK_ALT_SRC, 0);
 
 /*==========================================================================
- * SCAN mode
- *==========================================================================*/
-
-/**
- * Scan yaw speed.
- *
- * Speed of yaw sweep in SCAN mode.
- *
- * @unit deg/s
- * @min 0
- * @max 100
- * @decimal 1
- * @increment 1
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_SCAN_YSPD, 2.0f);
-
-/**
- * Scan pitch speed.
- *
- * Speed of pitch sweep in SCAN mode.
- *
- * @unit deg/s
- * @min 0
- * @max 100
- * @decimal 1
- * @increment 1
- * @group Antenna Tracker
- */
-PARAM_DEFINE_FLOAT(TRK_SCAN_PSPD, 5.0f);
-
-/**
- * Auto scan on target loss.
- *
- * When in AUTO mode and target is lost (timeout), automatically
- * switch to SCAN behavior to search for the target.
- * When target is reacquired, resume AUTO tracking.
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_AUTO_SCAN, 0);
-
-/*==========================================================================
- * Dead reckoning
- *==========================================================================*/
-
-/**
- * Enable dead reckoning.
- *
- * When enabled, uses target velocity (vx/vy/vz) from
- * GLOBAL_POSITION_INT to extrapolate target position between
- * MAVLink updates. Improves tracking smoothness.
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_DEADRECK, 0);
-
-/*==========================================================================
- * Fake target for testing
- *==========================================================================*/
-
-/**
- * Fake target latitude.
- *
- * Latitude in degrees * 1E7 for testing without MAVLink target.
- * Set to 0 to disable fake target.
- *
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_TGT_LAT, 0);
-
-/**
- * Fake target longitude.
- *
- * Longitude in degrees * 1E7 for testing without MAVLink target.
- *
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_TGT_LON, 0);
-
-/**
- * Fake target altitude.
- *
- * Altitude in millimeters MSL for testing without MAVLink target.
- *
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_TGT_ALT, 0);
-
-/**
- * Enable deterministic fake-target source.
- *
- * When enabled, TRK_TGT_LAT/LON/ALT is the only tracker target source. It is
- * intended for SITL and a controlled bench only. It never takes over after a
- * MAVLink target timeout unless explicitly enabled.
- *
- * 0 = use qualified MAVLink target only, 1 = use fake target only
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_FAKE_EN, 0);
-
-/*==========================================================================
  * Tracker home fallback
  *==========================================================================*/
 
@@ -623,23 +382,21 @@ PARAM_DEFINE_INT32(TRK_HOME_ALT, 0);
 /**
  * MAVLink target system ID.
  *
- * If nonzero, only accept GLOBAL_POSITION_INT from this sysid.
- * If zero and TRK_AUTO_LOCK is enabled, lock the first valid vehicle.
- * In both cases the source must be MAV_COMP_ID_AUTOPILOT1 and must have sent
- * a fresh non-GCS HEARTBEAT from the same system/component pair.
+ * Only accept GLOBAL_POSITION_INT from this sysid. Set this parameter to the
+ * UAV system ID before enabling AUTO tracking. A value of zero disables
+ * MAVLink target acceptance.
  *
  * @min 0
  * @max 255
  * @group Antenna Tracker
  */
-PARAM_DEFINE_INT32(TRK_SYSID_TGT, 0);
+PARAM_DEFINE_INT32(TRK_SYSID_TARGET, 0);
 
 /**
- * Auto-lock target sysid.
+ * Reserved for future auto-lock target selection.
  *
- * When target sysid is 0, automatically lock the first source that passes
- * the component, HEARTBEAT, position, and altitude checks. The lock is
- * released after TRK_TIMEOUT_MS without an accepted position update.
+ * The initial tracker implementation requires TRK_SYSID_TARGET to be set and
+ * does not acquire targets automatically.
  *
  * @boolean
  * @group Antenna Tracker
@@ -650,8 +407,7 @@ PARAM_DEFINE_INT32(TRK_AUTO_LOCK, 1);
  * Target timeout.
  *
  * If no target update is received within this time,
- * target is marked invalid and servos go to safe position
- * or SCAN mode if TRK_AUTO_SCAN is enabled.
+ * target is marked invalid and servos go to the configured safe position.
  *
  * @min 1000
  * @max 30000
@@ -659,21 +415,6 @@ PARAM_DEFINE_INT32(TRK_AUTO_LOCK, 1);
  * @group Antenna Tracker
  */
 PARAM_DEFINE_INT32(TRK_TIMEOUT_MS, 5000);
-
-/**
- * Legacy servo-test parameter.
- *
- * Kept for compatibility with existing parameter files. Production firmware
- * does not run a servo sweep from a persistent parameter because that can move
- * hardware unexpectedly after a reboot. Use the volatile console command
- * `antenna_tracker servo_test start yaw|pitch` instead.
- *
- * 0 = disabled, 1 = enabled
- *
- * @boolean
- * @group Antenna Tracker
- */
-PARAM_DEFINE_INT32(TRK_SERVO_TEST, 0);
 
 /**
  * Park-command settle time before head-reference capture.

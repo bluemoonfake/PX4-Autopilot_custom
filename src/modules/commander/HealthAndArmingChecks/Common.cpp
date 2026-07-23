@@ -207,10 +207,10 @@ void Report::reset()
 	_results_changed = false;
 }
 
-void Report::prepare(uint8_t vehicle_type)
+void Report::prepare(uint8_t vehicle_type, bool is_antenna_tracker)
 {
 	// Get mode requirements before running any checks (in particular the mode checks require them)
-	mode_util::getModeRequirements(vehicle_type, _failsafe_flags);
+	mode_util::getModeRequirements(vehicle_type, _failsafe_flags, is_antenna_tracker);
 }
 
 NavModes Report::getModeGroup(uint8_t nav_state) const

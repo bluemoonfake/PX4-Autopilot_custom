@@ -14,6 +14,8 @@ The firmware is a SITL-capable and limited bench-test candidate. It is **not fie
 - Computes bearing, elevation, distance, timeout state, and diagnostic status.
 - Publishes normalized yaw and pitch commands through `actuator_servos`.
 - Maps Servo 1 to yaw and Servo 2 to pitch through the PX4 output-function pipeline.
+- Selects positional or continuous-rotation semantics independently per axis,
+  while leaving PWM protocol/rate to the native PX4 output configuration.
 - Provides a dedicated airframe, `4099_antenna_tracker`, and hardware build targets including `px4_fmu-v6c_antenna_tracker`, `px4_fmu-v6x_antenna_tracker`, and `micoair_h743_antenna_tracker`.
 
 ## Safety-critical architecture constraint
@@ -25,11 +27,13 @@ If the FC remains fixed on the tripod, its attitude does not describe the antenn
 ## Documentation
 
 - [Architecture](architecture.md) — current flow, target architecture, and source ownership.
+- [Arming and tracker modes](arming_and_modes.md) — requested/effective mode state machine, Commander readiness, and validation status.
 - [QGroundControl compatibility](qgroundcontrol.md) — the stock-QGC integration contract and limits.
 - [Hardware setup](hardware_setup.md) — Pixhawk 6C, actuator mapping, IMU orientation, and telemetry.
 - [Safety](safety.md) — required mechanical, power, timeout, and prearm precautions.
 - [Build and flash](build_and_flash.md) — canonical SITL, firmware build, and artifact provenance procedures.
 - [Verification](verification.md) — evidence gates and required test coverage.
+- [MicoAir H743 validation](h743_validation.md) — board-specific bench, hardware, and field runbook.
 - [ArduPilot gap reference](reference/ardupilot_gap.md) — useful comparison only; it is not a porting plan.
 
 ## Source entry points
@@ -52,7 +56,9 @@ Do not treat a source file, a build artifact, or an unchecked historical transcr
 
 - **planned** — scoped but not implemented.
 - **implemented** — source exists and is reviewed.
+- **blocked** — a required prerequisite, setup, or evidence source is unavailable.
 - **verified-sitl** — tested in the canonical tracker SITL setup with recorded evidence.
+- **verified-bench** — tested with the intended controller and actuator setup on a controlled bench.
 - **verified-hardware** — tested on the intended hardware with recorded evidence.
 - **field-ready** — passed repeated hardware and field gates, including failure handling.
 

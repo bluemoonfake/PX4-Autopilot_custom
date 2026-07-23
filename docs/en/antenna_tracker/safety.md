@@ -4,6 +4,18 @@
 `COM_PREARM_MODE=2` is used so the tracker can drive non-throttling servo outputs while not armed. Treat every boot and parameter change as a potential actuator-motion event.
 :::
 
+## ARM permission versus servo power
+
+The implemented ARM gate prevents AUTO, SCAN, and MANUAL tracker behavior while
+disarmed. It does not promise zero physical motion before ARM: with
+`COM_PREARM_MODE=2`, the output pipeline may move or hold the mechanism at its
+calibrated park pose.
+
+On disarm, kill, lockdown, or termination, active mode dispatch must stop, both
+controllers must reset, and the configured safe command must be selected within
+one 50 Hz cycle. Continue to treat the independent servo-power cutoff as the
+final safety boundary.
+
 ## Required physical safeguards
 
 Before any powered servo test:
@@ -49,9 +61,9 @@ Compass/heading error points the antenna at the wrong azimuth even when GPS and 
 
 ## Target data safety
 
-- Set a specific `TRK_SYSID_TGT` for operational use unless an auto-lock procedure is intentionally validated.
-- Require a fresh non-GCS `HEARTBEAT` and `GLOBAL_POSITION_INT` from the same autopilot system/component pair.
-- Treat system ID and heartbeat filtering as routing/source qualification, not identity proof.
+- Set `TRK_SYSID_TARGET` to the target UAV system ID before operational use; a value of zero disables MAVLink target acceptance.
+- Verify that only `GLOBAL_POSITION_INT` from that system ID updates `tracker_target_position`.
+- Treat system ID filtering as routing, not identity proof.
 - Use absolute MSL altitude until a common relative-altitude reference is proven.
 - Keep dead reckoning disabled until target velocity validity and prediction error are verified.
 - Test target loss, recovery, invalid positions, and wrong source IDs before a field test.
